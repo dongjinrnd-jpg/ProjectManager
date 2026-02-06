@@ -1,0 +1,5 @@
+# Documentation (contains symlinks to local paths)
+docs/
+
+# Claude settings
+.claude/
