@@ -1,0 +1,9 @@
+/**
+ * NextAuth API Route Handler
+ *
+ * /api/auth/* 엔드포인트 처리
+ */
+
+import { handlers } from '@/auth';
+
+export const { GET, POST } = handlers;

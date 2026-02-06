@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c mklink \"e:\\\\Project\\\\vibecode\\\\ProjectManager\\\\docs\\\\04-blog\\\\프로젝트 개발 준비 이야기 셋째날.md\" \"G:\\\\내 드라이브\\\\MyKnowledge\\\\ReservedDataForge\\\\70. Blog\\\\73. Lab\\\\프로젝트 개발 준비 이야기 셋째날.md\")",
+      "Bash(powershell -Command:*)"
+    ]
+  }
+}

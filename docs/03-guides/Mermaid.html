@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mermaid.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%EC%97%B0%EA%B5%AC%EA%B0%9C%EB%B0%9C-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EA%B4%80%EB%A6%AC-%EC%8B%9C%EC%8A%A4%ED%85%9C---mermaid-%EB%8B%A4%EC%9D%B4%EC%96%B4%EA%B7%B8%EB%9E%A8">연구개발 프로젝트 관리 시스템 - Mermaid 다이어그램</h1>
+<blockquote>
+<p>PRD 기반 시스템 구조 시각화</p>
+</blockquote>
+<hr>
+<h2 id="1-%EC%A0%84%EC%B2%B4-%EC%8B%9C%EC%8A%A4%ED%85%9C-%EA%B0%9C%EC%9A%94">1. 전체 시스템 개요</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TB
+    subgraph Users["👥 사용자"]
+        U1["👤 일반<br/>업무일지 작성"]
+        U2["👔 팀장<br/>주간보고 등록<br/>팀 프로젝트 관리"]
+        U3["⚙️ 관리자<br/>전체 프로젝트 관리<br/>주간보고 수정"]
+        U4["👑 경영진<br/>현황 조회<br/>코멘트 작성"]
+        U5["🔧 시스템관리자<br/>사용자/시스템 설정"]
+    end
+
+    subgraph Core["📋 핵심 기능"]
+        direction TB
+
+        subgraph PM["프로젝트 관리"]
+            P1[프로젝트 CRUD]
+            P2[단계 관리<br/>14개 단계]
+            P3[팀 구성<br/>팀장+팀원]
+            P4[상태 관리<br/>진행/보류/완료]
+        end
+
+        subgraph WL["업무일지"]
+            W1[일지 작성]
+            W2[프로젝트 연동]
+            W3[전체 열람]
+        end
+
+        subgraph SC["일정 관리"]
+            S1[대일정<br/>전체 간트차트]
+            S2[세부추진항목<br/>계획/실적]
+            S3[드릴다운<br/>기간별 현황]
+        end
+
+        subgraph WR["주간 보고"]
+            R1[보고 등록<br/>업무일지 기반]
+            R2[AI 정리<br/>Gemini API]
+            R3[집계 화면<br/>구분별 그룹핑]
+            R4[Excel/PDF<br/>다운로드]
+        end
+    end
+
+    subgraph Dashboard["📊 대시보드"]
+        direction TB
+
+        subgraph General["일반 대시보드"]
+            D1[단계별 현황]
+            D2[소속별 현황]
+            D3[즐겨찾기]
+            D4[이슈사항]
+        end
+
+        subgraph Exec["경영진 대시보드"]
+            E1[프로젝트 카드<br/>즐겨찾기 6~8개]
+            E2[상세 팝업<br/>진행현황/이슈사항]
+            E3[계획vs실적<br/>간트차트 비교]
+            E4[코멘트<br/>스레드 형식]
+        end
+    end
+
+    subgraph Backend["🛠️ 백엔드"]
+        direction LR
+        N[Next.js 14+<br/>App Router]
+        Auth[자체 인증<br/>ID/Password]
+        API[API Routes]
+    end
+
+    subgraph GCP["☁️ Google Cloud"]
+        direction LR
+        Sheets[(Google Sheets<br/>데이터베이스)]
+        Drive[(Google Drive<br/>파일 저장)]
+        Gmail[Gmail API<br/>알림]
+        Gemini[Gemini API<br/>AI 요약]
+    end
+
+    U1 --> WL
+    U2 --> PM & WR
+    U3 --> PM & WR & Dashboard
+    U4 --> Exec
+    U5 --> Backend
+
+    WL -->|자동 반영| PM
+    WL -->|불러오기| WR
+    PM --> SC
+    SC -->|드릴다운| WR
+
+    PM --> General
+    WR --> General & Exec
+
+    Core --> Backend
+    Dashboard --> Backend
+    Backend -->|Service Account| GCP
+
+    %% 색상 스타일 정의
+    %% 사용자 - 파란색 계열
+    style Users fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    style U1 fill:#bbdefb,stroke:#1976d2,color:#000
+    style U2 fill:#bbdefb,stroke:#1976d2,color:#000
+    style U3 fill:#bbdefb,stroke:#1976d2,color:#000
+    style U4 fill:#fff8e1,stroke:#f9a825,color:#000
+    style U5 fill:#f3e5f5,stroke:#7b1fa2,color:#000
+
+    %% 핵심 기능 - 초록색 계열
+    style Core fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    style PM fill:#c8e6c9,stroke:#388e3c,color:#000
+    style WL fill:#c8e6c9,stroke:#388e3c,color:#000
+    style SC fill:#c8e6c9,stroke:#388e3c,color:#000
+    style WR fill:#c8e6c9,stroke:#388e3c,color:#000
+
+    %% 대시보드 - 주황색 계열
+    style Dashboard fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    style General fill:#ffe0b2,stroke:#f57c00,color:#000
+    style Exec fill:#fff8e1,stroke:#f9a825,color:#000
+
+    %% 백엔드 - 보라색 계열
+    style Backend fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+
+    %% GCP - 하늘색 계열
+    style GCP fill:#e0f7fa,stroke:#00838f,stroke-width:2px,color:#000
+</div></code></pre>
+<p><strong>색상 구분:</strong></p>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>배경색</th>
+<th>테두리</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>사용자</td>
+<td>연한 파랑 <code>#e3f2fd</code></td>
+<td>파랑 <code>#1976d2</code></td>
+</tr>
+<tr>
+<td>경영진</td>
+<td>연한 노랑 <code>#fff8e1</code></td>
+<td>금색 <code>#f9a825</code></td>
+</tr>
+<tr>
+<td>핵심 기능</td>
+<td>연한 초록 <code>#e8f5e9</code></td>
+<td>초록 <code>#388e3c</code></td>
+</tr>
+<tr>
+<td>대시보드</td>
+<td>연한 주황 <code>#fff3e0</code></td>
+<td>주황 <code>#f57c00</code></td>
+</tr>
+<tr>
+<td>백엔드</td>
+<td>연한 보라 <code>#f3e5f5</code></td>
+<td>보라 <code>#7b1fa2</code></td>
+</tr>
+<tr>
+<td>GCP</td>
+<td>연한 청록 <code>#e0f7fa</code></td>
+<td>청록 <code>#00838f</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2-%EA%B0%84%EA%B2%B0-%EB%B2%84%EC%A0%84-excalidraw%EC%9A%A9">2. 간결 버전 (Excalidraw용)</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart LR
+    subgraph 사용자
+        일반 & 팀장 & 관리자 & 경영진 & 시스템관리자
+    end
+
+    subgraph 기능
+        direction TB
+        프로젝트[📁 프로젝트<br/>CRUD/단계/팀]
+        업무일지[📝 업무일지<br/>작성/연동]
+        일정[📅 일정<br/>간트차트]
+        주간보고[📋 주간보고<br/>AI정리/다운로드]
+        대시보드[📊 대시보드<br/>현황/즐겨찾기]
+        경영진뷰[👑 경영진<br/>계획vs실적/코멘트]
+    end
+
+    subgraph 인프라
+        direction TB
+        NextJS[Next.js]
+        Sheets[(Google Sheets)]
+        Drive[(Drive)]
+        Gemini[Gemini AI]
+    end
+
+    사용자 --> 기능
+    기능 --> 인프라
+
+    업무일지 -.->|연동| 프로젝트
+    업무일지 -.->|불러오기| 주간보고
+    프로젝트 --> 일정
+    주간보고 -.->|AI요약| Gemini
+</div></code></pre>
+<hr>
+<h2 id="3-%EC%8B%9C%EC%8A%A4%ED%85%9C-%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98">3. 시스템 아키텍처</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TB
+    subgraph Users["👥 사용자 (5~20명)"]
+        U1[일반 사용자]
+        U2[팀장]
+        U3[관리자]
+        U4[경영진]
+        U5[시스템 관리자]
+    end
+
+    subgraph App["🖥️ Next.js Application"]
+        Pages[Pages<br/>React]
+        API[API Routes<br/>Backend]
+        Auth[Auth<br/>Credentials]
+    end
+
+    subgraph GCP["☁️ Google Cloud Platform"]
+        Sheets[(Google Sheets<br/>Database)]
+        Drive[(Google Drive<br/>Files)]
+        Gmail[Gmail API<br/>알림]
+        Gemini[Gemini API<br/>AI 요약]
+    end
+
+    Users -->|ID/Password| App
+    App -->|Service Account| GCP
+</div></code></pre>
+<hr>
+<h2 id="4-%EA%B6%8C%ED%95%9C-%EC%B2%B4%EA%B3%84">4. 권한 체계</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart LR
+    subgraph Roles["권한 단계"]
+        direction TB
+        User[일반 사용자]
+        Manager[팀장]
+        Admin[관리자]
+        Exec[경영진]
+        SysAdmin[시스템 관리자]
+    end
+
+    subgraph Permissions["권한 범위"]
+        P1[업무일지 작성/열람]
+        P2[프로젝트 관리<br/>팀 내]
+        P3[프로젝트 관리<br/>전체]
+        P4[주간보고 등록]
+        P5[주간보고 수정]
+        P6[코멘트 작성]
+        P7[사용자/시스템 관리]
+    end
+
+    User --> P1
+    Manager --> P1 & P2 & P4
+    Admin --> P1 & P3 & P4 & P5
+    Exec --> P1 & P6
+    SysAdmin --> P7
+</div></code></pre>
+<hr>
+<h2 id="5-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4">5. 프로젝트 라이프사이클</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart LR
+    Create[프로젝트<br/>생성] --> Schedule[일정<br/>등록] --> Manage[프로젝트<br/>관리] --> Close[프로젝트<br/>종료]
+
+    Create -.-> C1[기본정보<br/>팀 구성<br/>단계선택]
+    Schedule -.-> S1[세부추진항목<br/>계획 일정]
+    Manage -.-> M1[업무일지 작성<br/>단계진행<br/>실적반영]
+    Close -.-> E1[완료/보류<br/>상태변경<br/>결과기록]
+</div></code></pre>
+<hr>
+<h2 id="6-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%83%81%ED%83%9C-%EC%A0%84%ED%99%98">6. 프로젝트 상태 전환</h2>
+<pre><code class="language-mermaid"><div class="mermaid">stateDiagram-v2
+    [*] --> 진행중: 프로젝트 생성
+    진행중 --> 보류: 일시 중단
+    진행중 --> 완료: 모든 단계 완료
+    보류 --> 진행중: 재개
+    보류 --> 완료: 완료 처리
+    완료 --> [*]
+</div></code></pre>
+<hr>
+<h2 id="7-user-flow---%EC%A0%84%EC%B2%B4">7. User Flow - 전체</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TB
+    Login[로그인] --> Dashboard[대시보드]
+
+    Dashboard --> |일반| UserFlow
+    Dashboard --> |팀장| ManagerFlow
+    Dashboard --> |관리자| AdminFlow
+    Dashboard --> |경영진| ExecFlow
+
+    subgraph UserFlow["일반 사용자"]
+        U_Proj[담당 프로젝트 선택]
+        U_Log[업무일지 작성]
+        U_Schedule[개별 일정 관리]
+    end
+
+    subgraph ManagerFlow["팀장"]
+        M_Team[팀 프로젝트 현황]
+        M_Log[팀원 업무일지 열람]
+        M_Stage[단계 업데이트]
+        M_Weekly[주간 보고 등록]
+    end
+
+    subgraph AdminFlow["관리자"]
+        A_Proj[프로젝트 CRUD]
+        A_Weekly[주간 보고 수정]
+        A_Monitor[전체 현황 모니터링]
+    end
+
+    subgraph ExecFlow["경영진"]
+        E_Dash[경영진 대시보드]
+        E_Compare[계획 vs 실적]
+        E_Comment[코멘트 작성]
+        E_Fav[즐겨찾기 관리]
+    end
+</div></code></pre>
+<hr>
+<h2 id="8-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EA%B5%AC%EC%A1%B0-er-diagram">8. 데이터 구조 (ER Diagram)</h2>
+<pre><code class="language-mermaid"><div class="mermaid">erDiagram
+    User ||--o{ Project : "팀장/팀원"
+    User ||--o{ WorkLog : "작성"
+    User ||--o{ WeeklyReport : "작성"
+    User ||--o{ Favorite : "즐겨찾기"
+
+    Project ||--o{ WorkLog : "연결"
+    Project ||--o{ ProjectSchedule : "세부일정"
+    Project ||--o{ Attachment : "첨부"
+    Project ||--o{ ProjectHistory : "이력"
+    Project ||--o| ProjectCost : "원가정보"
+    Project ||--o{ WeeklyReport : "연결"
+    Project ||--o{ Favorite : "대상"
+
+    WeeklyReport }o--|| ReportCategory : "구분"
+
+    User {
+        string id PK
+        string name
+        string email
+        string role
+        string division
+    }
+
+    Project {
+        string id PK
+        string customer
+        string item
+        string teamLeader FK
+        string currentStage
+        string status
+    }
+
+    WorkLog {
+        string id PK
+        date date
+        string projectId FK
+        string assignee FK
+        string content
+    }
+
+    WeeklyReport {
+        string id PK
+        int year
+        int week
+        string category
+        string content
+    }
+</div></code></pre>
+<hr>
+<h2 id="9-%EC%A3%BC%EA%B0%84-%EB%B3%B4%EA%B3%A0-%ED%94%84%EB%A1%9C%EC%84%B8%EC%8A%A4">9. 주간 보고 프로세스</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TB
+    subgraph Input["입력"]
+        WL[업무일지]
+        Manual[직접 입력]
+    end
+
+    subgraph Process["주간 보고 등록"]
+        Select[주차/구분 선택]
+        Load[업무일지 불러오기]
+        AI{AI 정리?}
+        Edit[편집/보완]
+        Save[저장]
+    end
+
+    subgraph Output["집계 화면"]
+        List[주간 보고 목록]
+        Notice[공지사항]
+        Summary[AI 요약]
+        Download[Excel/PDF 다운로드]
+    end
+
+    WL --> Load
+    Manual --> Edit
+    Select --> Load
+    Load --> AI
+    AI -->|Yes| Gemini[Gemini API]
+    AI -->|No| Edit
+    Gemini --> Edit
+    Edit --> Save
+    Save --> List
+    List --> Summary
+    List --> Download
+</div></code></pre>
+<hr>
+<h2 id="10-%EA%B2%BD%EC%98%81%EC%A7%84-%EB%8C%80%EC%8B%9C%EB%B3%B4%EB%93%9C-%EA%B5%AC%EC%A1%B0">10. 경영진 대시보드 구조</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TB
+    ExecDash[경영진 대시보드]
+
+    ExecDash --> Cards[프로젝트 카드<br/>즐겨찾기 6~8개]
+    ExecDash --> Summary[주간 보고 요약]
+    ExecDash --> Compare[계획 vs 실적]
+
+    Cards --> |클릭| Popup[상세 팝업]
+
+    Popup --> Info[기본 정보<br/>단계/진행률/상태]
+    Popup --> Progress[최근 진행사항<br/>3~5건]
+    Popup --> Issues[이슈사항]
+    Popup --> Comments[경영진 코멘트<br/>+ 팀장 답변]
+
+    Compare --> Gantt[간트차트<br/>계획/실적 비교]
+    Compare --> Delay[지연 프로젝트<br/>하이라이트]
+    Compare --> CommentWrite[코멘트 작성]
+</div></code></pre>
+<hr>
+<h2 id="%EC%98%B5%EC%8B%9C%EB%94%94%EC%96%B8%EC%97%90%EC%84%9C-%EC%82%AC%EC%9A%A9%EB%B2%95">옵시디언에서 사용법</h2>
+<h3 id="%EA%B8%B0%EB%B3%B8-%EC%82%AC%EC%9A%A9">기본 사용</h3>
+<p>옵시디언에서는 코드 블록에 <code>mermaid</code>를 지정하면 바로 렌더링됨</p>
+<h3 id="excalidraw%EC%97%90%EC%84%9C-%EC%82%AC%EC%9A%A9">Excalidraw에서 사용</h3>
+<ol>
+<li><strong>명령어 팔레트</strong> (<code>Ctrl+P</code>) → <strong>&quot;Excalidraw: Insert Mermaid&quot;</strong></li>
+<li>또는 Excalidraw 도구바의 <strong>Mermaid 아이콘</strong> 클릭</li>
+<li>코드 붙여넣기 후 <strong>Convert</strong></li>
+</ol>
+<h3 id="%EC%A3%BC%EC%9D%98%EC%82%AC%ED%95%AD">주의사항</h3>
+<ul>
+<li>Excalidraw에서는 복잡한 다이어그램 변환 오류 가능</li>
+<li><code>subgraph</code> 중첩이 깊으면 오류 발생</li>
+<li>한글 깨짐 시 Excalidraw 폰트 설정 확인</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>PRD.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="prd-%EC%97%B0%EA%B5%AC%EA%B0%9C%EB%B0%9C-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EA%B4%80%EB%A6%AC-%EC%8B%9C%EC%8A%A4%ED%85%9C">PRD: 연구개발 프로젝트 관리 시스템</h1>
+<blockquote>
+<p>[!abstract] Document Info</p>
+<ul>
+<li><strong>Project:</strong> [[00_Project_Dashboard]]</li>
+<li><strong>Type:</strong> <code>VIEW[{doc_type}]</code></li>
+<li><strong>Status:</strong> <code>VIEW[{status}]</code></li>
+</ul>
+</blockquote>
+<h2 id="1-%F0%9F%8E%AF-overview-%EA%B0%9C%EC%9A%94">1. 🎯 Overview (개요)</h2>
+<h3 id="11-%EB%AA%A9%ED%91%9C">1.1 목표</h3>
+<p>기존 구글 시트 기반의 연구개발 진도 관리 시스템을 웹 애플리케이션으로 전환하여, <strong>프로젝트 관리, 업무일지, 일정관리</strong>를 통합 관리하고 <strong>대시보드</strong>를 통해 전체 현황을 한눈에 파악할 수 있도록 한다.</p>
+<h3 id="12-%EB%B0%B0%EA%B2%BD-%EB%B0%8F-%EB%AC%B8%EC%A0%9C%EC%A0%90">1.2 배경 및 문제점</h3>
+<p><strong>현재 관리 체계 (AS-IS):</strong></p>
+<pre class="hljs"><code><div>┌─────────────────────────────────────────────────────────────┐
+│  엑셀 파일들 (분산 관리)                                      │
+│  ├─ 연구소 개발제품 LIST (전체 진도 요약)                     │
+│  ├─ 주요 개발진행 ITEM (개별 프로젝트 상세)                   │
+│  └─ 개별 일정표 (프로젝트별 간트차트) ← 양식이 제각각          │
+├─────────────────────────────────────────────────────────────┤
+│  구글 시트 (웹용)                                            │
+│  ├─ 프로젝트 관리                                            │
+│  └─ 업무일지                                                 │
+└─────────────────────────────────────────────────────────────┘
+</div></code></pre>
+<table>
+<thead>
+<tr>
+<th>현재 문제점</th>
+<th>개선 방향</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>전체진도관리(엑셀)와 업무일지(웹)가 별도 관리됨</td>
+<td>데이터 연동으로 일원화</td>
+</tr>
+<tr>
+<td>개별 일정표 양식이 프로젝트마다 다름</td>
+<td>표준화된 간트차트 템플릿</td>
+</tr>
+<tr>
+<td>계획 vs 실적 비교가 수동 관리</td>
+<td>자동 계획/실적 비교 기능</td>
+</tr>
+<tr>
+<td>투자비/원가 정보가 분산됨</td>
+<td>프로젝트별 원가 정보 통합</td>
+</tr>
+<tr>
+<td>권한 관리 어려움</td>
+<td>5단계 권한 체계 (일반/팀장/관리자/경영진 + 시스템관리자)</td>
+</tr>
+<tr>
+<td>전체 현황 파악 어려움</td>
+<td>대시보드 (단계별 현황 집계)</td>
+</tr>
+<tr>
+<td>UI/UX 불편</td>
+<td>직관적인 웹 인터페이스</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-%ED%83%80%EA%B2%9F-%EC%9C%A0%EC%A0%80">1.3 타겟 유저</h3>
+<ul>
+<li><strong>Primary:</strong> 연구개발 담당자 (업무일지 작성, 개별 진도 관리)</li>
+<li><strong>Secondary:</strong> 팀장 (팀원 업무 확인, 진도 모니터링, 주간 보고 등록)</li>
+<li><strong>Tertiary:</strong> 관리자 (전체 프로젝트 관리, 주간 보고 수정)</li>
+<li><strong>Executive:</strong> 경영진 (주요 프로젝트 현황 조회, 계획vs실적 비교, 검토/코멘트)</li>
+<li><strong>System:</strong> 시스템 관리자 (사용자/권한/시스템 설정)</li>
+</ul>
+<hr>
+<h2 id="2-%F0%9F%91%A4-user-flow">2. 👤 User Flow</h2>
+<h3 id="21-%EC%9D%BC%EB%B0%98-%EC%82%AC%EC%9A%A9%EC%9E%90-%EC%97%B0%EA%B5%AC%EA%B0%9C%EB%B0%9C-%EB%8B%B4%EB%8B%B9%EC%9E%90">2.1 일반 사용자 (연구개발 담당자)</h3>
+<pre class="hljs"><code><div>로그인 → 대시보드 확인 → 담당 프로젝트 선택
+  ├→ 업무일지 작성/수정/조회
+  ├→ 개별 진도 업데이트 (진행사항, 이슈사항)
+  └→ 개별 일정 관리
+</div></code></pre>
+<h3 id="22-%ED%8C%80%EC%9E%A5">2.2 팀장</h3>
+<pre class="hljs"><code><div>로그인 → 대시보드 확인 → 팀 프로젝트 현황 조회
+  ├→ 팀원 업무일지 열람
+  ├→ 전체 진도 관리 (단계 업데이트)
+  ├→ 주간 보고 등록
+  └→ 이슈사항 확인 및 조치
+</div></code></pre>
+<h3 id="23-%EA%B4%80%EB%A6%AC%EC%9E%90">2.3 관리자</h3>
+<pre class="hljs"><code><div>로그인 → 대시보드 확인 → 전체 프로젝트 현황 조회
+  ├→ 프로젝트 생성/수정/삭제
+  ├→ 주간 보고 문서 수정 (순서 변경, 내용 편집, 삭제)
+  ├→ 경영진 보고 페이지 조회
+  └→ 전체 진도 현황 모니터링
+</div></code></pre>
+<h3 id="24-%EA%B2%BD%EC%98%81%EC%A7%84">2.4 경영진</h3>
+<pre class="hljs"><code><div>로그인 → 경영진 대시보드
+  ├→ 주요 프로젝트 현황 조회 (즐겨찾기 기반)
+  ├→ 계획 vs 실적 비교 조회 및 코멘트 작성
+  └→ 주요 프로젝트 즐겨찾기 관리
+</div></code></pre>
+<p>※ 경영진은 프로젝트/업무일지 생성/수정 권한 없음 (조회 + 코멘트만)</p>
+<h3 id="25-%EC%8B%9C%EC%8A%A4%ED%85%9C-%EA%B4%80%EB%A6%AC%EC%9E%90-%EB%B3%84%EB%8F%84">2.5 시스템 관리자 (별도)</h3>
+<pre class="hljs"><code><div>로그인 → 시스템 관리 대시보드
+  ├→ 사용자 계정 관리 (생성/수정/삭제)
+  ├→ 권한 설정
+  ├→ 시스템 설정 (단계, 구분, 컬럼 등)
+  └→ 구글 시트 연동 설정
+</div></code></pre>
+<hr>
+<h2 id="24-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4">2.4 프로젝트 라이프사이클</h2>
+<h3 id="%EC%A0%84%EC%B2%B4-%ED%9D%90%EB%A6%84">전체 흐름</h3>
+<pre class="hljs"><code><div>┌─────────────┐    ┌─────────────┐    ┌─────────────────────────┐    ┌─────────────┐
+│             │    │             │    │                         │    │             │
+│  프로젝트   │───▶│   일정      │───▶│   프로젝트 관리        │───▶│  프로젝트   │
+│    생성     │    │   등록      │    │   (업무일지 연동)       │    │    종료     │
+│             │    │             │    │                         │    │             │
+└─────────────┘    └─────────────┘    └─────────────────────────┘    └─────────────┘
+      │                  │                       │                         │
+      ▼                  ▼                       ▼                         ▼
+  ┌────────┐        ┌────────┐            ┌──────────┐             ┌────────────┐
+  │ 기본정보│        │세부추진│            │ 업무일지 │             │ 완료/보류  │
+  │ 팀 구성 │        │ 항목   │            │   작성   │             │  상태변경  │
+  │ 단계선택│        │ 계획   │            │ 단계진행 │             │ 결과기록   │
+  └────────┘        │ 일정   │            │ 실적반영 │             └────────────┘
+                    └────────┘            └──────────┘
+</div></code></pre>
+<h3 id="%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4-%EC%83%81%EC%84%B8">라이프사이클 상세</h3>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>활동</th>
+<th>담당자</th>
+<th>주요 산출물</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. 프로젝트 생성</strong></td>
+<td>기본정보 입력, 팀 구성, 개발단계 선택</td>
+<td>팀장/관리자</td>
+<td>프로젝트 등록</td>
+</tr>
+<tr>
+<td><strong>2. 일정 등록</strong></td>
+<td>세부추진항목 등록, 계획 일정 설정</td>
+<td>팀장</td>
+<td>개별 일정표</td>
+</tr>
+<tr>
+<td><strong>3. 프로젝트 관리</strong></td>
+<td>업무일지 작성, 단계 진행, 실적 기록</td>
+<td>팀원/팀장</td>
+<td>업무일지, 진행현황</td>
+</tr>
+<tr>
+<td><strong>4. 프로젝트 종료</strong></td>
+<td>최종 단계 완료, 상태 변경</td>
+<td>팀장/관리자</td>
+<td>완료 프로젝트</td>
+</tr>
+</tbody>
+</table>
+<h3 id="%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%83%81%ED%83%9C-%EC%A0%84%ED%99%98">프로젝트 상태 전환</h3>
+<pre class="hljs"><code><div>                    ┌──────────────────────────────┐
+                    │                              │
+                    ▼                              │
+┌────────┐     ┌────────┐     ┌────────┐     ┌────────┐
+│  생성  │────▶│ 진행중 │────▶│ 완료   │     │  보류  │
+│ (Draft)│     │(Active)│     │(Done)  │     │ (Hold) │
+└────────┘     └────────┘     └────────┘     └────────┘
+                    │              ▲              ▲
+                    │              │              │
+                    └──────────────┴──────────────┘
+                           상태 변경 가능
+</div></code></pre>
+<p><strong>상태 정의:</strong></p>
+<ul>
+<li><strong>진행 (Active):</strong> 현재 진행 중인 프로젝트 (기본 상태)</li>
+<li><strong>보류 (Hold):</strong> 일시적으로 중단된 프로젝트</li>
+<li><strong>완료 (Done):</strong> 모든 단계가 완료된 프로젝트</li>
+</ul>
+<h3 id="%EB%8B%A8%EA%B3%84-%EC%A7%84%ED%96%89-%EA%B7%9C%EC%B9%99">단계 진행 규칙</h3>
+<ol>
+<li>
+<p><strong>단계 완료 처리:</strong></p>
+<ul>
+<li>팀장/관리자가 해당 단계를 &quot;완료&quot;로 표시</li>
+<li>완료 시 완료일자 자동 기록</li>
+<li>다음 단계로 현재단계 자동 변경</li>
+</ul>
+</li>
+<li>
+<p><strong>단계 상태:</strong></p>
+<ul>
+<li>🔵 예정 (Planned): 아직 시작되지 않음</li>
+<li>🟡 진행중 (In Progress): 현재 작업 중</li>
+<li>🟢 완료 (Completed): 완료됨</li>
+</ul>
+</li>
+<li>
+<p><strong>업무일지 ↔ 세부추진항목 연동:</strong></p>
+<pre class="hljs"><code><div>업무일지 작성
+     │
+     ▼
+┌────────────────────────────────────┐
+│ 프로젝트 + 단계 선택               │
+│ (업무일지에서 프로젝트/단계 지정)   │
+└────────────────────────────────────┘
+     │
+     ├──▶ 프로젝트 '업무진행사항'에 자동 반영
+     │
+     └──▶ 세부추진항목 '실적' 연동 (선택 시)
+          └── 해당 항목의 실적 시작일/종료일 자동 업데이트
+</div></code></pre>
+</li>
+</ol>
+<hr>
+<h2 id="3-%F0%9F%93%B1-functional-requirements-%EA%B8%B0%EB%8A%A5">3. 📱 Functional Requirements (기능)</h2>
+<h3 id="31-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EA%B4%80%EB%A6%AC-priority-high">3.1 프로젝트 관리 (Priority: HIGH)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox0"><label for="checkbox0">프로젝트 CRUD (생성, 조회, 수정, 삭제)</label></li>
+<li><input type="checkbox" id="checkbox1"><label for="checkbox1"></label><strong>프로젝트 생성/수정 화면:</strong>
+<ul>
+<li><strong>필수 입력 항목:</strong>
+<ul>
+<li>고객사 *</li>
+<li>ITEM *</li>
+<li>팀장 * (1명, 담당자 목록에서 선택)</li>
+<li>대일정 * (시작일 ~ 종료일)</li>
+</ul>
+</li>
+<li><strong>선택 입력 항목:</strong>
+<ul>
+<li>PART NO</li>
+<li>소속 (전장/유압/기타)</li>
+<li>구분 (농기/중공업/해외/기타 - 주간보고 그룹핑 용도)</li>
+<li>모델</li>
+<li>팀원 (여러 명, 담당자 목록에서 다중 선택)</li>
+<li>비고</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox2"><label for="checkbox2"></label><strong>프로젝트별 단계 설정 (팀장이 선택):</strong>
+<ul>
+<li>가능한 단계 (14개): <code>검토 | 설계 | 개발 | PROTO | 신뢰성 | P1 | P2 | 승인 | 양산이관 | 초도양산 | 품질관리 | 원가절감 | 품질개선 | 설계변경</code></li>
+<li><strong>체크박스로 해당 프로젝트에 필요한 단계만 선택</strong></li>
+<li>선택된 단계만 진행 현황에 표시</li>
+<li>단계별 진행상황 색상 표시 (진행중: 노랑, 완료: 초록)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox3"><label for="checkbox3"></label><strong>프로젝트 팀 구성:</strong>
+<ul>
+<li>팀장 (1명): 프로젝트 총괄 담당자 - 단계 설정 권한</li>
+<li>팀원 (여러 명): 프로젝트 참여 인원</li>
+<li>팀장/팀원 선택 UI (담당자 목록에서 드롭다운/태그 선택)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox4"><label for="checkbox4">전체 진도 관리 (선택된 단계별 진행률)</label></li>
+<li><input type="checkbox" id="checkbox5"><label for="checkbox5"></label><strong>프로젝트 상태 관리:</strong>
+<ul>
+<li>상태 종류: 진행 (Active) / 보류 (Hold) / 완료 (Done)</li>
+<li>상태 변경 권한: 팀장, 관리자</li>
+<li>상태 변경 시 변경 이력 자동 기록</li>
+<li>완료 상태 변경 조건: 모든 선택 단계가 완료되어야 함</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox6"><label for="checkbox6"></label><strong>단계 진행 관리:</strong>
+<ul>
+<li>현재 단계 표시 (현재 진행 중인 단계)</li>
+<li>단계별 완료 처리 (팀장/관리자)</li>
+<li>단계 완료 시: 완료일자 자동 기록, 다음 단계로 자동 이동</li>
+<li>단계 상태: 🔵 예정 → 🟡 진행중 → 🟢 완료</li>
+<li><strong>프로젝트 진행 중 단계 변경:</strong>
+<ul>
+<li>단계 추가: 언제든 새로운 단계 추가 가능 (팀장/관리자)</li>
+<li>단계 삭제: 🔵 예정, 🟡 진행중 상태인 단계만 삭제 가능</li>
+<li>🟢 완료된 단계는 삭제 불가 (이력 보존)</li>
+<li>단계 변경 시 변경 이력 자동 기록</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox7"><label for="checkbox7"></label><strong>투자비/원가 정보 관리 (선택):</strong>
+<ul>
+<li>예상 판매가</li>
+<li>예상 자재비</li>
+<li>자재비율 (자동 계산)</li>
+<li>예상 투자실비</li>
+<li>예상 물량 (년)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox8"><label for="checkbox8"></label><strong>대표 이미지 (제품 사진/모델링):</strong>
+<ul>
+<li>프로젝트별 대표 이미지 1장 등록</li>
+<li>지원 형식: JPG, PNG, GIF (최대 5MB)</li>
+<li>표시 위치: 프로젝트 목록 (썸네일), 프로젝트 상세 (큰 이미지)</li>
+<li>이미지 미등록 시 기본 플레이스홀더 표시</li>
+<li>저장소: Google Drive 연동</li>
+</ul>
+</li>
+</ul>
+<h3 id="32-%EC%97%85%EB%AC%B4%EC%9D%BC%EC%A7%80-%EA%B4%80%EB%A6%AC-priority-high">3.2 업무일지 관리 (Priority: HIGH)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox9"><label for="checkbox9">업무일지 CRUD</label></li>
+<li><input type="checkbox" id="checkbox10"><label for="checkbox10">필수 입력 항목:</label>
+<ul>
+<li>날짜</li>
+<li><strong>담당자: 로그인 사용자 자동 입력 (수정 불가)</strong></li>
+<li>프로젝트 연결</li>
+<li>단계 연결</li>
+<li>업무 진행사항</li>
+<li>이슈사항</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox11"><label for="checkbox11"></label><strong>프로젝트 자동 연동:</strong>
+<ul>
+<li>업무일지 작성 시 → 프로젝트 '업무진행사항'에 자동 반영</li>
+<li>날짜별 업무 내역 누적 표시</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox12"><label for="checkbox12"></label><strong>검색 및 열람:</strong>
+<ul>
+<li>검색 및 필터링 (날짜, 프로젝트, 작성자)</li>
+<li><strong>모든 직원이 전체 업무일지 검색/열람 가능</strong></li>
+<li>수정/삭제는 본인 작성 건만 가능</li>
+</ul>
+</li>
+</ul>
+<h3 id="33-%EC%9D%BC%EC%A0%95-%EA%B4%80%EB%A6%AC-priority-high">3.3 일정 관리 (Priority: HIGH)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox13"><label for="checkbox13"></label><strong>전체 일정 (대일정):</strong>
+<ul>
+<li>프로젝트 시작일 ~ 종료일</li>
+<li>전체 프로젝트 간트 차트</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox14"><label for="checkbox14"></label><strong>개별 일정표 (세부추진항목):</strong>
+<ul>
+<li>프로젝트별 세부 작업 항목 CRUD</li>
+<li><strong>세부추진항목 등록 화면:</strong>
+<ul>
+<li>항목명 *</li>
+<li>계획 시작일 / 종료일 *</li>
+<li>업무 구분: 주관 / 협조 *</li>
+<li>관련 부문 (영업/생산/구매/품질/설계)</li>
+<li>비고</li>
+</ul>
+</li>
+<li><strong>실적 입력 방식 (둘 다 지원):</strong>
+<ul>
+<li>직접 수동 입력: 실적 시작일 / 종료일</li>
+<li>업무일지 연동: 업무일지 작성 시 자동 반영</li>
+</ul>
+</li>
+<li>계획 vs 실적 비교 시각화 (색상 구분)
+<ul>
+<li>파란색: 계획</li>
+<li>초록색: 실적 (완료)</li>
+<li>주황색: 진행중</li>
+<li>노란색: 예정</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox15"><label for="checkbox15">마일스톤 설정 (주요 일정 표시)</label></li>
+<li><input type="checkbox" id="checkbox16"><label for="checkbox16">일정 변경 이력 관리</label></li>
+<li><input type="checkbox" id="checkbox17"><label for="checkbox17"></label><strong>간트차트 드릴다운 (기간별 진행현황 조회):</strong>
+<ul>
+<li>전체 간트차트에서 특정 프로젝트의 월/기간 클릭 시 팝업 표시</li>
+<li>팝업 내용:
+<ul>
+<li>선택 기간 정보 (프로젝트명, 기간)</li>
+<li>해당 기간 주간 보고 목록 (주차, 주요 추진 실적 및 계획 요약)</li>
+<li>해당 기간 단계 변경 이력</li>
+<li>세부추진항목 진행 현황</li>
+</ul>
+</li>
+<li>팝업에서 주간 보고 클릭 시 해당 주차 상세 보기 가능</li>
+<li>권한: 모든 사용자 조회 가능</li>
+</ul>
+</li>
+</ul>
+<h3 id="34-%EB%8C%80%EC%8B%9C%EB%B3%B4%EB%93%9C-priority-high">3.4 대시보드 (Priority: HIGH)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox18"><label for="checkbox18"></label><strong>전체 진도 현황 요약:</strong>
+<ul>
+<li>단계별 프로젝트 수 집계 (검토: 23, 설계: 12, 개발: 4, ...)</li>
+<li>소속별 프로젝트 수 (전장: 52, 유압: 36, 전산: 6)</li>
+<li>진행/보류 현황</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox19"><label for="checkbox19">프로젝트별 진행률 표시</label></li>
+<li><input type="checkbox" id="checkbox20"><label for="checkbox20">전체 일정 간트 차트</label></li>
+<li><input type="checkbox" id="checkbox21"><label for="checkbox21"></label><strong>즐겨찾기 프로젝트 (Priority: HIGH):</strong>
+<ul>
+<li>사용자별 즐겨찾기 프로젝트 등록/해제</li>
+<li>대시보드에서 즐겨찾기 프로젝트만 필터링 보기</li>
+<li>팀장/관리자: 중요 프로젝트만 모아서 모니터링</li>
+<li>즐겨찾기 전용 뷰 (별도 탭 또는 필터)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox22"><label for="checkbox22">최근 업무일지 목록</label></li>
+<li><input type="checkbox" id="checkbox23"><label for="checkbox23">이슈사항 현황 (미해결 건수)</label></li>
+<li><input type="checkbox" id="checkbox24"><label for="checkbox24"></label><strong>주요 개발 진행 ITEM 뷰:</strong>
+<ul>
+<li>핵심 프로젝트만 필터링하여 상세 현황 표시</li>
+<li>투자비/원가 정보 포함</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox25"><label for="checkbox25"></label><strong>경영진 대시보드 (Executive Dashboard):</strong>
+<ul>
+<li><strong>설계 원칙:</strong>
+<ul>
+<li>즐겨찾기한 주요 프로젝트만 표시 (전체 30개+ 중 핵심만)</li>
+<li>한 페이지에 스크롤 없이 핵심 정보 요약</li>
+<li>계획 vs 실적 비교가 핵심 뷰</li>
+</ul>
+</li>
+<li><strong>경영진 메인 대시보드:</strong>
+<ul>
+<li>즐겨찾기 프로젝트 현황 카드 (최대 6~8개)</li>
+<li>프로젝트별: 고객사/ITEM, 현재단계, 진행률, 계획대비 상태</li>
+<li>전체 요약: 정상/지연/완료 프로젝트 수</li>
+<li>금주 주간 보고 요약 (AI 요약 또는 직접 입력)</li>
+<li>프로젝트 카드 클릭 → 상세 팝업 표시</li>
+</ul>
+</li>
+<li><strong>프로젝트 상세 팝업 (경영진용):</strong>
+<ul>
+<li>기본 정보: 현재단계, 진행률, 상태, 대일정, 팀장</li>
+<li>단계별 진행 시각화 (완료/진행중/예정)</li>
+<li>최근 진행사항 (주간보고 또는 업무일지 기반, 최근 3~5건)</li>
+<li>이슈사항 목록</li>
+<li>경영진 코멘트 리스트 + 팀장 답변 (스레드 형식)</li>
+<li>코멘트 작성 기능</li>
+</ul>
+</li>
+<li><strong>계획 vs 실적 비교 페이지:</strong>
+<ul>
+<li>즐겨찾기 프로젝트의 간트차트 (계획/실적 비교)</li>
+<li>일정 지연 프로젝트 하이라이트 (빨간색 표시)</li>
+<li>단계별 완료율 시각화</li>
+<li>프로젝트별 코멘트 작성 기능</li>
+</ul>
+</li>
+<li><strong>접근 권한:</strong> 경영진, 관리자</li>
+</ul>
+</li>
+</ul>
+<h3 id="35-%EA%B6%8C%ED%95%9C-%EA%B4%80%EB%A6%AC-priority-high">3.5 권한 관리 (Priority: HIGH)</h3>
+<ul>
+<li>
+<p><input type="checkbox" id="checkbox26"><label for="checkbox26"></label><strong>자체 로그인 시스템 (ID/Password):</strong></p>
+<ul>
+<li>서버는 Google Service Account로 구글 시트에 상시 연결</li>
+<li>사용자는 별도 계정(ID/Password)으로 로그인</li>
+<li>담당자 시트의 정보를 기반으로 인증</li>
+</ul>
+</li>
+<li>
+<p><input type="checkbox" id="checkbox27"><label for="checkbox27">로그인/로그아웃</label></p>
+</li>
+<li>
+<p><input type="checkbox" id="checkbox28"><label for="checkbox28">5단계 권한 체계 (일반 → 팀장 → 관리자 → 경영진 + 시스템 관리자):</label></p>
+<p><strong>업무 권한:</strong></p>
+<table>
+<thead>
+<tr>
+<th>권한</th>
+<th>프로젝트 관리</th>
+<th>업무일지 작성</th>
+<th>업무일지 열람</th>
+<th>주간보고 등록</th>
+<th>주간보고 수정</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>일반</td>
+<td>X</td>
+<td>O</td>
+<td>O (전체)</td>
+<td>X</td>
+<td>X</td>
+</tr>
+<tr>
+<td>팀장</td>
+<td>O (팀 내)</td>
+<td>O</td>
+<td>O (전체)</td>
+<td>O</td>
+<td>X</td>
+</tr>
+<tr>
+<td>관리자</td>
+<td>O (전체)</td>
+<td>O</td>
+<td>O (전체)</td>
+<td>O</td>
+<td>O</td>
+</tr>
+<tr>
+<td>경영진</td>
+<td>X (조회만)</td>
+<td>X</td>
+<td>O (전체)</td>
+<td>X</td>
+<td>X</td>
+</tr>
+</tbody>
+</table>
+<p><strong>경영진 특별 권한:</strong></p>
+<ul>
+<li>프로젝트/업무일지 생성/수정 권한 없음 (조회 전용)</li>
+<li>경영진 메인 대시보드에서 프로젝트별 코멘트 작성 가능</li>
+<li>계획 vs 실적 비교 페이지에서 코멘트 작성 가능</li>
+<li>주요 프로젝트 즐겨찾기</li>
+</ul>
+<p><strong>시스템 관리자 (별도):</strong></p>
+<table>
+<thead>
+<tr>
+<th>권한</th>
+<th>사용자 관리</th>
+<th>권한 설정</th>
+<th>시스템 설정</th>
+<th>구글시트 연동</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>시스템 관리자</td>
+<td>O</td>
+<td>O</td>
+<td>O</td>
+<td>O</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Note:</strong> 업무일지는 모든 직원이 검색/열람 가능하나, 수정/삭제는 본인 작성 건만 가능</p>
+</blockquote>
+</li>
+<li>
+<p><input type="checkbox" id="checkbox29"><label for="checkbox29">특정 프로젝트 접근 제한 (선택)</label></p>
+</li>
+<li>
+<p><input type="checkbox" id="checkbox30"><label for="checkbox30"></label><strong>경영진 코멘트 기능:</strong></p>
+<ul>
+<li>경영진 메인 대시보드: 프로젝트 카드에서 코멘트 작성/조회</li>
+<li>계획 vs 실적 비교: 프로젝트별 코멘트 작성/조회</li>
+<li>코멘트 알림: 해당 팀장에게 알림 발송</li>
+</ul>
+</li>
+</ul>
+<h3 id="36-%EA%B5%AC%EA%B8%80-%EC%8B%9C%ED%8A%B8-%EC%97%B0%EB%8F%99-priority-high">3.6 구글 시트 연동 (Priority: HIGH)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox31"><label for="checkbox31">기존 구글 시트 데이터 읽기</label></li>
+<li><input type="checkbox" id="checkbox32"><label for="checkbox32">웹에서 수정 시 구글 시트 동기화</label></li>
+<li><input type="checkbox" id="checkbox33"><label for="checkbox33">연동 상태 표시</label></li>
+</ul>
+<h3 id="37-%ED%8C%8C%EC%9D%BC-%EC%B2%A8%EB%B6%80-priority-medium">3.7 파일 첨부 (Priority: MEDIUM)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox34"><label for="checkbox34">프로젝트별 파일 첨부 (도면, 사양서, 이미지 등)</label></li>
+<li><input type="checkbox" id="checkbox35"><label for="checkbox35">업무일지에 파일 첨부</label></li>
+<li><input type="checkbox" id="checkbox36"><label for="checkbox36">파일 미리보기 (이미지, PDF)</label></li>
+<li><input type="checkbox" id="checkbox37"><label for="checkbox37">파일 다운로드</label></li>
+<li><input type="checkbox" id="checkbox38"><label for="checkbox38">파일 저장소: Google Drive 연동</label></li>
+</ul>
+<h3 id="38-%EC%95%8C%EB%A6%BC-%EA%B8%B0%EB%8A%A5-priority-medium">3.8 알림 기능 (Priority: MEDIUM)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox39"><label for="checkbox39">이메일 알림 발송 (Gmail API)</label></li>
+<li><input type="checkbox" id="checkbox40"><label for="checkbox40">알림 트리거:</label>
+<ul>
+<li>마감일 임박 (D-7, D-3, D-1)</li>
+<li>프로젝트 단계 변경 시</li>
+<li>이슈사항 등록 시 (팀장에게 알림)</li>
+<li>업무일지 멘션 시 (선택)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox41"><label for="checkbox41">알림 설정 (사용자별 On/Off)</label></li>
+</ul>
+<h3 id="39-%EA%B3%A0%EA%B8%89-%EA%B2%80%EC%83%89-priority-medium">3.9 고급 검색 (Priority: MEDIUM)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox42"><label for="checkbox42">복합 조건 검색:</label>
+<ul>
+<li>날짜 범위</li>
+<li>프로젝트 + 단계 + 담당자 조합</li>
+<li>고객사, 소속 필터</li>
+<li>진행여부 (진행/보류)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox43"><label for="checkbox43">키워드 검색 (업무진행사항, 이슈사항 내용)</label></li>
+<li><input type="checkbox" id="checkbox44"><label for="checkbox44">검색 결과 정렬 (날짜, 프로젝트명, 단계 등)</label></li>
+<li><input type="checkbox" id="checkbox45"><label for="checkbox45">검색 조건 저장 (즐겨찾기)</label></li>
+</ul>
+<h3 id="310-%EC%82%AC%EC%9A%A9%EC%9E%90-%EA%B4%80%EB%A6%AC-priority-high">3.10 사용자 관리 (Priority: HIGH)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox46"><label for="checkbox46"></label><strong>사용자 CRUD (관리자 전용):</strong>
+<ul>
+<li>사용자 생성 (이름, ID, 비밀번호, 이메일, 권한, 소속)</li>
+<li>사용자 목록 조회 (검색, 필터링)</li>
+<li>사용자 정보 수정</li>
+<li>사용자 삭제 (비활성화)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox47"><label for="checkbox47"></label><strong>사용자 계정 관리:</strong>
+<ul>
+<li>초기 비밀번호 설정</li>
+<li>비밀번호 변경 (본인)</li>
+<li>비밀번호 초기화 (관리자)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox48"><label for="checkbox48"></label><strong>권한 할당:</strong>
+<ul>
+<li>관리자/팀장/일반 권한 부여</li>
+<li>소속 부서 지정</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox49"><label for="checkbox49">담당자 시트와 동기화 (양방향)</label></li>
+</ul>
+<h3 id="311-%EC%8B%9C%EC%8A%A4%ED%85%9C-%EC%84%A4%EC%A0%95-priority-medium">3.11 시스템 설정 (Priority: MEDIUM)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox50"><label for="checkbox50"></label><strong>화면 설정 (관리자 전용):</strong>
+<ul>
+<li>프로젝트 목록 표시 컬럼 선택/순서 변경</li>
+<li>기본 컬럼: 즐겨찾기, 고객사, ITEM, 소속, 팀장, 현재단계, 대일정</li>
+<li>추가 컬럼: PART NO, 팀원, 모델, 진행상태, 최종수정일</li>
+<li>설정 저장 시 모든 사용자에게 적용</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox51"><label for="checkbox51"></label><strong>개발 단계 관리:</strong>
+<ul>
+<li>기본 14개 단계 활성화/비활성화</li>
+<li>커스텀 단계 추가 가능</li>
+<li>단계 순서 변경</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox52"><label for="checkbox52"></label><strong>시스템 옵션:</strong>
+<ul>
+<li>기본 페이지당 항목 수 설정 (10/20/50/100)</li>
+<li>날짜 표시 형식 (YYYY-MM-DD / YY.MM.DD)</li>
+<li>소속 옵션 관리 (전장/유압/기타 + 추가)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox53"><label for="checkbox53"></label><strong>데이터 관리:</strong>
+<ul>
+<li>구글 시트 연동 상태 확인</li>
+<li>수동 동기화 실행</li>
+<li>백업 다운로드 (CSV/Excel)</li>
+</ul>
+</li>
+</ul>
+<h3 id="312-%EC%97%91%EC%85%80-%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C-priority-medium">3.12 엑셀 다운로드 (Priority: MEDIUM)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox54"><label for="checkbox54"></label><strong>프로젝트 목록 다운로드:</strong>
+<ul>
+<li>현재 필터 조건 적용된 목록 다운로드</li>
+<li>다운로드 컬럼: 고객사, ITEM, PART NO, 소속, 팀장, 팀원, 현재단계, 대일정, 상태</li>
+<li>파일 형식: .xlsx (Excel)</li>
+<li>파일명: <code>프로젝트목록_YYYYMMDD.xlsx</code></li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox55"><label for="checkbox55"></label><strong>업무일지 목록 다운로드:</strong>
+<ul>
+<li>현재 필터 조건 적용된 목록 다운로드</li>
+<li>다운로드 컬럼: 날짜, ITEM, 고객사, 단계, 담당자, 계획, 업무내용</li>
+<li>파일 형식: .xlsx (Excel)</li>
+<li>파일명: <code>업무일지_YYYYMMDD.xlsx</code></li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox56"><label for="checkbox56"></label><strong>일정 데이터 다운로드 (간트차트):</strong>
+<ul>
+<li>전체 간트차트: 모든 프로젝트 대일정</li>
+<li>개별 일정표: 선택한 프로젝트의 세부추진항목</li>
+<li>다운로드 컬럼: 프로젝트명, 항목명, 계획시작일, 계획종료일, 실적시작일, 실적종료일, 상태</li>
+<li>파일 형식: .xlsx (Excel)</li>
+<li>파일명: <code>일정표_YYYYMMDD.xlsx</code> 또는 <code>일정표_프로젝트명_YYYYMMDD.xlsx</code></li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox57"><label for="checkbox57"></label><strong>공통 기능:</strong>
+<ul>
+<li>다운로드 버튼 위치: 각 목록 페이지 상단</li>
+<li>권한: 모든 사용자 다운로드 가능</li>
+</ul>
+</li>
+</ul>
+<h3 id="313-%EC%A3%BC%EA%B0%84-%EB%B3%B4%EA%B3%A0%EC%84%9C-priority-high">3.13 주간 보고서 (Priority: HIGH)</h3>
+<ul>
+<li><input type="checkbox" id="checkbox58"><label for="checkbox58"></label><strong>주간 보고 등록:</strong>
+<ul>
+<li>팀장이 자기 담당 프로젝트의 주간 보고 작성</li>
+<li>입력 항목:
+<ul>
+<li>주차 선택 (예: 2025년 7월 5주차, 자동 계산)</li>
+<li>구분 (농기/중공업/해외/기타 등 - 관리자 설정 가능)</li>
+<li>고객사 (프로젝트에서 선택 또는 직접 입력)</li>
+<li>개발 ITEM (프로젝트에서 선택 또는 직접 입력)</li>
+<li>주요 추진 실적 및 계획 (텍스트, 여러 줄)</li>
+</ul>
+</li>
+<li><strong>연계 드롭다운 (Cascading Dropdown):</strong>
+<ul>
+<li>구분 선택 → 해당 구분의 고객사만 드롭다운에 표시</li>
+<li>고객사 선택 → 해당 고객사의 ITEM만 드롭다운에 표시</li>
+<li>예: 농기 선택 → LS엠트론 선택 → 스트로크 실린더, 기타 ITEM 등 표시</li>
+</ul>
+</li>
+<li><strong>업무일지 기반 초안 자동 생성:</strong>
+<ul>
+<li>해당 주차에 작성된 업무일지 내용을 자동으로 불러오기</li>
+<li>팀장이 편집/보완하여 최종 작성</li>
+</ul>
+</li>
+<li><strong>AI 정리 기능 (선택):</strong>
+<ul>
+<li>불러온 업무일지 내용을 AI가 자동 요약/정리</li>
+<li>Google Gemini API 활용</li>
+<li>체크박스로 On/Off 선택</li>
+<li>AI 프롬프트 양식은 별도 정의 (TODO)</li>
+</ul>
+</li>
+<li><strong>한 번에 하나의 항목씩 저장</strong> (여러 항목 등록 시 반복 등록)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox59"><label for="checkbox59"></label><strong>주간 보고 집계 화면:</strong>
+<ul>
+<li>주차별로 전체 팀장들의 보고 내용 통합 표시</li>
+<li>구분별 그룹핑 (농기 → 중공업 → 해외 → 기타)</li>
+<li>주차 선택 필터 (이전 주차 보기 가능)</li>
+<li>공지사항/요청사항 섹션 (별도 입력)</li>
+<li><strong>전체 주간보고 AI 요약:</strong>
+<ul>
+<li>집계 화면 하단에 전체 보고 내용 요약 섹션 표시</li>
+<li>AI 요약 체크박스: 체크 시 Google Gemini API로 자동 요약</li>
+<li>미체크 시 관리자가 직접 입력</li>
+<li>요약 내용 수정 가능</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox60"><label for="checkbox60"></label><strong>관리자 편집 기능 (집계 화면):</strong>
+<ul>
+<li><strong>항목 순서 변경:</strong> 드래그 또는 ↑↓ 버튼으로 위치 이동 (주요 아이템 상위 배치)</li>
+<li><strong>내용 수정:</strong> 주요 추진 실적 및 계획 내용 직접 편집</li>
+<li><strong>항목 삭제:</strong> 경영진 보고에 불필요한 항목 삭제</li>
+<li>수정/삭제 시 확인 다이얼로그 표시</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox61"><label for="checkbox61"></label><strong>주간 보고 다운로드:</strong>
+<ul>
+<li><strong>엑셀 다운로드:</strong> 이미지와 동일한 형식의 엑셀 파일 출력
+<ul>
+<li>파일명: <code>주간업무보고_YYYY년MM월W주차.xlsx</code></li>
+</ul>
+</li>
+<li><strong>PDF 다운로드:</strong> 보고서 형태의 PDF 파일 출력
+<ul>
+<li>파일명: <code>주간업무보고_YYYY년MM월W주차.pdf</code></li>
+</ul>
+</li>
+<li><strong>다운로드 시 관리 컬럼 제외</strong> (No, 구분, 고객사/ITEM, 내용만 포함)</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox62"><label for="checkbox62"></label><strong>권한:</strong>
+<ul>
+<li>등록: 팀장, 관리자</li>
+<li>수정/삭제/순서변경: 관리자 (집계 화면에서)</li>
+<li>조회: 모든 사용자</li>
+</ul>
+</li>
+<li><input type="checkbox" id="checkbox63"><label for="checkbox63"></label><strong>구분 관리 (관리자 설정):</strong>
+<ul>
+<li>기본값: 농기, 중공업, 해외, 기타</li>
+<li>구분 추가/수정/삭제/순서 변경 가능</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="4-%F0%9F%97%84%EF%B8%8F-data-structure-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EA%B5%AC%EC%A1%B0">4. 🗄️ Data Structure (데이터 구조)</h2>
+<h3 id="40-%EA%B5%AC%EA%B8%80-%EC%8B%9C%ED%8A%B8-%EC%A0%95%EB%B3%B4">4.0 구글 시트 정보</h3>
+<ul>
+<li><strong>Spreadsheet ID:</strong> <code>1koJEgn6xwPNTFsuJdoo5gPGmKBdWZs08lJNQHYvLtJI</code></li>
+<li><strong>시트 구성:</strong>
+<table>
+<thead>
+<tr>
+<th>시트명</th>
+<th>gid</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>프로젝트</td>
+<td>1851635214</td>
+<td>프로젝트 목록 및 진도 관리</td>
+</tr>
+<tr>
+<td>업무일지</td>
+<td>0</td>
+<td>일일 업무 기록</td>
+</tr>
+<tr>
+<td>담당자</td>
+<td>483730243</td>
+<td>사용자 정보</td>
+</tr>
+<tr>
+<td>프로젝트 이력관리</td>
+<td>651074413</td>
+<td>변경 이력</td>
+</tr>
+<tr>
+<td>항목정보</td>
+<td>(확인필요)</td>
+<td>코드/마스터 데이터</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h3 id="41-project-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%8B%9C%ED%8A%B8">4.1 Project (프로젝트 시트)</h3>
+<pre class="hljs"><code><div>{
+  rowIndex: <span class="hljs-built_in">number</span>           <span class="hljs-comment">// A: 행 번호</span>
+  status: <span class="hljs-built_in">string</span>             <span class="hljs-comment">// B: 진행여부 (보류/진행)</span>
+  customer: <span class="hljs-built_in">string</span>           <span class="hljs-comment">// C: 고객사</span>
+  division: <span class="hljs-built_in">string</span>           <span class="hljs-comment">// D: 소속 (전장/유압/기타)</span>
+  category: <span class="hljs-built_in">string</span>           <span class="hljs-comment">// D2: 구분 (농기/중공업/해외/기타) - 주간보고 그룹핑</span>
+  model: <span class="hljs-built_in">string</span>              <span class="hljs-comment">// E: 모델</span>
+  item: <span class="hljs-built_in">string</span>               <span class="hljs-comment">// F: ITEM</span>
+  partNo: <span class="hljs-built_in">string</span>             <span class="hljs-comment">// G: PART NO</span>
+  teamLeader: <span class="hljs-built_in">string</span>         <span class="hljs-comment">// H: 팀장 (프로젝트 총괄 담당자, 1명)</span>
+  teamMembers: <span class="hljs-built_in">string</span>[]      <span class="hljs-comment">// I: 팀원 (프로젝트 참여 인원, 여러 명)</span>
+  currentStage: <span class="hljs-built_in">string</span>       <span class="hljs-comment">// J: 현재단계</span>
+  progress: <span class="hljs-built_in">string</span>           <span class="hljs-comment">// K: 업무진행사항</span>
+  issues: <span class="hljs-built_in">string</span>             <span class="hljs-comment">// L: 이슈사항</span>
+  note: <span class="hljs-built_in">string</span>               <span class="hljs-comment">// M: 비고</span>
+  additionalPlan: <span class="hljs-built_in">string</span>     <span class="hljs-comment">// N: 업무추가 일정계획</span>
+  stages: <span class="hljs-built_in">string</span>             <span class="hljs-comment">// O: 개발업무단계 (선택된 단계 목록)</span>
+  schedule: <span class="hljs-built_in">string</span>           <span class="hljs-comment">// P: 대일정 (YYYY-MM-DD ~ YYYY-MM-DD)</span>
+  price: <span class="hljs-built_in">number</span>              <span class="hljs-comment">// Q: 판매가</span>
+  materialCost: <span class="hljs-built_in">number</span>       <span class="hljs-comment">// R: 재료비</span>
+  materialRatio: <span class="hljs-built_in">number</span>      <span class="hljs-comment">// S: 재료비율</span>
+  updatedAt: <span class="hljs-built_in">string</span>          <span class="hljs-comment">// T: 수정일시</span>
+}
+</div></code></pre>
+<h3 id="42-worklog-%EC%97%85%EB%AC%B4%EC%9D%BC%EC%A7%80-%EC%8B%9C%ED%8A%B8">4.2 WorkLog (업무일지 시트)</h3>
+<pre class="hljs"><code><div>{
+  date: <span class="hljs-built_in">string</span>               <span class="hljs-comment">// A: 날짜 (YYYY-MM-DD)</span>
+  item: <span class="hljs-built_in">string</span>               <span class="hljs-comment">// B: ITEM</span>
+  partNo: <span class="hljs-built_in">string</span>             <span class="hljs-comment">// C: PART NO</span>
+  customer: <span class="hljs-built_in">string</span>           <span class="hljs-comment">// D: 고객사</span>
+  stage: <span class="hljs-built_in">string</span>              <span class="hljs-comment">// E: 단계</span>
+  assignee: <span class="hljs-built_in">string</span>           <span class="hljs-comment">// F: 담당자</span>
+  plan: <span class="hljs-built_in">string</span>               <span class="hljs-comment">// G: 계획</span>
+  content: <span class="hljs-built_in">string</span>            <span class="hljs-comment">// H: 상세 내용</span>
+}
+</div></code></pre>
+<h3 id="43-user-%EB%8B%B4%EB%8B%B9%EC%9E%90-%EC%8B%9C%ED%8A%B8">4.3 User (담당자 시트)</h3>
+<pre class="hljs"><code><div>{
+  id: <span class="hljs-built_in">string</span>                 <span class="hljs-comment">// 사용자 ID (로그인 ID)</span>
+  password: <span class="hljs-built_in">string</span>           <span class="hljs-comment">// 비밀번호 (해시 저장)</span>
+  name: <span class="hljs-built_in">string</span>               <span class="hljs-comment">// 이름</span>
+  email: <span class="hljs-built_in">string</span>              <span class="hljs-comment">// 이메일</span>
+  role: <span class="hljs-string">'sysadmin'</span> | <span class="hljs-string">'executive'</span> | <span class="hljs-string">'admin'</span> | <span class="hljs-string">'manager'</span> | <span class="hljs-string">'user'</span>
+  <span class="hljs-comment">// 권한: 시스템관리자 / 경영진 / 관리자 / 팀장 / 일반</span>
+  division: <span class="hljs-built_in">string</span>           <span class="hljs-comment">// 소속 (전장/유압/기타)</span>
+  isActive: <span class="hljs-built_in">boolean</span>          <span class="hljs-comment">// 활성화 여부</span>
+  createdAt: <span class="hljs-built_in">string</span>          <span class="hljs-comment">// 생성일시</span>
+  updatedAt: <span class="hljs-built_in">string</span>          <span class="hljs-comment">// 수정일시</span>
+}
+</div></code></pre>
+<h3 id="44-projecthistory-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%9D%B4%EB%A0%A5%EA%B4%80%EB%A6%AC-%EC%8B%9C%ED%8A%B8">4.4 ProjectHistory (프로젝트 이력관리 시트)</h3>
+<pre class="hljs"><code><div>{
+  projectId: <span class="hljs-built_in">string</span>
+  changedField: <span class="hljs-built_in">string</span>
+  oldValue: <span class="hljs-built_in">string</span>
+  newValue: <span class="hljs-built_in">string</span>
+  changedBy: <span class="hljs-built_in">string</span>
+  changedAt: <span class="hljs-built_in">string</span>
+}
+</div></code></pre>
+<h3 id="45-attachment-%EC%B2%A8%EB%B6%80%ED%8C%8C%EC%9D%BC">4.5 Attachment (첨부파일)</h3>
+<pre class="hljs"><code><div>{
+  id: <span class="hljs-built_in">string</span>
+  targetType: <span class="hljs-string">'project'</span> | <span class="hljs-string">'worklog'</span>  <span class="hljs-comment">// 연결 대상</span>
+  targetId: <span class="hljs-built_in">string</span>                    <span class="hljs-comment">// 프로젝트 또는 업무일지 ID</span>
+  fileName: <span class="hljs-built_in">string</span>
+  fileType: <span class="hljs-built_in">string</span>                    <span class="hljs-comment">// MIME type</span>
+  fileSize: <span class="hljs-built_in">number</span>
+  fileUrl: <span class="hljs-built_in">string</span>                     <span class="hljs-comment">// Google Drive URL 또는 스토리지 경로</span>
+  uploadedBy: <span class="hljs-built_in">string</span>
+  uploadedAt: <span class="hljs-built_in">string</span>
+}
+</div></code></pre>
+<h3 id="46-projectschedule-%EA%B0%9C%EB%B3%84-%EC%9D%BC%EC%A0%95%ED%91%9C---%EC%84%B8%EB%B6%80%EC%B6%94%EC%A7%84%ED%95%AD%EB%AA%A9">4.6 ProjectSchedule (개별 일정표 - 세부추진항목)</h3>
+<pre class="hljs"><code><div>{
+  id: <span class="hljs-built_in">string</span>
+  projectId: <span class="hljs-built_in">string</span>                   <span class="hljs-comment">// 연결된 프로젝트</span>
+  taskName: <span class="hljs-built_in">string</span>                    <span class="hljs-comment">// 세부추진항목명</span>
+  category: <span class="hljs-built_in">string</span>                    <span class="hljs-comment">// 관련부문 (영업/생산/구매/품질/설계)</span>
+  responsibility: <span class="hljs-string">'lead'</span> | <span class="hljs-string">'support'</span>  <span class="hljs-comment">// 주관/협조</span>
+  plannedStart: <span class="hljs-built_in">string</span>                <span class="hljs-comment">// 계획 시작일</span>
+  plannedEnd: <span class="hljs-built_in">string</span>                  <span class="hljs-comment">// 계획 종료일</span>
+  actualStart: <span class="hljs-built_in">string</span> | <span class="hljs-literal">null</span>          <span class="hljs-comment">// 실적 시작일</span>
+  actualEnd: <span class="hljs-built_in">string</span> | <span class="hljs-literal">null</span>            <span class="hljs-comment">// 실적 종료일</span>
+  status: <span class="hljs-string">'planned'</span> | <span class="hljs-string">'in_progress'</span> | <span class="hljs-string">'completed'</span> | <span class="hljs-string">'delayed'</span>
+  note: <span class="hljs-built_in">string</span>                        <span class="hljs-comment">// 비고</span>
+  order: <span class="hljs-built_in">number</span>                       <span class="hljs-comment">// 표시 순서</span>
+}
+</div></code></pre>
+<h3 id="47-projectcost-%ED%88%AC%EC%9E%90%EB%B9%84%EC%9B%90%EA%B0%80-%EC%A0%95%EB%B3%B4">4.7 ProjectCost (투자비/원가 정보)</h3>
+<pre class="hljs"><code><div>{
+  projectId: <span class="hljs-built_in">string</span>
+  expectedPrice: <span class="hljs-built_in">number</span>               <span class="hljs-comment">// 예상 판매가</span>
+  expectedMaterialCost: <span class="hljs-built_in">number</span>        <span class="hljs-comment">// 예상 자재비</span>
+  materialRatio: <span class="hljs-built_in">number</span>               <span class="hljs-comment">// 자재비율 (%)</span>
+  expectedInvestment: <span class="hljs-built_in">number</span>          <span class="hljs-comment">// 예상 투자실비</span>
+  expectedQuantity: <span class="hljs-built_in">number</span>            <span class="hljs-comment">// 예상 물량 (년)</span>
+  currency: <span class="hljs-built_in">string</span>                    <span class="hljs-comment">// 통화 (KRW, USD)</span>
+  updatedAt: <span class="hljs-built_in">string</span>
+}
+</div></code></pre>
+<h3 id="48-favorite-%EC%A6%90%EA%B2%A8%EC%B0%BE%EA%B8%B0">4.8 Favorite (즐겨찾기)</h3>
+<pre class="hljs"><code><div>{
+  id: <span class="hljs-built_in">string</span>
+  userId: <span class="hljs-built_in">string</span>                      <span class="hljs-comment">// 사용자 ID</span>
+  projectId: <span class="hljs-built_in">string</span>                   <span class="hljs-comment">// 즐겨찾기한 프로젝트 ID</span>
+  createdAt: <span class="hljs-built_in">string</span>                   <span class="hljs-comment">// 등록일시</span>
+}
+</div></code></pre>
+<h3 id="49-weeklyreport-%EC%A3%BC%EA%B0%84-%EB%B3%B4%EA%B3%A0">4.9 WeeklyReport (주간 보고)</h3>
+<pre class="hljs"><code><div>{
+  id: <span class="hljs-built_in">string</span>
+  year: <span class="hljs-built_in">number</span>                        <span class="hljs-comment">// 연도 (2025)</span>
+  month: <span class="hljs-built_in">number</span>                       <span class="hljs-comment">// 월 (7)</span>
+  week: <span class="hljs-built_in">number</span>                        <span class="hljs-comment">// 주차 (5)</span>
+  weekStart: <span class="hljs-built_in">string</span>                   <span class="hljs-comment">// 주차 시작일 (2025-07-28)</span>
+  weekEnd: <span class="hljs-built_in">string</span>                     <span class="hljs-comment">// 주차 종료일 (2025-08-01)</span>
+  category: <span class="hljs-built_in">string</span>                    <span class="hljs-comment">// 구분 (농기/중공업/해외/기타)</span>
+  customer: <span class="hljs-built_in">string</span>                    <span class="hljs-comment">// 고객사</span>
+  item: <span class="hljs-built_in">string</span>                        <span class="hljs-comment">// 개발 ITEM</span>
+  content: <span class="hljs-built_in">string</span>                     <span class="hljs-comment">// 주요 추진 실적 및 계획 (여러 줄)</span>
+  projectId: <span class="hljs-built_in">string</span> | <span class="hljs-literal">null</span>            <span class="hljs-comment">// 연결된 프로젝트 ID (선택)</span>
+  order: <span class="hljs-built_in">number</span>                       <span class="hljs-comment">// 표시 순서</span>
+  createdBy: <span class="hljs-built_in">string</span>                   <span class="hljs-comment">// 작성자 (팀장)</span>
+  createdAt: <span class="hljs-built_in">string</span>                   <span class="hljs-comment">// 작성일시</span>
+  updatedAt: <span class="hljs-built_in">string</span>                   <span class="hljs-comment">// 수정일시</span>
+}
+</div></code></pre>
+<h3 id="410-weeklyreportnotice-%EC%A3%BC%EA%B0%84-%EB%B3%B4%EA%B3%A0-%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD">4.10 WeeklyReportNotice (주간 보고 공지사항)</h3>
+<pre class="hljs"><code><div>{
+  id: <span class="hljs-built_in">string</span>
+  year: <span class="hljs-built_in">number</span>
+  month: <span class="hljs-built_in">number</span>
+  week: <span class="hljs-built_in">number</span>
+  content: <span class="hljs-built_in">string</span>                     <span class="hljs-comment">// 공지사항/요청사항 내용</span>
+  createdBy: <span class="hljs-built_in">string</span>
+  createdAt: <span class="hljs-built_in">string</span>
+}
+</div></code></pre>
+<h3 id="411-reportcategory-%EC%A3%BC%EA%B0%84-%EB%B3%B4%EA%B3%A0-%EA%B5%AC%EB%B6%84---%EB%A7%88%EC%8A%A4%ED%84%B0">4.11 ReportCategory (주간 보고 구분 - 마스터)</h3>
+<pre class="hljs"><code><div>{
+  id: <span class="hljs-built_in">string</span>
+  name: <span class="hljs-built_in">string</span>                        <span class="hljs-comment">// 구분명 (농기, 중공업, 해외, 기타)</span>
+  order: <span class="hljs-built_in">number</span>                       <span class="hljs-comment">// 표시 순서</span>
+  isActive: <span class="hljs-built_in">boolean</span>                   <span class="hljs-comment">// 활성화 여부</span>
+}
+</div></code></pre>
+<hr>
+<h2 id="5-%F0%9F%9B%A0%EF%B8%8F-tech-stack-%EA%B8%B0%EC%88%A0-%EC%8A%A4%ED%83%9D">5. 🛠️ Tech Stack (기술 스택)</h2>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>기술</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Framework</td>
+<td><strong>Next.js 14+ (App Router)</strong></td>
+<td>React 기반, SSR/SSG 지원</td>
+</tr>
+<tr>
+<td>Language</td>
+<td>TypeScript</td>
+<td>타입 안전성</td>
+</tr>
+<tr>
+<td>UI Library</td>
+<td>Ant Design 또는 shadcn/ui</td>
+<td>대시보드/테이블 친화적</td>
+</tr>
+<tr>
+<td>간트 차트</td>
+<td>dhtmlx-gantt 또는 frappe-gantt</td>
+<td>계획/실적 비교 지원</td>
+</tr>
+<tr>
+<td>Database</td>
+<td><strong>구글 시트 (Google Sheets API)</strong></td>
+<td>기존 데이터 활용, 원본 역할</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td><strong>자체 로그인 (Credentials)</strong></td>
+<td>담당자 시트 기반 인증</td>
+</tr>
+<tr>
+<td>Google 연동</td>
+<td><strong>Service Account</strong></td>
+<td>서버에서 상시 연결</td>
+</tr>
+<tr>
+<td>이메일</td>
+<td>Nodemailer + Gmail API</td>
+<td>알림 발송</td>
+</tr>
+<tr>
+<td>배포</td>
+<td><strong>회사 내부 서버 (On-premise)</strong></td>
+<td>Docker 컨테이너 권장</td>
+</tr>
+</tbody>
+</table>
+<h3 id="51-%EC%8B%9C%EC%8A%A4%ED%85%9C-%EA%B5%AC%EC%84%B1%EB%8F%84">5.1 시스템 구성도</h3>
+<pre class="hljs"><code><div>┌─────────────────────────────────────────────────────────────┐
+│                    사용자 (5~20명)                           │
+│                    반응형 웹 브라우저                         │
+│                    (ID/Password 로그인)                      │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────┐
+│                 Next.js Application                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Pages     │  │  API Routes │  │  Auth       │         │
+│  │  (React)    │  │  (Backend)  │  │(Credentials)│         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+└─────────────────────┬───────────────────────────────────────┘
+                      │ Service Account (상시 연결)
+┌─────────────────────▼───────────────────────────────────────┐
+│                 Google Cloud Platform                       │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │Google Sheets│  │Google Drive │  │  Gmail API  │         │
+│  │  (Database) │  │   (Files)   │  │  (알림)     │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+</div></code></pre>
+<hr>
+<h2 id="6-%F0%9F%93%8B-%EA%B0%9C%EB%B0%9C-%EC%9A%B0%EC%84%A0%EC%88%9C%EC%9C%84-phase">6. 📋 개발 우선순위 (Phase)</h2>
+<h3 id="phase-1-mvp-%ED%95%B5%EC%8B%AC-%EA%B8%B0%EB%8A%A5">Phase 1: MVP (핵심 기능)</h3>
+<ol>
+<li>자체 로그인 시스템 (ID/Password) + 권한 관리</li>
+<li><strong>사용자 관리 CRUD (관리자 전용)</strong></li>
+<li>Google Service Account 연동 (서버 상시 연결)</li>
+<li>프로젝트 CRUD (팀장 1명 + 팀원 여러 명 구조)</li>
+<li>업무일지 CRUD (담당자 자동입력 + 전체 열람 가능)</li>
+<li>구글 시트 양방향 동기화</li>
+</ol>
+<h3 id="phase-2-%EB%8C%80%EC%8B%9C%EB%B3%B4%EB%93%9C--%EC%9D%BC%EC%A0%95">Phase 2: 대시보드 &amp; 일정</h3>
+<ol>
+<li>대시보드 메인 화면 (단계별/소속별 현황)</li>
+<li>프로젝트별 진행률</li>
+<li>전체 간트 차트</li>
+<li>개별 일정표 (계획/실적)</li>
+<li><strong>즐겨찾기 기능 (중요 프로젝트 모니터링)</strong></li>
+</ol>
+<h3 id="phase-3-%EA%B3%A0%EA%B8%89-%EA%B8%B0%EB%8A%A5">Phase 3: 고급 기능</h3>
+<ol>
+<li>파일 첨부 (Google Drive 연동)</li>
+<li>고급 검색/필터</li>
+<li>이메일 알림</li>
+<li>투자비/원가 리포트</li>
+</ol>
+<hr>
+<h2 id="7-%E2%9D%93-open-questions-%ED%99%95%EC%9D%B8-%ED%95%84%EC%9A%94">7. ❓ Open Questions (확인 필요)</h2>
+<ul>
+<li><input type="checkbox" id="checkbox64" checked="true"><label for="checkbox64">구글 시트의 정확한 구조 (컬럼명, 시트 구성) ✅ 확인 완료</label></li>
+<li><input type="checkbox" id="checkbox65" checked="true"><label for="checkbox65">모바일 지원 필요 여부 → </label><strong>반응형 웹으로 지원</strong></li>
+<li><input type="checkbox" id="checkbox66" checked="true"><label for="checkbox66">동시 사용자 수 예상 → </label><strong>5~20명</strong></li>
+<li><input type="checkbox" id="checkbox67" checked="true"><label for="checkbox67">추가 요청 기능 확인 → </label><strong>파일 첨부, 이메일 알림, 고급 검색</strong></li>
+<li><input type="checkbox" id="checkbox68" checked="true"><label for="checkbox68">기술 스택 → </label><strong>Next.js + Google Sheets API</strong></li>
+<li><input type="checkbox" id="checkbox69" checked="true"><label for="checkbox69">배포 환경 → </label><strong>회사 내부 서버 (On-premise)</strong></li>
+<li><input type="checkbox" id="checkbox70" checked="true"><label for="checkbox70">로그인 방식 → </label><strong>자체 로그인 (ID/Password) + Service Account</strong></li>
+<li><input type="checkbox" id="checkbox71" checked="true"><label for="checkbox71">업무일지 연동 → </label><strong>프로젝트에 자동 반영</strong></li>
+<li><input type="checkbox" id="checkbox72"><label for="checkbox72">담당자 시트의 정확한 컬럼 구조</label></li>
+<li><input type="checkbox" id="checkbox73"><label for="checkbox73">항목정보 시트의 정확한 컬럼 구조</label></li>
+</ul>
+<hr>
+<h2 id="8-%F0%9F%93%8A-summary-%EC%9A%94%EC%95%BD">8. 📊 Summary (요약)</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>프로젝트명</td>
+<td>연구개발 프로젝트 관리 시스템</td>
+</tr>
+<tr>
+<td>목표</td>
+<td>구글 시트 기반 통합 프로젝트 관리 웹</td>
+</tr>
+<tr>
+<td>사용자</td>
+<td>연구개발 담당자 (5~20명)</td>
+</tr>
+<tr>
+<td>기술 스택</td>
+<td>Next.js + TypeScript + Google APIs</td>
+</tr>
+<tr>
+<td>배포</td>
+<td>회사 내부 서버</td>
+</tr>
+<tr>
+<td>핵심 기능</td>
+<td>프로젝트 관리, 업무일지, 간트차트, 대시보드</td>
+</tr>
+<tr>
+<td>데이터</td>
+<td>구글 시트 (원본), 양방향 동기화</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

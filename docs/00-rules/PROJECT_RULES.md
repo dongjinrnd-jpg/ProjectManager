@@ -1,0 +1,1 @@
+G:/내 드라이브/MyKnowledge/ReservedDataForge/40. projects/41. Active_Builds/Dev_Project_Manager/20_Architecture/23_PROJECT_RULES.md

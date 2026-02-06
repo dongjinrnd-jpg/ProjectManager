@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Dongjin Brand Colors */
+  --brand-primary: #3D2B1F;
+  --brand-yellow: #F7C52D;
+  --brand-orange: #F5A623;
+  --brand-yellow-light: #FFF8E1;
+  --brand-orange-light: #FFF3E0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Dongjin Brand Colors */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-yellow-light: var(--brand-yellow-light);
+  --color-brand-orange-light: var(--brand-orange-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Gantt Chart 스타일 - 내부 스크롤만 허용 */
+.gantt-container .overflow-x-auto {
+  scrollbar-width: thin;
+}
+
+/* 간트차트 날짜 범위 제한 */
+.gantt-wrapper {
+  position: relative;
+}
+
+.gantt-wrapper > div {
+  overflow: hidden !important;
+}
+
+.gantt-wrapper svg {
+  max-width: 100%;
+}
+
