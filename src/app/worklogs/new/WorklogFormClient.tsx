@@ -85,18 +85,36 @@ export default function WorklogFormClient({ worklog, isEdit }: WorklogFormClient
   };
 
   // 프로젝트 목록 가져오기
+  // 본인이 팀장 또는 팀원으로 소속된 프로젝트만 표시
   const fetchProjects = useCallback(async () => {
+    if (!session?.user?.id) return;
+
     try {
       const response = await fetch('/api/projects');
       const data = await response.json();
       if (data.success) {
-        // 진행중인 프로젝트만 표시
-        setProjects(data.data.filter((p: Project) => p.status === '진행중'));
+        const userId = session.user.id;
+        // 진행중인 프로젝트 중 본인 소속 프로젝트만 필터링
+        const filteredProjects = data.data.filter((p: Project) => {
+          if (p.status !== '진행중') return false;
+
+          // 팀장인 경우
+          if (p.teamLeaderId === userId) return true;
+
+          // 팀원인 경우
+          if (p.teamMembers) {
+            const memberIds = p.teamMembers.split(',').map((id: string) => id.trim());
+            if (memberIds.includes(userId)) return true;
+          }
+
+          return false;
+        });
+        setProjects(filteredProjects);
       }
     } catch (err) {
       console.error('프로젝트 목록 조회 오류:', err);
     }
-  }, []);
+  }, [session?.user?.id]);
 
   // 사용자 목록 가져오기
   const fetchUsers = useCallback(async () => {
