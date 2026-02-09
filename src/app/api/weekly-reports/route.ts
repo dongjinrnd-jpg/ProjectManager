@@ -105,6 +105,7 @@ export async function GET(request: Request) {
     const month = searchParams.get('month');
     const week = searchParams.get('week');
     const categoryId = searchParams.get('categoryId');
+    const projectId = searchParams.get('projectId');
     const onlyIncluded = searchParams.get('onlyIncluded') === 'true';
 
     // 모든 주간 보고 조회
@@ -118,6 +119,11 @@ export async function GET(request: Request) {
         if (!isIncluded) {
           return false;
         }
+      }
+
+      // 프로젝트 ID 필터
+      if (projectId && report.projectId !== projectId) {
+        return false;
       }
 
       // 연도 필터

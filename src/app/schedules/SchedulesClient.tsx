@@ -31,6 +31,10 @@ export default function SchedulesClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 드릴다운 모달 상태
+  const [selectedProject, setSelectedProject] = useState<GanttProject | null>(null);
+  const [showDrilldownModal, setShowDrilldownModal] = useState(false);
+
   // 필터 상태
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('진행중');
@@ -75,9 +79,22 @@ export default function SchedulesClient() {
     fetchSchedules();
   }, [fetchSchedules]);
 
-  // 프로젝트 클릭 핸들러
+  // 프로젝트 클릭 핸들러 - 드릴다운 모달 표시
   const handleProjectClick = (project: GanttProject) => {
-    router.push(`/projects/${project.id}`);
+    setSelectedProject(project);
+    setShowDrilldownModal(true);
+  };
+
+  // 모달에서 프로젝트 상세 페이지로 이동
+  const handleNavigateToProject = (projectId: string) => {
+    setShowDrilldownModal(false);
+    router.push(`/projects/${projectId}`);
+  };
+
+  // 드릴다운 모달 닫기
+  const handleCloseDrilldownModal = () => {
+    setShowDrilldownModal(false);
+    setSelectedProject(null);
   };
 
   // 필터 초기화
@@ -217,6 +234,15 @@ export default function SchedulesClient() {
           </div>
         </>
       ) : null}
+
+      {/* 드릴다운 모달 */}
+      {showDrilldownModal && (
+        <ProjectDrilldownModal
+          project={selectedProject}
+          onClose={handleCloseDrilldownModal}
+          onNavigate={handleNavigateToProject}
+        />
+      )}
     </AppLayout>
   );
 }
