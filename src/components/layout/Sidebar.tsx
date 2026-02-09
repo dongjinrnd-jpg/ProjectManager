@@ -19,7 +19,7 @@ const mainMenuItems = [
   { href: '/projects', label: '프로젝트', icon: '📁' },
   { href: '/worklogs', label: '업무일지', icon: '📝' },
   { href: '/schedules', label: '전체 일정', icon: '📅' },
-  { href: '/weekly-report', label: '주간보고', icon: '📋' },
+  { href: '/weekly-reports', label: '주간보고', icon: '📋' },
 ];
 
 // 경영진/관리자 메뉴

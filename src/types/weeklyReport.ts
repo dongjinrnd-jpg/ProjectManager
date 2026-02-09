@@ -37,6 +37,10 @@ export interface WeeklyReport {
   createdAt: string;
   /** 수정일시 */
   updatedAt: string;
+  /** 삭제 여부 (소프트 삭제) - deprecated, use isIncluded */
+  isDeleted?: boolean;
+  /** 제출용 여부 (true: 보고서에 포함, false: 제외) */
+  isIncluded?: boolean;
 }
 
 /**
@@ -65,6 +69,9 @@ export interface UpdateWeeklyReportInput {
   projectId?: string;
   content?: string;
   order?: number;
+  isDeleted?: boolean;
+  /** 제출용 여부 (true: 보고서에 포함, false: 제외) */
+  isIncluded?: boolean;
 }
 
 /**
