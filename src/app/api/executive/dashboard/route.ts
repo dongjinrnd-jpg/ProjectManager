@@ -4,7 +4,7 @@
  * GET /api/executive/dashboard - 경영진 대시보드 데이터 조회
  * - 즐겨찾기 프로젝트 목록 (상태 정보 포함)
  * - 상태 요약 (정상/지연/완료)
- * - 금주 주간 보고 요약
+ * - 최근 회의록 목록 (1개월 이내)
  *
  * 권한: executive, admin, sysadmin
  */
@@ -59,6 +59,29 @@ interface SheetWeeklyReport extends Record<string, unknown> {
   content: string;
   isIncluded: string;
   isDeleted: string;
+}
+
+interface SheetMeetingMinutes extends Record<string, unknown> {
+  id: string;
+  projectId: string;
+  title: string;
+  hostDepartment: string;
+  location: string;
+  meetingDate: string;
+  createdById: string;
+  createdAt: string;
+}
+
+// 회의록 응답 타입
+interface RecentMeetingMinutesItem {
+  id: string;
+  projectId: string;
+  projectName: string;
+  title: string;
+  hostDepartment: string;
+  location: string;
+  meetingDate: string;
+  createdByName: string;
 }
 
 // 경영진 대시보드용 프로젝트 타입
@@ -169,12 +192,13 @@ export async function GET() {
     }
 
     // 데이터 조회
-    const [projects, favorites, users, comments, weeklyReports] = await Promise.all([
+    const [projects, favorites, users, comments, weeklyReports, meetingMinutes] = await Promise.all([
       getAllAsObjects<SheetProject>(SHEET_NAMES.PROJECTS),
       getAllAsObjects<SheetFavorite>(SHEET_NAMES.FAVORITES),
       getAllAsObjects<SheetUser>(SHEET_NAMES.USERS),
       getAllAsObjects<SheetComment>(SHEET_NAMES.COMMENTS),
       getAllAsObjects<SheetWeeklyReport>(SHEET_NAMES.WEEKLY_REPORTS),
+      getAllAsObjects<SheetMeetingMinutes>(SHEET_NAMES.MEETING_MINUTES),
     ]);
 
     // 사용자 맵
@@ -245,28 +269,41 @@ export async function GET() {
     const week = getWeekOfMonth(koreanDate);
     const { start: weekStart, end: weekEnd } = getWeekRange(year, month, week);
 
-    // 금주 주간 보고 요약
-    const currentWeekReports = weeklyReports
-      .filter(r =>
-        r.isDeleted !== 'true' &&
-        r.isIncluded !== 'false' &&
-        parseInt(r.year) === year &&
-        parseInt(r.month) === month &&
-        parseInt(r.week) === week
-      )
-      .map(r => `${r.customer} ${r.item}: ${r.content?.slice(0, 50)}...`)
-      .slice(0, 5);
+    // 최근 1개월 이내 회의록
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const weeklyReportSummary = currentWeekReports.length > 0
-      ? currentWeekReports.join('\n')
-      : '등록된 주간 보고가 없습니다.';
+    // 프로젝트 맵 (id -> customer + item)
+    const projectMap = new Map(projects.map(p => [p.id, `${p.customer} ${p.item}`]));
+
+    const recentMeetingMinutes: RecentMeetingMinutesItem[] = meetingMinutes
+      .filter(m => {
+        // 즐겨찾기 프로젝트만
+        if (!favoriteProjectIds.includes(m.projectId)) return false;
+        // 회의일 기준 1개월 이내
+        const meetingDateObj = new Date(m.meetingDate?.split(' ')[0] || '');
+        return meetingDateObj >= oneMonthAgo;
+      })
+      .map(m => ({
+        id: m.id,
+        projectId: m.projectId,
+        projectName: projectMap.get(m.projectId) || m.projectId,
+        title: m.title,
+        hostDepartment: m.hostDepartment || '',
+        location: m.location || '',
+        meetingDate: m.meetingDate,
+        createdByName: userMap.get(m.createdById) || m.createdById,
+      }))
+      // 회의일 기준 최신순
+      .sort((a, b) => new Date(b.meetingDate).getTime() - new Date(a.meetingDate).getTime())
+      .slice(0, 10);
 
     return NextResponse.json({
       success: true,
       data: {
         favoriteProjects,
         statusSummary,
-        weeklyReportSummary,
+        recentMeetingMinutes,
         currentWeek: {
           year,
           month,

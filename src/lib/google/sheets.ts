@@ -30,6 +30,7 @@ export const SHEET_NAMES = {
   FAVORITES: 'Favorites',
   COMMENTS: 'Comments',
   ATTACHMENTS: 'Attachments',
+  MEETING_MINUTES: 'MeetingMinutes',
   REPORT_CATEGORIES: 'ReportCategories',
   SETTINGS: 'Settings',
 } as const;

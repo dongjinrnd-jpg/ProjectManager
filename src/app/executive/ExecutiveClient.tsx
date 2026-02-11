@@ -15,7 +15,8 @@ import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import ProjectDetailModal from '@/components/executive/ProjectDetailModal';
 import CommentModal from '@/components/executive/CommentModal';
-import type { ProjectStage, ProjectStatus } from '@/types';
+import MeetingMinutesViewer from '@/components/meeting-minutes/MeetingMinutesViewer';
+import type { ProjectStage, ProjectStatus, MeetingMinutesDetail } from '@/types';
 
 interface ExecutiveProject {
   id: string;
@@ -37,6 +38,17 @@ interface ExecutiveProject {
   commentCount: number;
 }
 
+interface RecentMeetingMinutesItem {
+  id: string;
+  projectId: string;
+  projectName: string;
+  title: string;
+  hostDepartment: string;
+  location: string;
+  meetingDate: string;
+  createdByName: string;
+}
+
 interface ExecutiveDashboardData {
   favoriteProjects: ExecutiveProject[];
   statusSummary: {
@@ -44,7 +56,7 @@ interface ExecutiveDashboardData {
     delayed: number;
     completed: number;
   };
-  weeklyReportSummary: string;
+  recentMeetingMinutes: RecentMeetingMinutesItem[];
   currentWeek: {
     year: number;
     month: number;
@@ -52,6 +64,17 @@ interface ExecutiveDashboardData {
     weekStart: string;
     weekEnd: string;
   };
+}
+
+/**
+ * 회의일시 포맷 (YYYY.MM.DD 형식)
+ */
+function formatMeetingDate(dateStr: string): string {
+  if (!dateStr) return '-';
+  const parts = dateStr.split(' ');
+  const datePart = parts[0];
+  const [year, month, day] = datePart.split('-');
+  return `${year}.${month}.${day}`;
 }
 
 export default function ExecutiveClient() {
@@ -63,6 +86,10 @@ export default function ExecutiveClient() {
   const [selectedProject, setSelectedProject] = useState<ExecutiveProject | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
+
+  // 회의록 뷰어 상태
+  const [viewingMeeting, setViewingMeeting] = useState<MeetingMinutesDetail | null>(null);
+  const [isLoadingMeeting, setIsLoadingMeeting] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -115,6 +142,26 @@ export default function ExecutiveClient() {
   const handleCommentCreated = () => {
     fetchDashboard();
     setShowCommentModal(false);
+  };
+
+  // 회의록 상세 조회
+  const handleViewMeeting = async (meetingId: string) => {
+    try {
+      setIsLoadingMeeting(true);
+      const response = await fetch(`/api/meeting-minutes/${meetingId}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setViewingMeeting(result.data);
+      } else {
+        alert(result.error || '회의록 조회에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('회의록 조회 오류:', err);
+      alert('서버 연결 오류가 발생했습니다.');
+    } finally {
+      setIsLoadingMeeting(false);
+    }
   };
 
   // 상태별 아이콘/색상
@@ -300,22 +347,65 @@ export default function ExecutiveClient() {
             )}
           </div>
 
-          {/* 주간 보고 요약 섹션 */}
+          {/* 최근 회의록 섹션 */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              📋 금주 주간 보고 요약
+              📋 최근 회의록
+              <span className="text-sm font-normal text-gray-500">
+                (최근 1개월)
+              </span>
             </h2>
-            <div className="text-sm text-gray-600 whitespace-pre-wrap">
-              {data.weeklyReportSummary}
-            </div>
-            <div className="mt-4 pt-4 border-t">
-              <Link
-                href="/weekly-reports"
-                className="text-brand-orange hover:underline text-sm"
-              >
-                주간 보고 전체 보기 →
-              </Link>
-            </div>
+            {data.recentMeetingMinutes.length === 0 ? (
+              <div className="text-sm text-gray-500 text-center py-4">
+                최근 1개월 내 등록된 회의록이 없습니다.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">프로젝트</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">회의명</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">회의일</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">주관부서</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">작성자</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {data.recentMeetingMinutes.map((meeting) => (
+                      <tr key={meeting.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-sm text-gray-700">
+                          <Link
+                            href={`/projects/${meeting.projectId}?tab=meeting`}
+                            className="text-brand-primary hover:underline"
+                          >
+                            {meeting.projectName}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-900 font-medium">
+                          <button
+                            onClick={() => handleViewMeeting(meeting.id)}
+                            className="text-brand-primary hover:underline text-left cursor-pointer"
+                            disabled={isLoadingMeeting}
+                          >
+                            {meeting.title}
+                          </button>
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-600">
+                          {formatMeetingDate(meeting.meetingDate)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-600">
+                          {meeting.hostDepartment || '-'}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-600">
+                          {meeting.createdByName}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </>
       ) : null}
@@ -339,6 +429,16 @@ export default function ExecutiveClient() {
           project={selectedProject}
           onClose={handleCloseCommentModal}
           onCommentCreated={handleCommentCreated}
+        />
+      )}
+
+      {/* 회의록 상세 보기 모달 */}
+      {viewingMeeting && (
+        <MeetingMinutesViewer
+          meeting={viewingMeeting}
+          onClose={() => setViewingMeeting(null)}
+          onEdit={() => {}}
+          canEdit={false}
         />
       )}
     </AppLayout>

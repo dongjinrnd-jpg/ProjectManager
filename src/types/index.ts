@@ -22,8 +22,8 @@ export * from './schedule';
 // 경영진 코멘트 관련
 export * from './comment';
 
-// 첨부파일 관련
-export * from './attachment';
+// 회의록 관련
+export * from './meetingMinutes';
 
 // 시스템 설정 관련
 export * from './settings';
