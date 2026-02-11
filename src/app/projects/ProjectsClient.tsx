@@ -226,9 +226,17 @@ export default function ProjectsClient() {
         </h1>
         <div className="flex gap-2">
           <button
-            disabled
-            className="px-4 py-2 text-gray-500 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed"
-            title="추후 지원"
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (searchQuery) params.set('search', searchQuery);
+              if (filterStatus) params.set('status', filterStatus);
+              if (filterDivision) params.set('division', filterDivision);
+              if (filterStage) params.set('stage', filterStage);
+              if (showFavoritesOnly) params.set('favorites', 'true');
+              window.location.href = `/api/export/projects?${params.toString()}`;
+            }}
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors"
+            title="현재 필터 조건으로 Excel 다운로드"
           >
             📥 Excel
           </button>

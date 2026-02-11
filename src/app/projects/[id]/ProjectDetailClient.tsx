@@ -1218,6 +1218,15 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      window.location.href = `/api/export/schedules?projectId=${projectId}&type=detail`;
+                    }}
+                    className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                    title="이 프로젝트 세부추진항목 Excel 다운로드"
+                  >
+                    📥 Excel
+                  </button>
                   {canDeleteSchedule && (
                     <button
                       onClick={handleRefreshSchedules}

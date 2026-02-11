@@ -189,9 +189,17 @@ export default function WorklogsClient() {
         </h1>
         <div className="flex gap-2">
           <button
-            disabled
-            className="px-4 py-2 text-gray-500 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed"
-            title="추후 지원"
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (filterStartDate) params.set('startDate', filterStartDate);
+              if (filterEndDate) params.set('endDate', filterEndDate);
+              if (filterProjectId) params.set('projectId', filterProjectId);
+              if (filterAssigneeId) params.set('assigneeId', filterAssigneeId);
+              if (filterKeyword) params.set('keyword', filterKeyword);
+              window.location.href = `/api/export/worklogs?${params.toString()}`;
+            }}
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors"
+            title="현재 필터 조건으로 Excel 다운로드"
           >
             📥 Excel
           </button>

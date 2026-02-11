@@ -114,6 +114,20 @@ export default function SchedulesClient() {
         </h1>
         <div className="flex gap-2">
           <button
+            onClick={() => {
+              const params = new URLSearchParams();
+              params.set('type', 'gantt');
+              if (showFavoritesOnly) params.set('favorites', 'true');
+              if (statusFilter) params.set('status', statusFilter);
+              if (divisionFilter) params.set('division', divisionFilter);
+              window.location.href = `/api/export/schedules?${params.toString()}`;
+            }}
+            className="px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50"
+            title="현재 필터 조건으로 Excel 다운로드"
+          >
+            📥 Excel
+          </button>
+          <button
             onClick={fetchSchedules}
             className="px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50"
           >
