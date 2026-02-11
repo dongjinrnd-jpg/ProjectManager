@@ -137,36 +137,53 @@ export default function ProjectDrilldownModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'weekly' | 'history' | 'schedule'>('weekly');
 
+  // 년/월 선택 상태 (기본값: 현재 년/월)
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+
   // 데이터 상태
   const [weeklyReports, setWeeklyReports] = useState<WeeklyReport[]>([]);
   const [projectHistory, setProjectHistory] = useState<ProjectHistory[]>([]);
   const [scheduleItems, setScheduleItems] = useState<ProjectScheduleItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 주간 보고 조회
-  const fetchWeeklyReports = useCallback(async (projectId: string) => {
+  // 년도 옵션 (현재 년도 ± 2년)
+  const yearOptions = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
+  const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
+
+  // 주간 보고 조회 (년/월 필터링)
+  const fetchWeeklyReports = useCallback(async (projectId: string, year: number, month: number) => {
     try {
-      // 프로젝트의 고객사와 ITEM으로 주간 보고 검색
       const response = await fetch(`/api/weekly-reports?projectId=${projectId}`);
       const data = await response.json();
       if (data.success) {
-        setWeeklyReports(data.data || []);
+        // 선택된 년/월에 해당하는 주간 보고만 필터링
+        const filtered = (data.data || []).filter((report: WeeklyReport) => {
+          if (!report.weekStart) return false;
+          const reportDate = new Date(report.weekStart);
+          return reportDate.getFullYear() === year && reportDate.getMonth() + 1 === month;
+        });
+        setWeeklyReports(filtered);
       }
     } catch (err) {
       console.error('주간 보고 조회 오류:', err);
     }
   }, []);
 
-  // 프로젝트 이력 조회
-  const fetchProjectHistory = useCallback(async (projectId: string) => {
+  // 프로젝트 이력 조회 (년/월 필터링)
+  const fetchProjectHistory = useCallback(async (projectId: string, year: number, month: number) => {
     try {
       const response = await fetch(`/api/projects/${projectId}/history`);
       const data = await response.json();
       if (data.success) {
-        // 단계 변경 이력만 필터링
-        const stageHistory = (data.data || []).filter(
-          (h: ProjectHistory) => h.changedField === 'currentStage' || h.changedField === '단계'
-        );
+        // 단계 변경 이력만 필터링 + 년/월 필터
+        const stageHistory = (data.data || []).filter((h: ProjectHistory) => {
+          if (h.changedField !== 'currentStage' && h.changedField !== '단계') return false;
+          if (!h.changedAt) return false;
+          const historyDate = new Date(h.changedAt);
+          return historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
+        });
         setProjectHistory(stageHistory);
       }
     } catch (err) {
@@ -174,32 +191,53 @@ export default function ProjectDrilldownModal({
     }
   }, []);
 
-  // 세부추진항목 조회
-  const fetchScheduleItems = useCallback(async (projectId: string) => {
+  // 세부추진항목 조회 (년/월 필터링 - 해당 월에 진행중인 항목)
+  const fetchScheduleItems = useCallback(async (projectId: string, year: number, month: number) => {
     try {
       const response = await fetch(`/api/schedules?projectId=${projectId}`);
       const data = await response.json();
       if (data.success) {
-        setScheduleItems(data.data || []);
+        // 선택된 년/월에 해당하는 항목 필터링
+        // (계획 시작~종료 또는 실적 시작~종료가 해당 월과 겹치는 항목)
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 0); // 해당 월의 마지막 날
+
+        const filtered = (data.data || []).filter((item: ProjectScheduleItem) => {
+          const plannedStart = item.plannedStart ? new Date(item.plannedStart) : null;
+          const plannedEnd = item.plannedEnd ? new Date(item.plannedEnd) : null;
+          const actualStart = item.actualStart ? new Date(item.actualStart) : null;
+          const actualEnd = item.actualEnd ? new Date(item.actualEnd) : null;
+
+          // 계획 기간이 해당 월과 겹치는지
+          const plannedOverlaps = plannedStart && plannedEnd &&
+            plannedStart <= monthEnd && plannedEnd >= monthStart;
+
+          // 실적 기간이 해당 월과 겹치는지
+          const actualOverlaps = actualStart &&
+            actualStart <= monthEnd && (!actualEnd || actualEnd >= monthStart);
+
+          return plannedOverlaps || actualOverlaps;
+        });
+        setScheduleItems(filtered);
       }
     } catch (err) {
       console.error('세부추진항목 조회 오류:', err);
     }
   }, []);
 
-  // 프로젝트 변경 시 데이터 로드
+  // 프로젝트 또는 년/월 변경 시 데이터 로드
   useEffect(() => {
     if (project) {
       setIsLoading(true);
       Promise.all([
-        fetchWeeklyReports(project.id),
-        fetchProjectHistory(project.id),
-        fetchScheduleItems(project.id),
+        fetchWeeklyReports(project.id, selectedYear, selectedMonth),
+        fetchProjectHistory(project.id, selectedYear, selectedMonth),
+        fetchScheduleItems(project.id, selectedYear, selectedMonth),
       ]).finally(() => {
         setIsLoading(false);
       });
     }
-  }, [project, fetchWeeklyReports, fetchProjectHistory, fetchScheduleItems]);
+  }, [project, selectedYear, selectedMonth, fetchWeeklyReports, fetchProjectHistory, fetchScheduleItems]);
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -284,6 +322,29 @@ export default function ProjectDrilldownModal({
               />
             </div>
           </div>
+
+          {/* 조회 기간 선택 */}
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-sm text-gray-600">조회 기간:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
+            >
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>{y}년</option>
+              ))}
+            </select>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
+            >
+              {monthOptions.map((m) => (
+                <option key={m} value={m}>{m}월</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* 탭 */}
@@ -296,7 +357,7 @@ export default function ProjectDrilldownModal({
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            📋 주간 보고
+            📋 주간 보고 ({selectedMonth}월)
             {weeklyReports.length > 0 && (
               <span className="ml-1 text-xs bg-brand-primary text-white px-1.5 py-0.5 rounded-full">
                 {weeklyReports.length}
@@ -311,7 +372,7 @@ export default function ProjectDrilldownModal({
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            🔄 단계 변경 이력
+            🔄 이력 ({selectedMonth}월)
             {projectHistory.length > 0 && (
               <span className="ml-1 text-xs bg-gray-500 text-white px-1.5 py-0.5 rounded-full">
                 {projectHistory.length}
@@ -326,7 +387,7 @@ export default function ProjectDrilldownModal({
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            📅 세부추진항목
+            📅 추진항목 ({selectedMonth}월)
             {scheduleItems.length > 0 && (
               <span className="ml-1 text-xs bg-gray-500 text-white px-1.5 py-0.5 rounded-full">
                 {scheduleItems.length}
@@ -348,7 +409,7 @@ export default function ProjectDrilldownModal({
                 <div className="space-y-3">
                   {weeklyReports.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
-                      등록된 주간 보고가 없습니다.
+                      {selectedYear}년 {selectedMonth}월에 등록된 주간 보고가 없습니다.
                     </div>
                   ) : (
                     weeklyReports.map((report) => {
@@ -387,7 +448,7 @@ export default function ProjectDrilldownModal({
                 <div className="space-y-3">
                   {projectHistory.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
-                      단계 변경 이력이 없습니다.
+                      {selectedYear}년 {selectedMonth}월에 단계 변경 이력이 없습니다.
                     </div>
                   ) : (
                     projectHistory.map((history) => (
@@ -421,7 +482,7 @@ export default function ProjectDrilldownModal({
                 <div className="space-y-2">
                   {scheduleItems.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
-                      등록된 세부추진항목이 없습니다.
+                      {selectedYear}년 {selectedMonth}월에 해당하는 세부추진항목이 없습니다.
                     </div>
                   ) : (
                     scheduleItems.map((item) => {

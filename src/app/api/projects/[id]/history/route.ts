@@ -15,7 +15,7 @@ interface SheetProjectHistory extends Record<string, unknown> {
   changedField: string;
   oldValue: string;
   newValue: string;
-  changedBy: string;
+  changedById: string;  // Google Sheet 컬럼명
   changedAt: string;
 }
 
@@ -51,7 +51,7 @@ export async function GET(
       SHEET_NAMES.PROJECT_HISTORY
     );
 
-    // 해당 프로젝트의 이력만 필터링
+    // 해당 프로젝트의 이력만 필터링 및 필드명 변환
     const projectHistory = allHistory
       .filter((h) => h.projectId === projectId)
       .sort((a, b) => {
@@ -59,7 +59,16 @@ export async function GET(
         const dateA = new Date(a.changedAt || '1970-01-01');
         const dateB = new Date(b.changedAt || '1970-01-01');
         return dateB.getTime() - dateA.getTime();
-      });
+      })
+      .map((h) => ({
+        id: h.id,
+        projectId: h.projectId,
+        changedField: h.changedField,
+        oldValue: h.oldValue,
+        newValue: h.newValue,
+        changedBy: h.changedById,  // changedById → changedBy로 매핑
+        changedAt: h.changedAt,
+      }));
 
     return NextResponse.json({
       success: true,

@@ -228,6 +228,7 @@ export default function SchedulesClient() {
           {/* 간트차트 */}
           <div className="bg-white rounded-lg shadow p-4">
             <ProjectGanttChart
+              key={`gantt-${showDrilldownModal}`}
               projects={data.projects}
               onProjectClick={handleProjectClick}
             />

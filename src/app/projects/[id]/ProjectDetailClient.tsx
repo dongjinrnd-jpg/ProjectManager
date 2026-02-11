@@ -18,6 +18,7 @@ import Link from 'next/link';
 import type { Project, ProjectStatus, ProjectStage, User, WorkLog, ProjectSchedule } from '@/types';
 import AppLayout from '@/components/layout/AppLayout';
 import GanttChart from '@/components/schedules/GanttChart';
+import ExecutiveCommentsSection from '@/components/projects/ExecutiveCommentsSection';
 
 // 전체 단계 목록 (선택 가능한 단계)
 const ALL_STAGES: ProjectStage[] = [
@@ -36,6 +37,7 @@ const STATUSES: { value: ProjectStatus; label: string; icon: string }[] = [
 const TABS = [
   { id: 'worklog', label: '📝 업무진행사항', disabled: false },
   { id: 'schedule', label: '📅 일정', disabled: false },
+  { id: 'comments', label: '💬 경영진코멘트', disabled: false },
   { id: 'cost', label: '💰 원가', disabled: true },
   { id: 'attachment', label: '📎 첨부파일', disabled: true },
 ];
@@ -1396,6 +1398,11 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
                 </div>
               )}
             </>
+          ) : activeTab === 'comments' ? (
+            <ExecutiveCommentsSection
+              projectId={projectId}
+              isTeamLeader={isTeamLeader}
+            />
           ) : (
             <div className="text-center text-gray-500 py-12">
               <span className="text-4xl mb-4 block">🚧</span>

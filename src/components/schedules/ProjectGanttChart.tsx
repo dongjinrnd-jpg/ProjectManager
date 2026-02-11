@@ -20,11 +20,11 @@ const LIST_CELL_WIDTH = '280px';
 const CUSTOMER_COL_WIDTH = '120px';
 const ITEM_COL_WIDTH = '160px';
 
-// 프로젝트 상태별 색상
-const STATUS_COLORS: Record<string, { bg: string; selected: string }> = {
-  '진행중': { bg: '#3b82f6', selected: '#2563eb' }, // blue
-  '보류': { bg: '#f59e0b', selected: '#d97706' }, // amber
-  '완료': { bg: '#10b981', selected: '#059669' }, // emerald
+// 프로젝트 상태별 색상 (배경=회색, 진행률=상태별 색상)
+const STATUS_COLORS: Record<string, { bg: string; progress: string; selected: string }> = {
+  '진행중': { bg: '#e5e7eb', progress: '#3b82f6', selected: '#2563eb' }, // 회색 배경 + 파란색 진행
+  '보류': { bg: '#e5e7eb', progress: '#f59e0b', selected: '#d97706' }, // 회색 배경 + 주황색 진행
+  '완료': { bg: '#10b981', progress: '#059669', selected: '#047857' }, // 초록색 전체 (완료)
 };
 
 /**
@@ -93,55 +93,45 @@ export default function ProjectGanttChart({ projects, onProjectClick }: ProjectG
   const tasks: Task[] = useMemo(() => {
     if (sortedProjects.length === 0) return [];
 
-    return sortedProjects.map(project => {
-      const startDate = new Date(project.scheduleStart);
-      const endDate = new Date(project.scheduleEnd);
-      const colors = STATUS_COLORS[project.status] || STATUS_COLORS['진행중'];
-      const progress = calculateProgress(startDate, endDate);
+    // 프로젝트 태스크 - 유효한 날짜가 있는 프로젝트만 포함
+    return sortedProjects
+      .filter(project => {
+        // 날짜 유효성 검사
+        if (!project.scheduleStart || !project.scheduleEnd) return false;
+        const start = new Date(project.scheduleStart);
+        const end = new Date(project.scheduleEnd);
+        return !isNaN(start.getTime()) && !isNaN(end.getTime());
+      })
+      .map(project => {
+        const startDate = new Date(project.scheduleStart);
+        const endDate = new Date(project.scheduleEnd);
+        const colors = STATUS_COLORS[project.status] || STATUS_COLORS['진행중'];
+        const progress = calculateProgress(startDate, endDate);
 
-      return {
-        id: project.id,
-        name: `${project.customer} - ${project.item}`,
-        start: startDate,
-        end: endDate,
-        progress,
-        type: 'task',
-        styles: {
-          backgroundColor: colors.bg,
-          backgroundSelectedColor: colors.selected,
-          progressColor: colors.selected,
-          progressSelectedColor: colors.selected,
-        },
-      };
-    });
+        return {
+          id: project.id,
+          name: `${project.customer} - ${project.item}`,
+          start: startDate,
+          end: endDate,
+          progress,
+          type: 'task' as const,
+          styles: {
+            backgroundColor: colors.bg,
+            backgroundSelectedColor: colors.bg,
+            progressColor: colors.progress,
+            progressSelectedColor: colors.selected,
+          },
+        };
+      });
   }, [sortedProjects]);
 
-  // 날짜 범위 계산
+  // 날짜 범위 계산 - 1월~12월 전체 연도 표시 (항상 정의됨)
   const dateRange = useMemo(() => {
-    if (projects.length === 0) return null;
-
-    let minStart = new Date(projects[0].scheduleStart);
-    let maxEnd = new Date(projects[0].scheduleEnd);
-
-    projects.forEach(p => {
-      const start = new Date(p.scheduleStart);
-      const end = new Date(p.scheduleEnd);
-      if (start < minStart) minStart = start;
-      if (end > maxEnd) maxEnd = end;
-    });
-
-    // 버퍼 추가
-    const buffer = new Date(maxEnd);
-    if (viewMode === ViewMode.Month) {
-      buffer.setMonth(buffer.getMonth() + 2);
-    } else if (viewMode === ViewMode.Week) {
-      buffer.setDate(buffer.getDate() + 21);
-    } else {
-      buffer.setDate(buffer.getDate() + 14);
-    }
-
-    return { minStart, maxEnd: buffer };
-  }, [projects, viewMode]);
+    const currentYear = new Date().getFullYear();
+    const minStart = new Date(currentYear, 0, 1); // 1월 1일
+    const maxEnd = new Date(currentYear, 11, 31); // 12월 31일
+    return { minStart, maxEnd };
+  }, []);
 
   // 컬럼 너비 계산
   const columnWidth = useMemo(() => {
@@ -150,9 +140,9 @@ export default function ProjectGanttChart({ projects, onProjectClick }: ProjectG
     return 50;
   }, [viewMode]);
 
-  // 바 텍스트 숨기기 (렌더링 후)
+  // 바 텍스트 숨기기 + 줄무늬 배경 제거 (렌더링 후)
   useEffect(() => {
-    const hideBarLabels = () => {
+    const cleanupGanttStyles = () => {
       const container = document.querySelector('.project-gantt-container');
       if (!container) return;
 
@@ -165,10 +155,19 @@ export default function ProjectGanttChart({ projects, onProjectClick }: ProjectG
           (text as SVGTextElement).style.display = 'none';
         }
       });
+
+      // 짝수 행 줄무늬 배경 제거 (#f5f5f5 색상)
+      const svgRects = container.querySelectorAll('svg rect');
+      svgRects.forEach((rect) => {
+        const fill = rect.getAttribute('fill');
+        if (fill === '#f5f5f5' || fill === 'rgb(245, 245, 245)') {
+          rect.setAttribute('fill', 'white');
+        }
+      });
     };
 
     // 약간의 딜레이 후 실행 (Gantt 렌더링 완료 대기)
-    const timer = setTimeout(hideBarLabels, 100);
+    const timer = setTimeout(cleanupGanttStyles, 100);
     return () => clearTimeout(timer);
   }, [tasks, viewMode]);
 
@@ -238,7 +237,7 @@ export default function ProjectGanttChart({ projects, onProjectClick }: ProjectG
     }
   };
 
-  if (tasks.length === 0) {
+  if (sortedProjects.length === 0 || tasks.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
         표시할 프로젝트 일정이 없습니다.
@@ -285,19 +284,23 @@ export default function ProjectGanttChart({ projects, onProjectClick }: ProjectG
       {/* 범례 */}
       <div className="flex flex-wrap gap-4 mb-4 text-sm">
         <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded" style={{ backgroundColor: STATUS_COLORS['진행중'].bg }} />
-          <span>진행중</span>
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: '#e5e7eb' }} />
+          <span>예정 (회색)</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded" style={{ backgroundColor: STATUS_COLORS['보류'].bg }} />
-          <span>보류</span>
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: STATUS_COLORS['진행중'].progress }} />
+          <span>진행됨 (파란색)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: STATUS_COLORS['보류'].progress }} />
+          <span>보류 (주황색)</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded" style={{ backgroundColor: STATUS_COLORS['완료'].bg }} />
-          <span>완료</span>
+          <span>완료 (초록색)</span>
         </div>
         <div className="text-gray-400 ml-4">
-          | 진행률 바는 오늘 날짜 기준
+          | 진행률은 오늘 날짜 기준 자동 계산
         </div>
       </div>
 
@@ -314,12 +317,12 @@ export default function ProjectGanttChart({ projects, onProjectClick }: ProjectG
           <Gantt
             tasks={tasks}
             viewMode={viewMode}
-            viewDate={dateRange?.minStart}
+            viewDate={dateRange.minStart}
             preStepsCount={0}
             onClick={handleTaskClick}
             listCellWidth={LIST_CELL_WIDTH}
             columnWidth={columnWidth}
-            ganttHeight={Math.min(600, tasks.length * 40 + 50)}
+            ganttHeight={Math.min(600, tasks.length * 35 + 50)}
             rowHeight={35}
             barCornerRadius={3}
             locale="ko"
@@ -412,7 +415,7 @@ function TaskListTable({
       className="border-r border-gray-200"
       style={{ width: rowWidth }}
     >
-      {tasks.map((task, index) => {
+      {tasks.map((task: Task, index: number) => {
         // task.name은 "고객사 - ITEM" 형식
         const [customer, item] = task.name.split(' - ');
         const isFirst = isFirstInGroup(index);
