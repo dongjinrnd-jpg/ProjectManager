@@ -1222,7 +1222,7 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
                     onClick={() => {
                       window.location.href = `/api/export/schedules?projectId=${projectId}&type=detail`;
                     }}
-                    className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                    className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 text-sm cursor-pointer"
                     title="이 프로젝트 세부추진항목 Excel 다운로드"
                   >
                     📥 Excel
