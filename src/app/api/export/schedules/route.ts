@@ -19,7 +19,7 @@ import { getAllAsObjects, SHEET_NAMES } from '@/lib/google';
 import { getSession } from '@/lib/auth';
 import type { ProjectStatus, ScheduleStatus } from '@/types';
 
-interface SheetProject {
+interface SheetProject extends Record<string, unknown> {
   id: string;
   status: ProjectStatus;
   customer: string;
@@ -38,7 +38,7 @@ interface SheetProject {
   updatedAt: string;
 }
 
-interface SheetSchedule {
+interface SheetSchedule extends Record<string, unknown> {
   id: string;
   projectId: string;
   stage: string;
@@ -54,7 +54,7 @@ interface SheetSchedule {
   order: string;
 }
 
-interface SheetUser {
+interface SheetUser extends Record<string, unknown> {
   id: string;
   name: string;
   email: string;
@@ -63,7 +63,7 @@ interface SheetUser {
   isActive: string;
 }
 
-interface SheetFavorite {
+interface SheetFavorite extends Record<string, unknown> {
   id: string;
   userId: string;
   projectId: string;

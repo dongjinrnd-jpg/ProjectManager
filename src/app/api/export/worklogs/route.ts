@@ -20,7 +20,7 @@ import { getAllAsObjects, SHEET_NAMES } from '@/lib/google';
 import { getSession } from '@/lib/auth';
 import type { ProjectStage, UserRole } from '@/types';
 
-interface SheetWorkLog {
+interface SheetWorkLog extends Record<string, unknown> {
   id: string;
   date: string;
   projectId: string;
@@ -38,7 +38,7 @@ interface SheetWorkLog {
   updatedAt: string;
 }
 
-interface SheetUser {
+interface SheetUser extends Record<string, unknown> {
   id: string;
   name: string;
   email: string;
