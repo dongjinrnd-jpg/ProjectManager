@@ -170,7 +170,7 @@ export default function ExecutiveClient() {
       case 'completed':
         return { icon: '✅', text: '완료', color: 'text-green-600', bg: 'bg-green-100' };
       case 'delayed':
-        return { icon: '⚠️', text: '지연', color: 'text-yellow-600', bg: 'bg-yellow-100' };
+        return { icon: '⚠️', text: '지연', color: 'text-red-600', bg: 'bg-red-100' };
       default:
         return { icon: '🟢', text: '정상', color: 'text-green-600', bg: 'bg-green-100' };
     }
@@ -235,9 +235,9 @@ export default function ExecutiveClient() {
               <div className="text-sm text-gray-500 mb-1">🟢 정상</div>
               <div className="text-3xl font-bold text-green-600">{data.statusSummary.normal}건</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
               <div className="text-sm text-gray-500 mb-1">⚠️ 지연</div>
-              <div className="text-3xl font-bold text-yellow-600">{data.statusSummary.delayed}건</div>
+              <div className="text-3xl font-bold text-red-600">{data.statusSummary.delayed}건</div>
             </div>
             <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
               <div className="text-sm text-gray-500 mb-1">✅ 완료</div>
@@ -278,7 +278,7 @@ export default function ExecutiveClient() {
                           project.healthStatus === 'completed'
                             ? '#10B981'
                             : project.healthStatus === 'delayed'
-                            ? '#F59E0B'
+                            ? '#EF4444'
                             : '#10B981',
                       }}
                     >
@@ -326,7 +326,7 @@ export default function ExecutiveClient() {
                               project.healthStatus === 'completed'
                                 ? 'bg-green-500'
                                 : project.healthStatus === 'delayed'
-                                ? 'bg-yellow-500'
+                                ? 'bg-red-500'
                                 : 'bg-brand-orange'
                             }`}
                             style={{ width: `${project.progress}%` }}

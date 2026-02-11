@@ -87,7 +87,7 @@ export default function ComparisonClient() {
       case 'completed':
         return { icon: '✅', color: 'text-green-600' };
       case 'delayed':
-        return { icon: '🟡', color: 'text-yellow-600' };
+        return { icon: '🔴', color: 'text-red-600' };
       default:
         return { icon: '🟢', color: 'text-green-600' };
     }
@@ -281,7 +281,7 @@ export default function ComparisonClient() {
         <div className="mt-4 text-sm text-gray-500">
           총 {data.projects.length}개 프로젝트 |{' '}
           <span className="text-green-600">정상: {data.projects.filter(p => p.healthStatus === 'normal').length}</span> |{' '}
-          <span className="text-yellow-600">지연: {data.projects.filter(p => p.healthStatus === 'delayed').length}</span> |{' '}
+          <span className="text-red-600">지연: {data.projects.filter(p => p.healthStatus === 'delayed').length}</span> |{' '}
           <span className="text-blue-600">완료: {data.projects.filter(p => p.healthStatus === 'completed').length}</span>
         </div>
       )}
