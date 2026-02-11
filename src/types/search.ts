@@ -125,6 +125,8 @@ export interface SavedSearch {
   createdAt: string;
   /** 수정일시 */
   updatedAt: string;
+  /** 인덱스 시그니처 (Record<string, unknown> 호환) */
+  [key: string]: unknown;
 }
 
 /**
