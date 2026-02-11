@@ -112,24 +112,6 @@ function getWeekInfo(dateStr: string): { year: number; month: number; week: numb
   return { year, month, week };
 }
 
-/**
- * 진행률 계산 (오늘 기준)
- */
-function calculateProgress(startStr: string, endStr: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const start = new Date(startStr);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(endStr);
-  end.setHours(0, 0, 0, 0);
-
-  if (today < start) return 0;
-  if (today >= end) return 100;
-
-  const total = end.getTime() - start.getTime();
-  const elapsed = today.getTime() - start.getTime();
-  return Math.round((elapsed / total) * 100);
-}
 
 export default function ProjectDrilldownModal({
   project,
@@ -265,7 +247,7 @@ export default function ProjectDrilldownModal({
 
   if (!project) return null;
 
-  const progress = calculateProgress(project.scheduleStart, project.scheduleEnd);
+  const progress = project.progress;
   const statusClass = STATUS_COLORS[project.status] || STATUS_COLORS['진행중'];
 
   return (

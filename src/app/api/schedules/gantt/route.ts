@@ -20,6 +20,7 @@ interface SheetProject extends Record<string, unknown> {
   category: string;
   item: string;
   currentStage: ProjectStage;
+  stages: string;
   teamLeaderId: string;
   scheduleStart: string;
   scheduleEnd: string;
@@ -41,10 +42,35 @@ export interface GanttProject {
   category: string;
   status: ProjectStatus;
   currentStage: ProjectStage;
+  stages: string[];
+  progress: number;
   scheduleStart: string;
   scheduleEnd: string;
   isFavorite: boolean;
   teamLeaderId: string;
+}
+
+/**
+ * 프로젝트 진행률 계산 (단계 기반)
+ * - 완료된 단계 수 / 전체 단계 수
+ */
+function calculateProgress(project: SheetProject): number {
+  if (project.status === '완료') return 100;
+
+  // 단계 목록 파싱
+  const stages = project.stages ? project.stages.split(',').map(s => s.trim()) : [];
+  if (stages.length === 0) return 0;
+
+  // 현재 단계의 인덱스
+  const currentStageIndex = stages.indexOf(project.currentStage);
+
+  // 현재 단계 이전의 모든 단계가 완료된 것으로 계산
+  let completedCount = 0;
+  if (currentStageIndex > 0) {
+    completedCount = currentStageIndex;
+  }
+
+  return Math.round((completedCount / stages.length) * 100);
 }
 
 export async function GET(request: NextRequest) {
@@ -117,6 +143,8 @@ export async function GET(request: NextRequest) {
       category: p.category || '',
       status: p.status,
       currentStage: p.currentStage,
+      stages: p.stages ? p.stages.split(',').map(s => s.trim()) : [],
+      progress: calculateProgress(p),
       scheduleStart: p.scheduleStart,
       scheduleEnd: p.scheduleEnd,
       isFavorite: favoriteProjectIds.has(p.id),

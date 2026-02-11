@@ -37,27 +37,6 @@ function formatDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/**
- * 프로젝트 진행률 계산 (오늘 기준)
- */
-function calculateProgress(startDate: Date, endDate: Date): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // 시간을 0으로 정규화하여 날짜만 비교
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(endDate);
-  end.setHours(0, 0, 0, 0);
-
-  if (today < start) return 0;
-  if (today >= end) return 100;
-
-  const total = end.getTime() - start.getTime();
-  const elapsed = today.getTime() - start.getTime();
-  return Math.round((elapsed / total) * 100);
-}
-
 interface ProjectGanttChartProps {
   projects: GanttProject[];
   onProjectClick?: (project: GanttProject) => void;
@@ -112,14 +91,13 @@ export default function ProjectGanttChart({ projects, onProjectClick }: ProjectG
         const startDate = new Date(project.scheduleStart);
         const endDate = new Date(project.scheduleEnd);
         const colors = STATUS_COLORS[project.status] || STATUS_COLORS['진행중'];
-        const progress = calculateProgress(startDate, endDate);
 
         return {
           id: project.id,
           name: `${project.customer} - ${project.item}`,
           start: startDate,
           end: endDate,
-          progress,
+          progress: project.progress,
           type: 'task' as const,
           styles: {
             backgroundColor: colors.bg,
@@ -306,7 +284,7 @@ export default function ProjectGanttChart({ projects, onProjectClick }: ProjectG
           <span>완료 (초록색)</span>
         </div>
         <div className="text-gray-400 ml-4">
-          | 진행률은 오늘 날짜 기준 자동 계산
+          | 진행률은 단계 기반 계산
         </div>
       </div>
 
