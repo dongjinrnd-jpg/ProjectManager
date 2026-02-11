@@ -164,7 +164,7 @@ export default function ComparisonClient() {
           <span className="text-gray-600">정상</span>
         </div>
         <div className="flex items-center gap-2">
-          <span>🟡</span>
+          <span>🔴</span>
           <span className="text-gray-600">지연</span>
         </div>
         <div className="flex items-center gap-2">
