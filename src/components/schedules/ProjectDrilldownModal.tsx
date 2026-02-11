@@ -119,7 +119,9 @@ function calculateProgress(startStr: string, endStr: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const start = new Date(startStr);
+  start.setHours(0, 0, 0, 0);
   const end = new Date(endStr);
+  end.setHours(0, 0, 0, 0);
 
   if (today < start) return 0;
   if (today >= end) return 100;

@@ -44,11 +44,17 @@ function calculateProgress(startDate: Date, endDate: Date): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (today < startDate) return 0;
-  if (today >= endDate) return 100;
+  // 시간을 0으로 정규화하여 날짜만 비교
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
 
-  const total = endDate.getTime() - startDate.getTime();
-  const elapsed = today.getTime() - startDate.getTime();
+  if (today < start) return 0;
+  if (today >= end) return 100;
+
+  const total = end.getTime() - start.getTime();
+  const elapsed = today.getTime() - start.getTime();
   return Math.round((elapsed / total) * 100);
 }
 
