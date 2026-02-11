@@ -106,35 +106,30 @@ interface ExecutiveProject {
 }
 
 /**
- * 프로젝트 진행률 계산
- * - 완료된 단계 수 / 전체 단계 수
+ * 프로젝트 진행률 계산 (시간 기반)
+ * - 경과 일수 / 전체 일수
  */
 function calculateProgress(project: SheetProject): number {
   if (project.status === '완료') return 100;
 
-  const stages = project.stages ? project.stages.split(',').map(s => s.trim()) : [];
-  if (stages.length === 0) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  // stageHistory에서 완료된 단계 수 계산
-  let completedCount = 0;
-  let stageHistory: Record<string, string> = {};
+  const startDate = project.scheduleStart ? new Date(project.scheduleStart) : null;
+  const endDate = project.scheduleEnd ? new Date(project.scheduleEnd) : null;
 
-  if (project.stageHistory) {
-    try {
-      stageHistory = JSON.parse(project.stageHistory);
-    } catch {
-      stageHistory = {};
-    }
-  }
+  if (!startDate || !endDate) return 0;
 
-  const currentStageIndex = stages.indexOf(project.currentStage);
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
 
-  // 현재 단계 이전까지는 모두 완료
-  if (currentStageIndex > 0) {
-    completedCount = currentStageIndex;
-  }
+  if (today < startDate) return 0;
+  if (today >= endDate) return 100;
 
-  return Math.round((completedCount / stages.length) * 100);
+  const total = endDate.getTime() - startDate.getTime();
+  const elapsed = today.getTime() - startDate.getTime();
+
+  return Math.round((elapsed / total) * 100);
 }
 
 /**
