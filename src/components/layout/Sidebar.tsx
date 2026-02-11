@@ -18,6 +18,7 @@ const mainMenuItems = [
   { href: '/dashboard', label: '대시보드', icon: '📊' },
   { href: '/projects', label: '프로젝트', icon: '📁' },
   { href: '/worklogs', label: '업무일지', icon: '📝' },
+  { href: '/search', label: '고급 검색', icon: '🔍' },
   { href: '/schedules', label: '전체 일정', icon: '📅' },
   { href: '/weekly-reports', label: '주간보고', icon: '📋' },
 ];
@@ -50,8 +51,8 @@ export default function Sidebar() {
 
   // 역할별 메뉴 필터링
   const filteredMainMenuItems = mainMenuItems.filter((item) => {
-    // 업무일지 메뉴: user, sysadmin 제외
-    if (item.href === '/worklogs') {
+    // 업무일지/고급검색 메뉴: user, sysadmin 제외
+    if (item.href === '/worklogs' || item.href === '/search') {
       return canAccessWorklogs;
     }
     return true;

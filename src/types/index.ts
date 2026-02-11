@@ -25,6 +25,9 @@ export * from './comment';
 // 회의록 관련
 export * from './meetingMinutes';
 
+// 고급 검색 관련
+export * from './search';
+
 // 시스템 설정 관련
 export * from './settings';
 
