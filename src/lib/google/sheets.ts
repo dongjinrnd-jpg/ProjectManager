@@ -34,6 +34,8 @@ export const SHEET_NAMES = {
   REPORT_CATEGORIES: 'ReportCategories',
   SETTINGS: 'Settings',
   SAVED_SEARCHES: 'SavedSearches',
+  CUSTOMERS: 'Customers',
+  MODELS: 'Models',
 } as const;
 
 export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES];

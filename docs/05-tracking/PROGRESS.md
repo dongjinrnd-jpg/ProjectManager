@@ -3,7 +3,7 @@ type: tracking
 doc_type: Progress
 status: In Progress
 created: 2026-01-29
-updated: 2026-02-11T23:30
+updated: 2026-02-13T18:30
 ---
 
   
@@ -646,6 +646,58 @@ updated: 2026-02-11T23:30
 - [x] **데이터 저장** ✅
   - [x] Google Sheets MeetingMinutes 시트 ✅
   - [x] 본문 필드 직접 저장 (agenda, discussion, decisions, nextSteps) ✅
+
+#### 3.8 시스템 설정 (PRD 3.11) ✅ 완료 (2026-02-13)
+- [x] **설정 페이지** (/admin/settings) ✅
+  - [x] 페이지 생성 (sysadmin 전용) ✅
+  - [x] 탭 구조 (개발 단계 관리 / 시스템 옵션 / 데이터 관리) ✅
+- [x] **개발 단계 관리** ✅
+  - [x] 14개 기본 단계 목록 표시 ✅
+  - [x] 단계별 활성화/비활성화 토글 ✅
+  - [x] 단계 순서 변경 (위/아래 버튼) ✅
+- [x] **시스템 옵션** ✅
+  - [x] 페이지당 항목 수 설정 (10/20/50/100) ✅
+  - [x] 날짜 표시 형식 설정 ✅
+  - [x] 소속 옵션 관리 (추가/삭제) ✅
+  - [x] 구분 옵션 관리 - 주간보고용 (추가/삭제) ✅
+- [x] **데이터 관리** ✅
+  - [x] Google Sheets 연동 상태 표시 ✅
+  - [x] 수동 동기화 버튼 ✅
+  - [x] 데이터 백업 다운로드 링크 (프로젝트/업무일지) ✅
+  - [x] 시스템 정보 표시 ✅
+- [x] **설정 API** (/api/settings) ✅
+  - [x] GET - 설정 조회 ✅
+  - [x] PUT - 설정 저장 (Google Sheets 설정 시트) ✅
+
+#### 3.9 마스터 데이터 관리 (PRD 3.15) ✅ 완료 (2026-02-13)
+- [x] **Google Sheets 시트 생성** ✅ (2026-02-13)
+  - [x] Customers 시트 생성 (고객사 마스터) ✅
+  - [x] Models 시트 생성 (모델 마스터) ✅
+  - [x] 초기화 API (/api/master/init) 구현 ✅
+  - [x] force 옵션 (강제 재초기화) 지원 ✅
+- [x] **마스터 데이터 API** ✅ (2026-02-13)
+  - [x] GET /api/master/customers - 고객사 목록 조회 ✅
+  - [x] GET /api/master/models - 모델 목록 조회 ✅
+  - [x] POST /api/master/customers - 고객사 추가 ✅
+  - [x] POST /api/master/models - 모델 추가 ✅
+  - [x] PUT /api/master/customers - 고객사 순서 변경 (up/down, newOrder) ✅
+  - [x] PUT /api/master/models - 모델 순서 변경 (up/down, newOrder) ✅
+  - [x] DELETE /api/master/customers - 고객사 삭제 (하드 삭제) ✅
+  - [x] DELETE /api/master/models - 모델 삭제 (하드 삭제) ✅
+- [x] **프로젝트 생성/수정 폼 연동** ✅ (2026-02-13)
+  - [x] 고객사 드롭다운: 마스터에서 선택 ✅
+  - [x] 모델 드롭다운: 마스터에서 선택 ✅
+  - [x] 마스터 없을 경우 텍스트 입력 폴백 ✅
+- [x] **초기 데이터 입력** ✅ (2026-02-13)
+  - [x] 고객사 37개: KIA, 한화에어로스페이스, 마루이앤지, HMC, TTDW모빌리티 등 ✅
+  - [x] 모델 23개: CAB TILT SYSTEM, FUEL FILLER PUMP, PUMP, CYLINDER 등 ✅
+  - [x] 설정 페이지에서 초기화/강제 재초기화 버튼으로 실행 ✅
+- [x] **시스템 설정 페이지 연동** ✅ (2026-02-13)
+  - [x] "고객사/모델 관리" 탭 추가 ✅
+  - [x] 고객사/모델 추가/삭제 UI (리스트 형식) ✅
+  - [x] 순서 변경: ↑↓ 버튼 및 순서 번호 클릭하여 직접 이동 ✅
+  - [x] 설정 저장 버튼: 개발 단계/시스템 옵션 탭에서만 표시 ✅
+  - [x] 데이터 관리 탭에 마스터 데이터 초기화 버튼 ✅
 
 ---
 

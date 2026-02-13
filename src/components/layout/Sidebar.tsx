@@ -40,14 +40,14 @@ export default function Sidebar() {
 
   const userRole = session?.user?.role;
 
-  // 업무일지 접근 가능 여부 (user 제외)
+  // 업무일지 접근 가능 여부 (user, sysadmin 제외)
   const canAccessWorklogs = userRole !== 'user' && userRole !== 'sysadmin';
 
-  // 경영진/관리자 여부
-  const isExecutiveOrAdmin = userRole === 'executive' || userRole === 'admin' || userRole === 'sysadmin';
+  // 경영진 메뉴 접근 여부 (executive, sysadmin만)
+  const canAccessExecutive = userRole === 'executive' || userRole === 'sysadmin';
 
-  // 시스템 관리자 여부
-  const isSysAdmin = userRole === 'sysadmin' || userRole === 'admin';
+  // 사용자 관리 메뉴 접근 여부 (sysadmin만)
+  const canAccessUserAdmin = userRole === 'sysadmin';
 
   // 역할별 메뉴 필터링
   const filteredMainMenuItems = mainMenuItems.filter((item) => {
@@ -87,8 +87,8 @@ export default function Sidebar() {
           ))}
         </ul>
 
-        {/* 구분선 + 경영진 메뉴 */}
-        {isExecutiveOrAdmin && (
+        {/* 구분선 + 경영진 메뉴 (executive, sysadmin만) */}
+        {canAccessExecutive && (
           <>
             <hr className="my-4 border-gray-200" />
             <ul className="space-y-1">
@@ -111,8 +111,8 @@ export default function Sidebar() {
           </>
         )}
 
-        {/* 구분선 + 관리자 메뉴 */}
-        {isSysAdmin && (
+        {/* 구분선 + 사용자 관리 메뉴 (sysadmin만) */}
+        {canAccessUserAdmin && (
           <>
             <hr className="my-4 border-gray-200" />
             <ul className="space-y-1">

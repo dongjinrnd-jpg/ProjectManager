@@ -12,7 +12,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
-import type { User, ProjectStage, Project } from '@/types';
+import type { User, ProjectStage, Project, Customer, Model } from '@/types';
 
 // 단계 목록
 const STAGES: ProjectStage[] = [
@@ -66,6 +66,8 @@ interface ProjectFormClientProps {
 export default function ProjectFormClient({ project, isEdit = false }: ProjectFormClientProps) {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [formData, setFormData] = useState<ProjectFormData>(initialFormData);
   const [isSaving, setIsSaving] = useState(false);
   const [showCostSection, setShowCostSection] = useState(false);
@@ -108,9 +110,37 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
     }
   }, []);
 
+  // 고객사 목록 가져오기
+  const fetchCustomers = useCallback(async () => {
+    try {
+      const response = await fetch('/api/master/customers');
+      const data = await response.json();
+      if (data.customers) {
+        setCustomers(data.customers);
+      }
+    } catch (err) {
+      console.error('고객사 목록 조회 오류:', err);
+    }
+  }, []);
+
+  // 모델 목록 가져오기
+  const fetchModels = useCallback(async () => {
+    try {
+      const response = await fetch('/api/master/models');
+      const data = await response.json();
+      if (data.models) {
+        setModels(data.models);
+      }
+    } catch (err) {
+      console.error('모델 목록 조회 오류:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchCustomers();
+    fetchModels();
+  }, [fetchUsers, fetchCustomers, fetchModels]);
 
   // 저장
   const handleSave = async () => {
@@ -218,13 +248,26 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 고객사 <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={formData.customer}
-                onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
-                placeholder="예: 대동공업"
-              />
+              {customers.length > 0 ? (
+                <select
+                  value={formData.customer}
+                  onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                >
+                  <option value="">고객사를 선택하세요</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={formData.customer}
+                  onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                  placeholder="예: 대동공업"
+                />
+              )}
             </div>
 
             {/* ITEM */}
@@ -292,12 +335,25 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 모델
               </label>
-              <input
-                type="text"
-                value={formData.model}
-                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
-              />
+              {models.length > 0 ? (
+                <select
+                  value={formData.model}
+                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                >
+                  <option value="">모델을 선택하세요</option>
+                  {models.map(m => (
+                    <option key={m.id} value={m.name}>{m.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={formData.model}
+                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                />
+              )}
             </div>
           </div>
         </div>
