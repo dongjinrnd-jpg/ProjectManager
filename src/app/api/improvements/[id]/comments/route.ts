@@ -1,0 +1,216 @@
+/**
+ * 개선요청 댓글 API Routes
+ *
+ * GET /api/improvements/[id]/comments - 댓글 목록 조회
+ * POST /api/improvements/[id]/comments - 댓글 등록
+ *
+ * 권한: engineer, admin, sysadmin
+ */
+
+import { NextResponse } from 'next/server';
+import {
+  findRowByColumn,
+  getAllAsObjects,
+  appendRow,
+  getHeaders,
+  getRows,
+  SHEET_NAMES,
+} from '@/lib/google';
+import { getSession } from '@/lib/auth';
+import type {
+  ImprovementComment,
+  CreateCommentInput,
+} from '@/types/improvement';
+
+// 시트에서 가져온 개선요청 타입 (존재 확인용)
+interface SheetImprovement extends Record<string, unknown> {
+  id: string;
+}
+
+// 시트에서 가져온 댓글 타입
+interface SheetComment extends Record<string, unknown> {
+  id: string;
+  improvementId: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+}
+
+// 허용된 역할 확인
+function hasAccess(role: string): boolean {
+  return ['engineer', 'admin', 'sysadmin'].includes(role);
+}
+
+/**
+ * GET /api/improvements/[id]/comments
+ * 댓글 목록 조회
+ */
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    // 인증 확인
+    const session = await getSession();
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    // 권한 확인
+    if (!hasAccess(session.user.role)) {
+      return NextResponse.json(
+        { success: false, error: '접근 권한이 없습니다.' },
+        { status: 403 }
+      );
+    }
+
+    // 개선요청 존재 확인
+    const improvement = await findRowByColumn<SheetImprovement>(
+      SHEET_NAMES.IMPROVEMENTS,
+      'id',
+      id
+    );
+
+    if (!improvement) {
+      return NextResponse.json(
+        { success: false, error: '개선요청을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 댓글 조회
+    const allComments = await getAllAsObjects<SheetComment>(
+      SHEET_NAMES.IMPROVEMENT_COMMENTS
+    );
+
+    const comments: ImprovementComment[] = allComments
+      .filter((c) => c.improvementId === id)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+    return NextResponse.json({
+      success: true,
+      data: comments,
+      total: comments.length,
+    });
+  } catch (error) {
+    console.error('댓글 목록 조회 오류:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : '알 수 없는 오류',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/improvements/[id]/comments
+ * 댓글 등록
+ */
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    // 인증 확인
+    const session = await getSession();
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    // 권한 확인
+    if (!hasAccess(session.user.role)) {
+      return NextResponse.json(
+        { success: false, error: '접근 권한이 없습니다.' },
+        { status: 403 }
+      );
+    }
+
+    // 개선요청 존재 확인
+    const improvement = await findRowByColumn<SheetImprovement>(
+      SHEET_NAMES.IMPROVEMENTS,
+      'id',
+      id
+    );
+
+    if (!improvement) {
+      return NextResponse.json(
+        { success: false, error: '개선요청을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 요청 본문 파싱
+    const body: CreateCommentInput = await request.json();
+
+    // 필수 필드 검증
+    if (!body.content) {
+      return NextResponse.json(
+        { success: false, error: '댓글 내용을 입력해주세요.' },
+        { status: 400 }
+      );
+    }
+
+    // 새 ID 생성
+    const headers = await getHeaders(SHEET_NAMES.IMPROVEMENT_COMMENTS);
+    const rows = await getRows(SHEET_NAMES.IMPROVEMENT_COMMENTS);
+
+    let maxNum = 0;
+    for (const row of rows) {
+      if (row[0] && row[0].startsWith('IMPC-')) {
+        const num = parseInt(row[0].replace('IMPC-', ''), 10);
+        if (num > maxNum) maxNum = num;
+      }
+    }
+    const commentId = `IMPC-${String(maxNum + 1).padStart(5, '0')}`;
+
+    const now = new Date().toISOString();
+
+    // 새 댓글 데이터
+    const newComment: Record<string, unknown> = {
+      id: commentId,
+      improvementId: id,
+      content: body.content,
+      authorId: session.user.id,
+      authorName: session.user.name,
+      createdAt: now,
+    };
+
+    // 행 데이터 생성
+    const rowValues = headers.map((header) => {
+      const value = newComment[header];
+      if (value === null || value === undefined) return '';
+      return String(value);
+    });
+
+    // 시트에 추가
+    await appendRow(SHEET_NAMES.IMPROVEMENT_COMMENTS, rowValues);
+
+    return NextResponse.json({
+      success: true,
+      data: newComment as unknown as ImprovementComment,
+      message: '댓글이 등록되었습니다.',
+    });
+  } catch (error) {
+    console.error('댓글 등록 오류:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : '알 수 없는 오류',
+      },
+      { status: 500 }
+    );
+  }
+}

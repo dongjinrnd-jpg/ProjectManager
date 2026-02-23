@@ -3,7 +3,7 @@ type: tracking
 doc_type: Progress
 status: In Progress
 created: 2026-01-29
-updated: 2026-02-13T18:30
+updated: 2026-02-23
 ---
 
   
@@ -699,9 +699,54 @@ updated: 2026-02-13T18:30
   - [x] 설정 저장 버튼: 개발 단계/시스템 옵션 탭에서만 표시 ✅
   - [x] 데이터 관리 탭에 마스터 데이터 초기화 버튼 ✅
 
+#### 3.10 개선요청 게시판 (PRD 3.16) 🆕 기획 완료 (2026-02-23)
+> **상세 기획:** [Feature_ImprovementBoard.md](../01-planning/Feature_ImprovementBoard.md)
+
+- [ ] **Google Sheets 시트 생성**
+  - [ ] Improvements 시트 (개선요청 본문)
+  - [ ] ImprovementHistories 시트 (처리 이력)
+  - [ ] ImprovementComments 시트 (댓글)
+- [ ] **타입 정의** (src/types/improvement.ts)
+  - [ ] Improvement, ImprovementHistory, ImprovementComment 타입
+  - [ ] CreateImprovementInput, UpdateImprovementInput 타입
+- [ ] **API Routes 구현**
+  - [ ] GET /api/improvements - 목록 조회
+  - [ ] GET /api/improvements/[id] - 상세 조회
+  - [ ] POST /api/improvements - 등록
+  - [ ] PUT /api/improvements/[id] - 수정
+  - [ ] DELETE /api/improvements/[id] - 삭제
+  - [ ] PATCH /api/improvements/[id]/status - 상태 변경 (sysadmin)
+  - [ ] GET /api/improvements/[id]/comments - 댓글 목록
+  - [ ] POST /api/improvements/[id]/comments - 댓글 등록
+  - [ ] DELETE /api/improvements/[id]/comments/[commentId] - 댓글 삭제
+- [ ] **페이지 구현**
+  - [ ] 목록 페이지 (/improvements)
+  - [ ] 등록/수정 페이지 (/improvements/new, /improvements/[id]/edit)
+  - [ ] 상세 페이지 (/improvements/[id])
+- [ ] **UI 기능**
+  - [ ] 필터 (상태/유형/우선순위)
+  - [ ] 검색 (제목/내용 키워드)
+  - [ ] 상태 배지 색상 (접수/검토중/진행중/완료/보류/반려)
+  - [ ] 유형 아이콘 (버그/개선요청/기능추가/기타)
+  - [ ] 우선순위 표시 (긴급/높음/보통/낮음)
+- [ ] **관리자 기능 (sysadmin)**
+  - [ ] 상태 변경 + 처리 메모
+  - [ ] 처리 이력 표시
+  - [ ] 우선순위/처리예정일 설정
+- [ ] **댓글 기능**
+  - [ ] 댓글 목록 표시
+  - [ ] 댓글 작성/삭제
+- [ ] **권한 체크**
+  - [ ] 조회: engineer, admin, sysadmin
+  - [ ] 작성: engineer, admin, sysadmin
+  - [ ] 수정/삭제: 작성자, sysadmin
+  - [ ] 상태 변경: sysadmin
+- [ ] **Sidebar 메뉴 추가**
+  - [ ] 📋 개선요청 메뉴 (engineer, admin, sysadmin만 표시)
+
 ---
 
-  
+
 
 ## 🎯 핵심 결정 사항
 

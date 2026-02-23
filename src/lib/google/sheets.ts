@@ -36,6 +36,10 @@ export const SHEET_NAMES = {
   SAVED_SEARCHES: 'SavedSearches',
   CUSTOMERS: 'Customers',
   MODELS: 'Models',
+  // 개선요청 게시판
+  IMPROVEMENTS: 'Improvements',
+  IMPROVEMENT_HISTORIES: 'ImprovementHistories',
+  IMPROVEMENT_COMMENTS: 'ImprovementComments',
 } as const;
 
 export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES];

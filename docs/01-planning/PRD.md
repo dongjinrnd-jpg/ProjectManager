@@ -11,7 +11,7 @@ tags:
   - prd
   - codex-context
 created: 2026-01-23
-updated: 2026-02-13T18:30
+updated: 2026-02-23
 ---
 
 # PRD: 연구개발 프로젝트 관리 시스템
@@ -701,6 +701,49 @@ updated: 2026-02-13T18:30
   - 작성/수정: 모든 로그인 사용자
   - 삭제: 작성자 본인, 팀장, admin, sysadmin
 
+### 3.16 개선요청 게시판 (Priority: MEDIUM)
+> **상세 기획:** [Feature_ImprovementBoard.md](./Feature_ImprovementBoard.md)
+
+- [ ] **개선요청 CRUD:**
+  - [ ] API Routes (/api/improvements)
+    - [ ] GET - 목록 조회 (필터: 상태/유형/우선순위, 검색)
+    - [ ] GET /[id] - 상세 조회
+    - [ ] POST - 등록
+    - [ ] PUT /[id] - 수정 (작성자, sysadmin)
+    - [ ] DELETE /[id] - 삭제 (작성자, sysadmin)
+    - [ ] PATCH /[id]/status - 상태 변경 (sysadmin)
+  - [ ] 목록 페이지 (/improvements)
+  - [ ] 등록/수정 페이지
+  - [ ] 상세 페이지
+- [ ] **요청 유형:**
+  - 🐛 버그
+  - 💡 개선요청
+  - ✨ 기능추가
+  - 📝 기타
+- [ ] **상태 관리:**
+  - 🔵 접수
+  - 🟡 검토중
+  - 🟠 진행중
+  - 🟢 완료
+  - ⚪ 보류
+  - 🔴 반려
+- [ ] **우선순위:**
+  - 🔴 긴급 / 🟠 높음 / 🟡 보통 / 🟢 낮음
+- [ ] **처리 이력 관리:**
+  - 상태 변경 시 메모 입력
+  - 처리 이력 자동 기록
+  - 처리예정일 설정
+- [ ] **댓글 기능:**
+  - 요청에 대한 댓글 작성
+  - 댓글 목록 표시
+- [ ] **관련 메뉴 선택:**
+  - 대시보드/프로젝트/업무일지/주간보고/일정/검색/설정/기타
+- **권한:**
+  - 조회: engineer, admin, sysadmin
+  - 작성: engineer, admin, sysadmin
+  - 수정/삭제: 작성자 본인, sysadmin
+  - 상태 변경: sysadmin
+
 ---
 
 ## 4. 🗄️ Data Structure (데이터 구조)
@@ -962,6 +1005,7 @@ updated: 2026-02-13T18:30
 3. 이메일 알림
 4. 투자비/원가 리포트
 5. ✅ 엑셀 다운로드 (2026-02-11)
+6. 개선요청 게시판 (시스템 운영 피드백 수집)
 
 ---
 

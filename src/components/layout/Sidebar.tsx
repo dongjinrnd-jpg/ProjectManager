@@ -23,6 +23,11 @@ const mainMenuItems = [
   { href: '/weekly-reports', label: '주간보고', icon: '📋' },
 ];
 
+// 개선요청 메뉴 (engineer, admin, sysadmin만)
+const improvementMenuItems = [
+  { href: '/improvements', label: '개선요청', icon: '📋' },
+];
+
 // 경영진/관리자 메뉴
 const executiveMenuItems = [
   { href: '/executive', label: '경영진', icon: '👔' },
@@ -42,6 +47,9 @@ export default function Sidebar() {
 
   // 업무일지 접근 가능 여부 (user, sysadmin 제외)
   const canAccessWorklogs = userRole !== 'user' && userRole !== 'sysadmin';
+
+  // 개선요청 메뉴 접근 여부 (engineer, admin, sysadmin만)
+  const canAccessImprovements = userRole === 'engineer' || userRole === 'admin' || userRole === 'sysadmin';
 
   // 경영진 메뉴 접근 여부 (executive, sysadmin만)
   const canAccessExecutive = userRole === 'executive' || userRole === 'sysadmin';
@@ -86,6 +94,30 @@ export default function Sidebar() {
             </li>
           ))}
         </ul>
+
+        {/* 구분선 + 개선요청 메뉴 (engineer, admin, sysadmin만) */}
+        {canAccessImprovements && (
+          <>
+            <hr className="my-4 border-gray-200" />
+            <ul className="space-y-1">
+              {improvementMenuItems.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActive(item.href)
+                        ? 'bg-brand-orange-light text-brand-primary'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span className="text-lg">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
         {/* 구분선 + 경영진 메뉴 (executive, sysadmin만) */}
         {canAccessExecutive && (
