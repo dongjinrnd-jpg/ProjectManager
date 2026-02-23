@@ -44,6 +44,13 @@ button {
   cursor: pointer;
 }
 
+/* 모든 입력 필드 텍스트 색상을 블랙으로 설정 */
+input,
+select,
+textarea {
+  color: #111827; /* gray-900 */
+}
+
 /* Gantt Chart 스타일 - 내부 스크롤만 허용 */
 .gantt-container .overflow-x-auto {
   scrollbar-width: thin;

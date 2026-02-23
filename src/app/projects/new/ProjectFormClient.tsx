@@ -252,7 +252,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                 <select
                   value={formData.customer}
                   onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
                 >
                   <option value="">고객사를 선택하세요</option>
                   {customers.map(c => (
@@ -264,7 +264,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                   type="text"
                   value={formData.customer}
                   onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
                   placeholder="예: 대동공업"
                 />
               )}
@@ -279,7 +279,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                 type="text"
                 value={formData.item}
                 onChange={(e) => setFormData({ ...formData, item: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
                 placeholder="예: 연료펌프"
               />
             </div>
@@ -293,7 +293,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                 type="text"
                 value={formData.partNo}
                 onChange={(e) => setFormData({ ...formData, partNo: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
               />
             </div>
 
@@ -305,7 +305,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
               <select
                 value={formData.division}
                 onChange={(e) => setFormData({ ...formData, division: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
               >
                 {DIVISIONS.map(div => (
                   <option key={div} value={div}>{div}</option>
@@ -321,7 +321,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
               >
                 {CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -339,7 +339,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                 <select
                   value={formData.model}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
                 >
                   <option value="">모델을 선택하세요</option>
                   {models.map(m => (
@@ -351,7 +351,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                   type="text"
                   value={formData.model}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
                 />
               )}
             </div>
@@ -396,7 +396,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                   const newMembers = formData.teamMembers.filter(m => m !== newLeaderId);
                   setFormData({ ...formData, teamLeaderId: newLeaderId, teamMembers: newMembers });
                 }}
-                className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
               >
                 <option value="">팀장을 선택하세요</option>
                 {users.map(user => (
@@ -432,7 +432,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                   addTeamMember(e.target.value);
                   e.target.value = '';
                 }}
-                className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
               >
                 <option value="">+ 팀원 추가</option>
                 {users
@@ -457,7 +457,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                 type="date"
                 value={formData.scheduleStart}
                 onChange={(e) => setFormData({ ...formData, scheduleStart: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
               />
             </div>
             <div>
@@ -467,7 +467,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
                 value={formData.scheduleEnd}
                 min={formData.scheduleStart}
                 onChange={(e) => setFormData({ ...formData, scheduleEnd: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
               />
             </div>
           </div>
@@ -512,7 +512,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
             <select
               value={formData.currentStage}
               onChange={(e) => setFormData({ ...formData, currentStage: e.target.value })}
-              className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+              className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
             >
               {formData.stages.map(stage => (
                 <option key={stage} value={stage}>{stage}</option>
@@ -550,7 +550,7 @@ export default function ProjectFormClient({ project, isEdit = false }: ProjectFo
             value={formData.note}
             onChange={(e) => setFormData({ ...formData, note: e.target.value })}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange text-gray-900"
             placeholder="추가 메모 사항"
           />
         </div>
