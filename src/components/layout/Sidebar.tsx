@@ -39,6 +39,9 @@ const adminMenuItems = [
   { href: '/admin/settings', label: '설정', icon: '⚙️' },
 ];
 
+// 매뉴얼 메뉴 (모든 권한 접근 가능)
+const manualMenuItem = { href: '/manual', label: '매뉴얼', icon: '📖' };
+
 export default function Sidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -166,6 +169,24 @@ export default function Sidebar() {
             </ul>
           </>
         )}
+
+        {/* 구분선 + 매뉴얼 메뉴 (모든 권한) */}
+        <hr className="my-4 border-gray-200" />
+        <ul className="space-y-1">
+          <li>
+            <Link
+              href={manualMenuItem.href}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive(manualMenuItem.href)
+                  ? 'bg-brand-orange-light text-brand-primary'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <span className="text-lg">{manualMenuItem.icon}</span>
+              <span>{manualMenuItem.label}</span>
+            </Link>
+          </li>
+        </ul>
       </nav>
     </aside>
   );

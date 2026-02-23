@@ -194,7 +194,7 @@ export default function SearchFilters({
             />
           </div>
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-1 text-sm cursor-pointer">
+            <label className="flex items-center gap-1 text-sm text-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={keywordScope.content}
@@ -203,7 +203,7 @@ export default function SearchFilters({
               />
               업무진행사항
             </label>
-            <label className="flex items-center gap-1 text-sm cursor-pointer">
+            <label className="flex items-center gap-1 text-sm text-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={keywordScope.issue}

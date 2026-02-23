@@ -266,30 +266,30 @@ export default function ProjectGanttChart({ projects, onProjectClick }: ProjectG
       </div>
 
       {/* 범례 */}
-      <div className="flex flex-wrap gap-4 mb-4 text-sm">
+      <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-700">
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded" style={{ backgroundColor: '#e5e7eb' }} />
-          <span>예정 (회색)</span>
+          <span>예정</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded" style={{ backgroundColor: STATUS_COLORS['진행중'].progress }} />
-          <span>진행됨 (파란색)</span>
+          <span>진행됨</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded" style={{ backgroundColor: STATUS_COLORS['보류'].progress }} />
-          <span>보류 (주황색)</span>
+          <span>보류</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded" style={{ backgroundColor: STATUS_COLORS['완료'].bg }} />
-          <span>완료 (초록색)</span>
+          <span>완료</span>
         </div>
-        <div className="text-gray-400 ml-4">
+        <div className="text-gray-600 ml-4">
           | 진행률은 단계 기반 계산
         </div>
       </div>
 
       {/* 오늘 날짜 표시 */}
-      <div className="text-sm text-gray-500 mb-2">
+      <div className="text-sm text-gray-700 mb-2">
         오늘: {formatDate(new Date())}
       </div>
 

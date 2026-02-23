@@ -321,18 +321,18 @@ export default function WeeklyReportsClient() {
         <div className="flex items-center justify-center gap-4 mb-6">
           <button
             onClick={handlePrevWeek}
-            className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+            className="w-9 h-9 flex items-center justify-center bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 rounded-md transition-colors text-lg font-bold"
           >
             ◀
           </button>
-          <span className="text-lg font-medium">
+          <span className="text-lg font-medium text-gray-800">
             {selectedYear}년 {selectedMonth}월 {selectedWeek}주차 (
             {formatDateDisplay(formatDate(weekRange.start))} ~{' '}
             {formatDateDisplay(formatDate(weekRange.end))})
           </span>
           <button
             onClick={handleNextWeek}
-            className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+            className="w-9 h-9 flex items-center justify-center bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 rounded-md transition-colors text-lg font-bold"
           >
             ▶
           </button>
@@ -342,7 +342,7 @@ export default function WeeklyReportsClient() {
         <div className="border-t-2 border-brand-primary mb-4"></div>
 
         {/* 제목 */}
-        <h2 className="text-lg font-semibold text-center mb-4">
+        <h2 className="text-lg font-semibold text-center mb-4 text-gray-800">
           {selectedYear}년 {selectedMonth}월 {selectedWeek}주차 연구소 업무 보고
         </h2>
 

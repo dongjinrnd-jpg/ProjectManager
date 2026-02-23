@@ -21,6 +21,10 @@ import GanttChart from '@/components/schedules/GanttChart';
 import ExecutiveCommentsSection from '@/components/projects/ExecutiveCommentsSection';
 import { MeetingMinutesSection } from '@/components/meeting-minutes';
 
+// 사용자 목록 캐시 (페이지 간 공유, 5분 유효)
+let usersCache: { data: User[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5분
+
 // 전체 단계 목록 (선택 가능한 단계)
 const ALL_STAGES: ProjectStage[] = [
   '검토', '설계', '개발', 'PROTO', '신뢰성', 'P1', 'P2',
@@ -59,6 +63,7 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
 
   // 업무일지 목록
   const [worklogs, setWorklogs] = useState<WorkLog[]>([]);
+  const [issues, setIssues] = useState<WorkLog[]>([]); // 전체 이슈사항 (별도 관리)
   const [isLoadingWorklogs, setIsLoadingWorklogs] = useState(false);
 
   // 세부추진항목 (일정)
@@ -126,33 +131,6 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
   const isTeamLeader = project?.teamLeaderId === userId;
   const canDeleteSchedule = isTeamLeader || userRole === 'sysadmin' || userRole === 'admin';
 
-  // 사용자 목록 가져오기
-  const fetchUsers = useCallback(async () => {
-    try {
-      const response = await fetch('/api/users');
-      const data = await response.json();
-      if (data.success) {
-        setUsers(data.data.filter((u: User) => u.isActive));
-      }
-    } catch (err) {
-      console.error('사용자 목록 조회 오류:', err);
-    }
-  }, []);
-
-  // 즐겨찾기 상태 조회
-  const fetchFavoriteStatus = useCallback(async () => {
-    try {
-      const response = await fetch('/api/favorites');
-      const data = await response.json();
-      if (data.success) {
-        const favoriteProjectIds = data.data.map((f: { projectId: string }) => f.projectId);
-        setIsFavorite(favoriteProjectIds.includes(projectId));
-      }
-    } catch (err) {
-      console.error('즐겨찾기 상태 조회 오류:', err);
-    }
-  }, [projectId]);
-
   // 즐겨찾기 토글
   const toggleFavorite = async () => {
     if (isFavoriteLoading) return;
@@ -187,37 +165,33 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
     }
   };
 
-  // 프로젝트 조회
+  // 프로젝트 단건 조회 (수정 후 새로고침용)
   const fetchProject = useCallback(async () => {
     try {
-      setIsLoading(true);
       const response = await fetch(`/api/projects/${projectId}`);
       const data = await response.json();
-
       if (data.success) {
         setProject(data.data);
-        setSelectedStatus(data.data.status); // 초기 상태 설정
-        setError(null);
-      } else {
-        setError(data.error || '프로젝트를 불러올 수 없습니다.');
+        setSelectedStatus(data.data.status);
       }
     } catch (err) {
-      setError('서버 연결 오류가 발생했습니다.');
       console.error('프로젝트 조회 오류:', err);
-    } finally {
-      setIsLoading(false);
     }
   }, [projectId]);
 
-  // 업무일지 조회
+  // 업무일지 재조회 (날짜 필터 변경 시)
   const fetchWorklogs = useCallback(async () => {
     try {
       setIsLoadingWorklogs(true);
-      const response = await fetch(`/api/worklogs?projectId=${projectId}`);
+      const params = new URLSearchParams();
+      params.set('projectId', projectId);
+      if (startDate) params.set('startDate', startDate);
+      if (endDate) params.set('endDate', endDate);
+
+      const response = await fetch(`/api/worklogs?${params.toString()}`);
       const data = await response.json();
 
       if (data.success) {
-        // 날짜순 정렬 (최신순)
         const sorted = [...data.data].sort(
           (a: WorkLog, b: WorkLog) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
@@ -228,9 +202,9 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
     } finally {
       setIsLoadingWorklogs(false);
     }
-  }, [projectId]);
+  }, [projectId, startDate, endDate]);
 
-  // 세부추진항목 조회
+  // 세부추진항목 재조회
   const fetchSchedules = useCallback(async () => {
     try {
       setIsLoadingSchedules(true);
@@ -247,19 +221,58 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
     }
   }, [projectId]);
 
+  // 초기 데이터 로드 - 통합 API 사용 (5회 호출 → 1회 호출)
   useEffect(() => {
-    fetchUsers();
-    fetchProject();
-    fetchWorklogs();
-    fetchFavoriteStatus();
-  }, [fetchUsers, fetchProject, fetchWorklogs, fetchFavoriteStatus]);
+    let isMounted = true;
 
-  // 업무진행사항/일정 탭에서 세부추진항목 필요 (배지 표시용)
-  useEffect(() => {
-    if (activeTab === 'worklog' || activeTab === 'schedule') {
-      fetchSchedules();
-    }
-  }, [activeTab, fetchSchedules]);
+    const loadInitialData = async () => {
+      try {
+        setIsLoading(true);
+        setIsLoadingWorklogs(true);
+        setIsLoadingSchedules(true);
+
+        // 통합 API 호출 (프로젝트 + 사용자 + 업무일지 + 세부추진항목 + 즐겨찾기)
+        const response = await fetch(`/api/projects/${projectId}/detail`);
+        const data = await response.json();
+
+        if (!isMounted) return;
+
+        if (data.success) {
+          const { project: proj, users: usersData, worklogs: worklogsData, issues: issuesData, schedules: schedulesData, isFavorite: favStatus } = data.data;
+
+          setProject(proj);
+          setSelectedStatus(proj.status);
+          setUsers(usersData);
+          // 사용자 캐시 업데이트
+          usersCache = { data: usersData, timestamp: Date.now() };
+          setWorklogs(worklogsData);
+          setIssues(issuesData || []); // 전체 이슈사항
+          setSchedules(schedulesData);
+          setIsFavorite(favStatus);
+          setError(null);
+        } else {
+          setError(data.error || '프로젝트를 불러올 수 없습니다.');
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError('서버 연결 오류가 발생했습니다.');
+          console.error('데이터 로드 오류:', err);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+          setIsLoadingWorklogs(false);
+          setIsLoadingSchedules(false);
+        }
+      }
+    };
+
+    loadInitialData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [projectId]);
 
   // 사용자 이름 찾기
   const getUserName = (userId: string) => {
@@ -1113,17 +1126,16 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
                 );
               })()}
 
-              {/* 이슈사항 섹션 (전체 이슈 표시) */}
+              {/* 이슈사항 섹션 (전체 이슈 표시 - issues 상태 사용) */}
               {(() => {
-                const allIssues = worklogs
-                  .filter((w) => w.issue && w.issue.trim() !== '')
-                  .sort((a, b) => {
-                    // 미해결 이슈 먼저, 그 다음 날짜순 (최신순)
-                    const aResolved = a.issueStatus === 'resolved' ? 1 : 0;
-                    const bResolved = b.issueStatus === 'resolved' ? 1 : 0;
-                    if (aResolved !== bResolved) return aResolved - bResolved;
-                    return b.date.localeCompare(a.date);
-                  });
+                // issues는 통합 API에서 전체 기간 이슈를 가져옴
+                const allIssues = [...issues].sort((a, b) => {
+                  // 미해결 이슈 먼저, 그 다음 날짜순 (최신순)
+                  const aResolved = a.issueStatus === 'resolved' ? 1 : 0;
+                  const bResolved = b.issueStatus === 'resolved' ? 1 : 0;
+                  if (aResolved !== bResolved) return aResolved - bResolved;
+                  return b.date.localeCompare(a.date);
+                });
                 if (allIssues.length === 0) return null;
 
                 const unresolvedCount = allIssues.filter((w) => w.issueStatus !== 'resolved').length;

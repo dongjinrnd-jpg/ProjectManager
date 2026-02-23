@@ -15,6 +15,20 @@ import Link from 'next/link';
 import type { WorkLog, Project, User } from '@/types';
 import AppLayout from '@/components/layout/AppLayout';
 
+// 사용자 & 프로젝트 목록 캐시 (페이지 간 공유, 5분 유효)
+let usersCache: { data: User[]; timestamp: number } | null = null;
+let projectsCache: { data: Project[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5분
+
+// 오늘 날짜를 YYYY-MM-DD 형식으로 반환
+function getTodayString(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export default function WorklogsClient() {
   const { data: session } = useSession();
   const [worklogs, setWorklogs] = useState<WorkLog[]>([]);
@@ -27,9 +41,9 @@ export default function WorklogsClient() {
   const userRole = session?.user?.role;
   const canWriteWorklog = userRole === 'engineer' || userRole === 'admin';
 
-  // 필터 상태
-  const [filterStartDate, setFilterStartDate] = useState('');
-  const [filterEndDate, setFilterEndDate] = useState('');
+  // 필터 상태 - 기본값: 오늘 날짜
+  const [filterStartDate, setFilterStartDate] = useState(getTodayString());
+  const [filterEndDate, setFilterEndDate] = useState(getTodayString());
   const [filterProjectId, setFilterProjectId] = useState('');
   const [filterAssigneeId, setFilterAssigneeId] = useState('');
   const [filterKeyword, setFilterKeyword] = useState('');
@@ -42,26 +56,41 @@ export default function WorklogsClient() {
   // 상세 보기 모달
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // 프로젝트 목록 가져오기
+  // 프로젝트 목록 가져오기 (캐시 사용)
   const fetchProjects = useCallback(async () => {
     try {
+      // 캐시가 유효하면 API 호출 스킵
+      if (projectsCache && Date.now() - projectsCache.timestamp < CACHE_TTL) {
+        setProjects(projectsCache.data);
+        return;
+      }
+
       const response = await fetch('/api/projects');
       const data = await response.json();
       if (data.success) {
         setProjects(data.data);
+        projectsCache = { data: data.data, timestamp: Date.now() };
       }
     } catch (err) {
       console.error('프로젝트 목록 조회 오류:', err);
     }
   }, []);
 
-  // 사용자 목록 가져오기
+  // 사용자 목록 가져오기 (캐시 사용)
   const fetchUsers = useCallback(async () => {
     try {
+      // 캐시가 유효하면 API 호출 스킵
+      if (usersCache && Date.now() - usersCache.timestamp < CACHE_TTL) {
+        setUsers(usersCache.data);
+        return;
+      }
+
       const response = await fetch('/api/users');
       const data = await response.json();
       if (data.success) {
-        setUsers(data.data.filter((u: User) => u.isActive));
+        const activeUsers = data.data.filter((u: User) => u.isActive);
+        setUsers(activeUsers);
+        usersCache = { data: activeUsers, timestamp: Date.now() };
       }
     } catch (err) {
       console.error('사용자 목록 조회 오류:', err);
@@ -216,6 +245,69 @@ export default function WorklogsClient() {
 
       {/* 필터 영역 */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
+        {/* 빠른 날짜 필터 버튼 */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            onClick={() => {
+              const today = getTodayString();
+              setFilterStartDate(today);
+              setFilterEndDate(today);
+            }}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              filterStartDate === getTodayString() && filterEndDate === getTodayString()
+                ? 'bg-brand-orange text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            오늘
+          </button>
+          <button
+            onClick={() => {
+              const today = new Date();
+              const weekAgo = new Date(today);
+              weekAgo.setDate(today.getDate() - 6);
+              setFilterStartDate(weekAgo.toISOString().split('T')[0]);
+              setFilterEndDate(getTodayString());
+            }}
+            className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+          >
+            최근 1주
+          </button>
+          <button
+            onClick={() => {
+              const today = new Date();
+              const monthAgo = new Date(today);
+              monthAgo.setMonth(today.getMonth() - 1);
+              setFilterStartDate(monthAgo.toISOString().split('T')[0]);
+              setFilterEndDate(getTodayString());
+            }}
+            className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+          >
+            최근 1개월
+          </button>
+          <button
+            onClick={() => {
+              const today = new Date();
+              const threeMonthsAgo = new Date(today);
+              threeMonthsAgo.setMonth(today.getMonth() - 3);
+              setFilterStartDate(threeMonthsAgo.toISOString().split('T')[0]);
+              setFilterEndDate(getTodayString());
+            }}
+            className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+          >
+            최근 3개월
+          </button>
+          <button
+            onClick={() => {
+              setFilterStartDate('');
+              setFilterEndDate('');
+            }}
+            className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+          >
+            전체 기간
+          </button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           {/* 시작 날짜 */}
           <div>
@@ -427,15 +519,15 @@ export default function WorklogsClient() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-sm text-gray-500">날짜</span>
-                    <p className="font-medium">{selectedWorklog.date}</p>
+                    <p className="font-medium text-gray-900">{selectedWorklog.date}</p>
                   </div>
                   <div>
                     <span className="text-sm text-gray-500">담당자</span>
-                    <p className="font-medium">{getUserName(selectedWorklog.assigneeId)}</p>
+                    <p className="font-medium text-gray-900">{getUserName(selectedWorklog.assigneeId)}</p>
                   </div>
                   <div>
                     <span className="text-sm text-gray-500">프로젝트</span>
-                    <p className="font-medium">
+                    <p className="font-medium text-gray-900">
                       {(() => {
                         const projectInfo = getProjectInfo(selectedWorklog.projectId);
                         return projectInfo
@@ -457,20 +549,20 @@ export default function WorklogsClient() {
                 {selectedWorklog.participants && (
                   <div>
                     <span className="text-sm text-gray-500">참여자</span>
-                    <p className="mt-1">{getParticipantNames(selectedWorklog.participants)}</p>
+                    <p className="mt-1 text-gray-900">{getParticipantNames(selectedWorklog.participants)}</p>
                   </div>
                 )}
 
                 {selectedWorklog.plan && (
                   <div>
                     <span className="text-sm text-gray-500">계획</span>
-                    <p className="mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">{selectedWorklog.plan}</p>
+                    <p className="mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap text-gray-800">{selectedWorklog.plan}</p>
                   </div>
                 )}
 
                 <div>
                   <span className="text-sm text-gray-500">업무 내용</span>
-                  <p className="mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">{selectedWorklog.content}</p>
+                  <p className="mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap text-gray-800">{selectedWorklog.content}</p>
                 </div>
 
                 {selectedWorklog.issue && (
@@ -484,7 +576,7 @@ export default function WorklogsClient() {
                       <div className="flex items-start gap-2">
                         <span>{selectedWorklog.issueStatus === 'resolved' ? '✅' : '⚠️'}</span>
                         <div>
-                          <p>{selectedWorklog.issue}</p>
+                          <p className="text-gray-800">{selectedWorklog.issue}</p>
                           {selectedWorklog.issueStatus === 'resolved' && selectedWorklog.issueResolvedAt && (
                             <p className="text-xs text-green-600 mt-1">
                               해결일: {new Date(selectedWorklog.issueResolvedAt).toLocaleString('ko-KR')}
