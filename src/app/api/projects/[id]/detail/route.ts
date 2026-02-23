@@ -193,12 +193,19 @@ export async function GET(
       .filter(s => s.projectId === projectId)
       .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
       .map(s => ({
-        ...s,
+        id: s.id,
+        projectId: s.projectId,
         stage: s.stage as ProjectStage,
-        responsibility: (s.responsibility || '') as ProjectSchedule['responsibility'],
-        category: (s.category || '') as ProjectSchedule['category'],
+        taskName: s.taskName,
+        category: (s.category || undefined) as ProjectSchedule['category'],
+        responsibility: (s.responsibility || undefined) as ProjectSchedule['responsibility'],
+        plannedStart: s.plannedStart,
+        plannedEnd: s.plannedEnd,
+        actualStart: s.actualStart || undefined,
+        actualEnd: s.actualEnd || undefined,
         status: (s.status || 'planned') as ProjectSchedule['status'],
-        sortOrder: Number(s.sortOrder || 0),
+        note: s.note || undefined,
+        order: Number(s.sortOrder || 0),
       })) as ProjectSchedule[];
 
     await delay(150);
