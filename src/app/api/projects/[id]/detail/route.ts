@@ -188,10 +188,25 @@ export async function GET(
     await delay(150);
 
     // 4. 세부추진항목 조회 (해당 프로젝트)
+    const stageOrder = projectResult.data.stages
+      ? projectResult.data.stages.split(',').map((s: string) => s.trim())
+      : [];
     const schedulesData = await getAllAsObjects<SheetSchedule>(SHEET_NAMES.PROJECT_SCHEDULES);
     const schedules: ProjectSchedule[] = schedulesData
       .filter(s => s.projectId === projectId)
-      .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
+      .sort((a, b) => {
+        // 1차: 단계 순서 (프로젝트 단계진행 순서 기준)
+        const idxA = stageOrder.indexOf(a.stage || '');
+        const idxB = stageOrder.indexOf(b.stage || '');
+        const safeA = idxA === -1 ? stageOrder.length : idxA;
+        const safeB = idxB === -1 ? stageOrder.length : idxB;
+        if (safeA !== safeB) return safeA - safeB;
+        // 2차: 계획시작일 오름차순
+        const dateCompare = (a.plannedStart || '').localeCompare(b.plannedStart || '');
+        if (dateCompare !== 0) return dateCompare;
+        // 3차: 등록순
+        return Number(a.sortOrder || 0) - Number(b.sortOrder || 0);
+      })
       .map(s => ({
         id: s.id,
         projectId: s.projectId,

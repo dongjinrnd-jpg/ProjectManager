@@ -12,6 +12,11 @@ import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import 'gantt-task-react/dist/index.css';
 import type { ProjectSchedule } from '@/types';
 
+// 좌측 목록 너비
+const LIST_CELL_WIDTH = '280px';
+const STAGE_COL_WIDTH = '80px';
+const TASK_COL_WIDTH = '200px';
+
 // 마우스 위치 저장용 전역 변수
 let mouseX = 0;
 let mouseY = 0;
@@ -387,16 +392,104 @@ export default function GanttChart({ schedules, onTaskClick }: GanttChartProps) 
             viewDate={dateRange?.minStart}
             preStepsCount={0}
             onClick={handleTaskClick}
-            listCellWidth=""
+            listCellWidth={LIST_CELL_WIDTH}
             columnWidth={viewMode === ViewMode.Month ? 150 : viewMode === ViewMode.Week ? 100 : 60}
             ganttHeight={Math.min(500, tasks.length * 40 + 50)}
             rowHeight={35}
             barCornerRadius={3}
             locale="ko"
             TooltipContent={CustomTooltip}
+            TaskListHeader={ScheduleListHeader}
+            TaskListTable={(props) => (
+              <ScheduleListTable {...props} schedules={schedules} />
+            )}
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * 커스텀 태스크 목록 헤더 (단계 + 항목명)
+ */
+function ScheduleListHeader({ headerHeight }: { headerHeight: number }) {
+  return (
+    <div
+      className="bg-gray-100 border-b border-gray-300 flex items-center text-sm font-semibold text-gray-700"
+      style={{ height: headerHeight, width: LIST_CELL_WIDTH }}
+    >
+      <div
+        className="px-2 border-r border-gray-300 flex items-center"
+        style={{ width: STAGE_COL_WIDTH, height: '100%' }}
+      >
+        단계
+      </div>
+      <div
+        className="px-2 flex items-center"
+        style={{ width: TASK_COL_WIDTH }}
+      >
+        항목명
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 커스텀 태스크 목록 테이블 (단계 + 항목명)
+ * 계획/실적 바가 같은 스케줄에서 나오므로 실적 행은 단계/항목명 생략
+ */
+function ScheduleListTable({
+  tasks,
+  rowHeight,
+  rowWidth,
+  onExpanderClick,
+  schedules,
+}: {
+  tasks: Task[];
+  rowHeight: number;
+  rowWidth: string;
+  onExpanderClick: (task: Task) => void;
+  schedules: ProjectSchedule[];
+}) {
+  return (
+    <div
+      className="border-r border-gray-200"
+      style={{ width: rowWidth }}
+    >
+      {tasks.map((task: Task) => {
+        const scheduleId = task.id.replace(/-plan$/, '').replace(/-actual$/, '');
+        const schedule = schedules.find(s => s.id === scheduleId);
+        const isPlan = task.id.endsWith('-plan');
+
+        return (
+          <div
+            key={task.id}
+            className="flex items-center border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+            style={{ height: rowHeight }}
+            onClick={() => onExpanderClick(task)}
+          >
+            <div
+              className="px-2 text-xs text-center truncate border-r border-gray-200"
+              style={{ width: STAGE_COL_WIDTH }}
+              title={schedule?.stage || ''}
+            >
+              {isPlan && schedule?.stage ? (
+                <span className="inline-flex px-1.5 py-0.5 bg-brand-orange-light text-brand-primary rounded">
+                  {schedule.stage}
+                </span>
+              ) : ''}
+            </div>
+            <div
+              className="px-2 text-sm text-gray-700 truncate"
+              style={{ width: TASK_COL_WIDTH }}
+              title={isPlan ? schedule?.taskName : ''}
+            >
+              {isPlan ? schedule?.taskName : ''}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

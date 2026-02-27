@@ -96,13 +96,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // 프로젝트 정보 조회 (단계 순서 확인용)
+    const allProjects = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.PROJECTS);
+    const project = allProjects.find((p) => p.id === projectId);
+    const stagesRaw = project?.stages as string | undefined;
+    const stageOrder = stagesRaw
+      ? stagesRaw.split(',').map((s) => s.trim())
+      : [];
+
     // 세부추진항목 조회
     const allSchedules = await getAllAsObjects<SheetSchedule>(SHEET_NAMES.PROJECT_SCHEDULES);
 
-    // 프로젝트별 필터링 및 정렬
+    // 프로젝트별 필터링 및 정렬: 단계순 → 계획시작일순 → 등록순
     const projectSchedules = allSchedules
       .filter((s) => s.projectId === projectId)
-      .sort((a, b) => parseInt(a.order || '0', 10) - parseInt(b.order || '0', 10));
+      .sort((a, b) => {
+        // 1차: 단계 순서
+        const stageA = stageOrder.indexOf(a.stage || '');
+        const stageB = stageOrder.indexOf(b.stage || '');
+        const safeStageA = stageA === -1 ? stageOrder.length : stageA;
+        const safeStageB = stageB === -1 ? stageOrder.length : stageB;
+        if (safeStageA !== safeStageB) return safeStageA - safeStageB;
+        // 2차: 계획시작일 오름차순
+        const dateCompare = (a.plannedStart || '').localeCompare(b.plannedStart || '');
+        if (dateCompare !== 0) return dateCompare;
+        // 3차: 등록순
+        return parseInt(a.order || '0', 10) - parseInt(b.order || '0', 10);
+      });
 
     // 타입 변환
     const schedules: ProjectSchedule[] = projectSchedules.map((s) => ({
