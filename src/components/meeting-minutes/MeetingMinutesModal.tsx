@@ -57,10 +57,11 @@ export default function MeetingMinutesModal({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
-  // 모달 외부 클릭 시 닫기
+  // 모달 외부 클릭 시 - 작성 중 데이터 손실 방지를 위해 닫지 않음
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
+      e.stopPropagation();
+      // 작성 중 실수로 닫히는 것을 방지 - 닫으려면 취소 버튼이나 X 버튼 사용
     }
   };
 

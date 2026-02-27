@@ -157,11 +157,13 @@ export async function PUT(
     const { id } = await params;
     const body: UpdateMeetingMinutesInput = await request.json();
 
-    // 회의록 조회
-    const rows = await getRows(SHEET_NAMES.MEETING_MINUTES);
-    const headers = await getHeaders(SHEET_NAMES.MEETING_MINUTES);
+    // 회의록 조회 - getRows()는 헤더 미포함(A2:Z)
+    const [headers, rows] = await Promise.all([
+      getHeaders(SHEET_NAMES.MEETING_MINUTES),
+      getRows(SHEET_NAMES.MEETING_MINUTES),
+    ]);
 
-    if (rows.length <= 1) {
+    if (rows.length === 0) {
       return NextResponse.json(
         { success: false, error: '회의록을 찾을 수 없습니다.' },
         { status: 404 }
@@ -177,13 +179,13 @@ export async function PUT(
       );
     }
 
-    // 해당 행 찾기 (헤더 제외)
+    // 해당 행 찾기 - rows[0]은 시트 2행, rows[i]는 시트 (i+2)행
     let rowIndex = -1;
     let existingData: Record<string, string> = {};
 
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
       if (rows[i][idIndex] === id) {
-        rowIndex = i + 1; // 1-indexed
+        rowIndex = i + 2; // rows[0]=시트2행, rows[i]=시트(i+2)행
         // 기존 데이터 로드
         headers.forEach((h, idx) => {
           existingData[h] = rows[i][idx] || '';
@@ -254,11 +256,13 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // 회의록 조회
-    const rows = await getRows(SHEET_NAMES.MEETING_MINUTES);
-    const headers = await getHeaders(SHEET_NAMES.MEETING_MINUTES);
+    // 회의록 조회 - getRows()는 헤더 미포함(A2:Z)
+    const [headers, rows] = await Promise.all([
+      getHeaders(SHEET_NAMES.MEETING_MINUTES),
+      getRows(SHEET_NAMES.MEETING_MINUTES),
+    ]);
 
-    if (rows.length <= 1) {
+    if (rows.length === 0) {
       return NextResponse.json(
         { success: false, error: '회의록을 찾을 수 없습니다.' },
         { status: 404 }
@@ -277,14 +281,14 @@ export async function DELETE(
       );
     }
 
-    // 해당 행 찾기
+    // 해당 행 찾기 - rows[0]은 시트 2행, rows[i]는 시트 (i+2)행
     let rowIndex = -1;
     let createdById = '';
     let projectId = '';
 
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
       if (rows[i][idIndex] === id) {
-        rowIndex = i + 1; // 1-indexed
+        rowIndex = i + 2; // rows[0]=시트2행, rows[i]=시트(i+2)행
         createdById = rows[i][createdByIdIndex] || '';
         projectId = rows[i][projectIdIndex] || '';
         break;

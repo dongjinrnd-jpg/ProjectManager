@@ -241,8 +241,8 @@ export default function MeetingMinutesSection({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {meetings.map((meeting) => (
-                <tr key={meeting.id} className="hover:bg-gray-50">
+              {meetings.map((meeting, index) => (
+                <tr key={`${meeting.id}-${index}`} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm">
                     <button
                       onClick={() => handleView(meeting.id)}

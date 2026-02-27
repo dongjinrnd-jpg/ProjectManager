@@ -48,16 +48,32 @@ interface SheetUser extends Record<string, unknown> {
 }
 
 /**
- * 새 회의록 ID 생성
+ * 새 회의록 ID 생성 - 기존 최대 ID 기반으로 중복 방지
  */
 async function generateMeetingMinutesId(): Promise<string> {
-  const rows = await getRows(SHEET_NAMES.MEETING_MINUTES);
+  // getRows()는 헤더 미포함(A2:Z), getHeaders()로 별도 조회
+  const [headers, rows] = await Promise.all([
+    getHeaders(SHEET_NAMES.MEETING_MINUTES),
+    getRows(SHEET_NAMES.MEETING_MINUTES),
+  ]);
+  const idIndex = headers.indexOf('id');
 
-  // 헤더 제외한 데이터 행 수
-  const count = rows.length > 0 ? rows.length - 1 : 0;
+  let maxNum = 0;
 
-  // MTG-001 형식으로 ID 생성
-  const nextNum = count + 1;
+  if (idIndex >= 0) {
+    for (let i = 0; i < rows.length; i++) {
+      const id = rows[i][idIndex];
+      if (id && id.startsWith('MTG-')) {
+        const num = parseInt(id.replace('MTG-', ''), 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    }
+  }
+
+  // 최대 ID + 1 로 새 ID 생성
+  const nextNum = maxNum + 1;
   return `MTG-${String(nextNum).padStart(3, '0')}`;
 }
 

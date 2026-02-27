@@ -3,7 +3,7 @@ type: tracking
 doc_type: Progress
 status: In Progress
 created: 2026-01-29
-updated: 2026-02-23
+updated: 2026-02-27
 ---
 
   
@@ -699,50 +699,58 @@ updated: 2026-02-23
   - [x] 설정 저장 버튼: 개발 단계/시스템 옵션 탭에서만 표시 ✅
   - [x] 데이터 관리 탭에 마스터 데이터 초기화 버튼 ✅
 
-#### 3.10 개선요청 게시판 (PRD 3.16) 🆕 기획 완료 (2026-02-23)
+#### 3.10 개선요청 게시판 (PRD 3.16) ✅ 완료 (2026-02-27)
 > **상세 기획:** [Feature_ImprovementBoard.md](../01-planning/Feature_ImprovementBoard.md)
 
-- [ ] **Google Sheets 시트 생성**
-  - [ ] Improvements 시트 (개선요청 본문)
-  - [ ] ImprovementHistories 시트 (처리 이력)
-  - [ ] ImprovementComments 시트 (댓글)
-- [ ] **타입 정의** (src/types/improvement.ts)
-  - [ ] Improvement, ImprovementHistory, ImprovementComment 타입
-  - [ ] CreateImprovementInput, UpdateImprovementInput 타입
-- [ ] **API Routes 구현**
-  - [ ] GET /api/improvements - 목록 조회
-  - [ ] GET /api/improvements/[id] - 상세 조회
-  - [ ] POST /api/improvements - 등록
-  - [ ] PUT /api/improvements/[id] - 수정
-  - [ ] DELETE /api/improvements/[id] - 삭제
-  - [ ] PATCH /api/improvements/[id]/status - 상태 변경 (sysadmin)
-  - [ ] GET /api/improvements/[id]/comments - 댓글 목록
-  - [ ] POST /api/improvements/[id]/comments - 댓글 등록
-  - [ ] DELETE /api/improvements/[id]/comments/[commentId] - 댓글 삭제
-- [ ] **페이지 구현**
-  - [ ] 목록 페이지 (/improvements)
-  - [ ] 등록/수정 페이지 (/improvements/new, /improvements/[id]/edit)
-  - [ ] 상세 페이지 (/improvements/[id])
-- [ ] **UI 기능**
-  - [ ] 필터 (상태/유형/우선순위)
-  - [ ] 검색 (제목/내용 키워드)
-  - [ ] 상태 배지 색상 (접수/검토중/진행중/완료/보류/반려)
-  - [ ] 유형 아이콘 (버그/개선요청/기능추가/기타)
-  - [ ] 우선순위 표시 (긴급/높음/보통/낮음)
-- [ ] **관리자 기능 (sysadmin)**
-  - [ ] 상태 변경 + 처리 메모
-  - [ ] 처리 이력 표시
-  - [ ] 우선순위/처리예정일 설정
-- [ ] **댓글 기능**
-  - [ ] 댓글 목록 표시
-  - [ ] 댓글 작성/삭제
-- [ ] **권한 체크**
-  - [ ] 조회: engineer, admin, sysadmin
-  - [ ] 작성: engineer, admin, sysadmin
-  - [ ] 수정/삭제: 작성자, sysadmin
-  - [ ] 상태 변경: sysadmin
-- [ ] **Sidebar 메뉴 추가**
-  - [ ] 📋 개선요청 메뉴 (engineer, admin, sysadmin만 표시)
+- [x] **Google Sheets 시트 생성** ✅
+  - [x] Improvements 시트 (개선요청 본문) ✅
+  - [x] ImprovementHistories 시트 (처리 이력) ✅
+  - [x] ImprovementComments 시트 (댓글) ✅
+- [x] **타입 정의** (src/types/improvement.ts) ✅
+  - [x] Improvement, ImprovementHistory, ImprovementComment 타입 ✅
+  - [x] CreateImprovementInput, UpdateImprovementInput 타입 ✅
+- [x] **API Routes 구현** ✅
+  - [x] GET /api/improvements - 목록 조회 ✅
+  - [x] GET /api/improvements/[id] - 상세 조회 ✅
+  - [x] POST /api/improvements - 등록 ✅
+  - [x] PUT /api/improvements/[id] - 수정 ✅
+  - [x] DELETE /api/improvements/[id] - 삭제 ✅
+  - [x] PATCH /api/improvements/[id]/status - 상태 변경 (sysadmin) ✅
+  - [x] GET /api/improvements/[id]/comments - 댓글 목록 ✅
+  - [x] POST /api/improvements/[id]/comments - 댓글 등록 ✅
+  - [x] DELETE /api/improvements/[id]/comments/[commentId] - 댓글 삭제 ✅
+- [x] **페이지 구현** ✅
+  - [x] 목록 페이지 (/improvements) ✅
+  - [x] 등록/수정 페이지 (/improvements/new, /improvements/[id]/edit) ✅
+  - [x] 상세 페이지 (/improvements/[id]) ✅
+- [x] **UI 기능** ✅
+  - [x] 필터 (상태/유형/우선순위) ✅
+  - [x] 검색 (제목/내용 키워드) ✅
+  - [x] 상태 배지 색상 (접수/검토중/진행중/완료/보류/반려) ✅
+  - [x] 유형 아이콘 (버그/개선요청/기능추가/기타) ✅
+  - [x] 우선순위 표시 (긴급/높음/보통/낮음) ✅
+- [x] **관리자 기능 (sysadmin)** ✅
+  - [x] 상태 변경 + 처리 메모 ✅
+  - [x] 처리 이력 표시 ✅
+  - [x] 우선순위/처리예정일 설정 ✅
+- [x] **댓글 기능** ✅
+  - [x] 댓글 목록 표시 ✅
+  - [x] 댓글 작성/삭제 ✅
+- [x] **권한 체크** ✅
+  - [x] 조회: engineer, admin, sysadmin ✅
+  - [x] 작성: engineer, admin, sysadmin ✅
+  - [x] 수정/삭제: 작성자, sysadmin ✅
+  - [x] 상태 변경: sysadmin ✅
+- [x] **Sidebar 메뉴 추가** ✅
+  - [x] 📋 개선요청 메뉴 (engineer, admin, sysadmin만 표시) ✅
+
+#### 3.11 사용자 매뉴얼 페이지 ✅ 완료 (2026-02-27)
+- [x] **매뉴얼 페이지** (/manual) ✅
+  - [x] ManualClient 컴포넌트 (HTML 기반 UI) ✅
+  - [x] 매뉴얼 API (/api/manual) ✅
+  - [x] 권한별 맞춤 매뉴얼 콘텐츠 (admin, engineer, executive, sysadmin, user) ✅
+- [x] **Sidebar 메뉴 추가** ✅
+  - [x] 📖 매뉴얼 메뉴 (모든 권한 접근 가능) ✅
 
 ---
 

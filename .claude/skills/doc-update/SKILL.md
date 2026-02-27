@@ -20,6 +20,8 @@ description: 문서 업데이트 - PRD, PROGRESS, Roadmap 문서를 현재 구�
 - PROGRESS.md는 PRD 항목을 더 세부적으로 나눠서 추적
 - Roadmap.md는 UI 화면 단위로 구현 완료 표시
 
+> **참고:** 개선요청 관리(BACKLOG.md, CHANGELOG.md)는 `/backlog` 스킬을 사용하세요.
+
 ## 대상 문서
 
 @docs/01-planning/PRD.md
@@ -60,6 +62,8 @@ PRD.md의 체크박스 항목을 기준으로:
 - 실제 UI와 다른 와이어프레임 수정
 - Phase 마일스톤 체크박스 업데이트
 - `updated` 타임스탬프 갱신
+
+> **BACKLOG/CHANGELOG 업데이트가 필요하면** `/backlog` 스킬을 사용하세요.
 
 ---
 
@@ -137,6 +141,7 @@ updated: 2026-02-06T16:00
    - 기능 변경 시: 세부 내용 추가/수정
 5. **날짜 정확성**: 완료일은 실제 구현된 날짜로 기록
 6. **와이어프레임 일치**: Roadmap.md의 와이어프레임이 실제 UI와 다르면 수정
+7. **개선요청은 `/backlog`**: BACKLOG.md, CHANGELOG.md 관리는 `/backlog` 스킬 담당
 
 ## 문서 구조 예시
 
