@@ -27,6 +27,7 @@ interface SheetSchedule extends Record<string, unknown> {
   taskName: string;
   category: string;
   responsibility: string;
+  assigneeId: string;
   plannedStart: string;
   plannedEnd: string;
   actualStart: string;
@@ -111,6 +112,7 @@ export async function GET(request: NextRequest) {
       taskName: s.taskName,
       category: s.category as ProjectSchedule['category'],
       responsibility: s.responsibility as ProjectSchedule['responsibility'],
+      assigneeId: s.assigneeId || undefined,
       plannedStart: s.plannedStart,
       plannedEnd: s.plannedEnd,
       actualStart: s.actualStart || undefined,
@@ -188,6 +190,7 @@ export async function POST(request: NextRequest) {
       taskName: body.taskName,
       category: body.category || '',
       responsibility: body.responsibility || '',
+      assigneeId: body.assigneeId || '',
       plannedStart: body.plannedStart,
       plannedEnd: body.plannedEnd,
       actualStart: '',
@@ -212,6 +215,7 @@ export async function POST(request: NextRequest) {
       taskName: newSchedule.taskName,
       category: newSchedule.category as ProjectSchedule['category'] || undefined,
       responsibility: newSchedule.responsibility as ProjectSchedule['responsibility'] || undefined,
+      assigneeId: newSchedule.assigneeId || undefined,
       plannedStart: newSchedule.plannedStart,
       plannedEnd: newSchedule.plannedEnd,
       status: 'planned',

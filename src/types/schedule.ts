@@ -34,6 +34,8 @@ export interface ProjectSchedule {
   category?: ScheduleCategory;
   /** 주관/협조 */
   responsibility?: Responsibility;
+  /** 담당자 ID (FK → Users.id) */
+  assigneeId?: string;
   /** 계획 시작일 (YYYY-MM-DD) */
   plannedStart: string;
   /** 계획 종료일 (YYYY-MM-DD) */
@@ -59,6 +61,7 @@ export interface CreateScheduleInput {
   taskName: string;
   category?: ScheduleCategory;
   responsibility?: Responsibility;
+  assigneeId?: string;
   plannedStart: string;
   plannedEnd: string;
   note?: string;
@@ -72,6 +75,7 @@ export interface UpdateScheduleInput {
   taskName?: string;
   category?: ScheduleCategory;
   responsibility?: Responsibility;
+  assigneeId?: string;
   plannedStart?: string;
   plannedEnd?: string;
   actualStart?: string;

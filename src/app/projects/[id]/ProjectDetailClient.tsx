@@ -115,6 +115,7 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
     actualStart: '',
     actualEnd: '',
     responsibility: '' as 'lead' | 'support' | '',
+    assigneeId: '',
     category: '' as '영업' | '생산' | '구매' | '품질' | '설계' | '',
     status: 'planned' as 'planned' | 'in_progress' | 'completed' | 'delayed',
     note: '',
@@ -343,6 +344,7 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
       actualStart: '',
       actualEnd: '',
       responsibility: '',
+      assigneeId: '',
       category: '',
       status: 'planned',
       note: '',
@@ -361,6 +363,7 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
       actualStart: schedule.actualStart || '',
       actualEnd: schedule.actualEnd || '',
       responsibility: schedule.responsibility || '',
+      assigneeId: schedule.assigneeId || '',
       category: schedule.category || '',
       status: schedule.status,
       note: schedule.note || '',
@@ -391,6 +394,7 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
             actualStart: scheduleForm.actualStart || undefined,
             actualEnd: scheduleForm.actualEnd || undefined,
             responsibility: scheduleForm.responsibility || undefined,
+            assigneeId: scheduleForm.assigneeId || undefined,
             category: scheduleForm.category || undefined,
             status: scheduleForm.status,
             note: scheduleForm.note || undefined,
@@ -402,6 +406,7 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
             plannedStart: scheduleForm.plannedStart,
             plannedEnd: scheduleForm.plannedEnd,
             responsibility: scheduleForm.responsibility || undefined,
+            assigneeId: scheduleForm.assigneeId || undefined,
             category: scheduleForm.category || undefined,
             note: scheduleForm.note || undefined,
           };
@@ -1303,6 +1308,9 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
                           구분
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          담당자
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           상태
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1336,6 +1344,9 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {schedule.responsibility === 'lead' ? '주관' : schedule.responsibility === 'support' ? '협조' : '-'}
                             {schedule.category && ` (${schedule.category})`}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {schedule.assigneeId ? getUserName(schedule.assigneeId) : '-'}
                           </td>
                           <td className="px-4 py-3">
                             <span
@@ -1672,6 +1683,35 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
                   </div>
                 </div>
               )}
+
+              {/* 담당자 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  담당자
+                </label>
+                <select
+                  value={scheduleForm.assigneeId}
+                  onChange={(e) => setScheduleForm({ ...scheduleForm, assigneeId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                >
+                  <option value="">선택하세요</option>
+                  {project && (() => {
+                    const memberIds = new Set<string>();
+                    if (project.teamLeaderId) memberIds.add(project.teamLeaderId);
+                    if (project.teamMembers) {
+                      project.teamMembers.split(',').forEach(id => memberIds.add(id.trim()));
+                    }
+                    return Array.from(memberIds).map(memberId => {
+                      const user = users.find(u => u.id === memberId);
+                      return user ? (
+                        <option key={user.id} value={user.id}>
+                          {user.name} ({user.id})
+                        </option>
+                      ) : null;
+                    });
+                  })()}
+                </select>
+              </div>
 
               {/* 업무 구분 */}
               <div>

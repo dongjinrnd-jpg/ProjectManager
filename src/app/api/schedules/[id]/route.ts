@@ -28,6 +28,7 @@ interface SheetSchedule extends Record<string, unknown> {
   taskName: string;
   category: string;
   responsibility: string;
+  assigneeId: string;
   plannedStart: string;
   plannedEnd: string;
   actualStart: string;
@@ -84,6 +85,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       taskName: s.taskName,
       category: s.category as ProjectSchedule['category'] || undefined,
       responsibility: s.responsibility as ProjectSchedule['responsibility'] || undefined,
+      assigneeId: s.assigneeId || undefined,
       plannedStart: s.plannedStart,
       plannedEnd: s.plannedEnd,
       actualStart: s.actualStart || undefined,
@@ -172,6 +174,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       taskName: body.taskName ?? existingSchedule.taskName,
       category: body.category ?? existingSchedule.category,
       responsibility: body.responsibility ?? existingSchedule.responsibility,
+      assigneeId: body.assigneeId ?? existingSchedule.assigneeId,
       plannedStart: body.plannedStart ?? existingSchedule.plannedStart,
       plannedEnd: body.plannedEnd ?? existingSchedule.plannedEnd,
       actualStart: body.actualStart ?? existingSchedule.actualStart,
@@ -195,6 +198,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       taskName: updatedSchedule.taskName,
       category: updatedSchedule.category as ProjectSchedule['category'] || undefined,
       responsibility: updatedSchedule.responsibility as ProjectSchedule['responsibility'] || undefined,
+      assigneeId: updatedSchedule.assigneeId || undefined,
       plannedStart: updatedSchedule.plannedStart,
       plannedEnd: updatedSchedule.plannedEnd,
       actualStart: updatedSchedule.actualStart || undefined,
