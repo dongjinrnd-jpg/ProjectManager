@@ -3,7 +3,7 @@ type: tracking
 doc_type: Progress
 status: In Progress
 created: 2026-01-29
-updated: 2026-02-27
+updated: 2026-03-06
 ---
 
   
@@ -372,6 +372,7 @@ updated: 2026-02-27
   - [x] 업무 구분 (라디오: 주관/협조) ✅
 - [x] **선택 입력 항목:** ✅
   - [x] 관련 부문 (드롭다운: 영업/생산/구매/품질/설계) ✅
+  - [x] 담당자 (드롭다운: 프로젝트 팀원 중 선택) ✅ (2026-02-27)
   - [x] 비고 (텍스트) ✅
 - [x] 저장/취소 버튼 ✅
 
@@ -398,7 +399,7 @@ updated: 2026-02-27
 ##### 2.4.4 개별 일정표 탭 UI (Roadmap 2.8) ✅
 - [x] 📅 일정 탭 추가 (ProjectDetailClient.tsx) ✅
 - [x] **테이블 뷰 구현:** ✅
-  - [x] 단계 | 항목명 | 계획 | 실적 | 구분 | 상태 | 관리 컬럼 ✅
+  - [x] 단계 | 항목명 | 계획 | 실적 | 구분 | 담당자 | 상태 | 관리 컬럼 ✅ (2026-02-27 담당자 추가)
   - [x] 상태별 색상 배지 (예정/진행중/완료/지연) ✅
 - [x] **간트차트 뷰 구현:** ✅
   - [x] gantt-task-react 라이브러리 설치 ✅
@@ -406,6 +407,10 @@ updated: 2026-02-27
   - [x] 뷰 모드 토글 (일/주/월) ✅
   - [x] 상태별 색상 (예정-회색, 진행중-파랑, 완료-초록, 지연-빨강) ✅
   - [x] 범례 표시 ✅
+  - [x] 좌측 단계/항목명 컬럼 표시 ✅ (2026-02-27)
+- [x] **자동정렬:** ✅ (2026-02-27)
+  - [x] 단계 진행순 → 계획시작일순 → 등록순 자동 정렬 ✅
+  - [x] detail API, schedules API 동일 정렬 적용 ✅
 - [x] **UI 기능:** ✅
   - [x] [+ 항목 추가] 버튼 → 등록 모달 ✅
   - [x] 항목 클릭 → 수정 모달 ✅
@@ -496,6 +501,7 @@ updated: 2026-02-27
   - [x] POST - 공지사항 생성/수정 (관리자) ✅
 - [x] **주간 보고 등록 폼** (/weekly-reports/new) ✅
   - [x] 주차 선택 (자동 계산: YYYY년 MM월 W주차) ✅
+  - [x] 주차 기간 계산 버그 수정 ✅ (2026-03-06)
   - [x] 구분 선택 (농기/중공업/해외/기타) ✅
   - [x] 고객사/ITEM 입력 ✅
   - [x] 주요 추진 실적 및 계획 (텍스트) ✅
@@ -743,6 +749,28 @@ updated: 2026-02-27
   - [x] 상태 변경: sysadmin ✅
 - [x] **Sidebar 메뉴 추가** ✅
   - [x] 📋 개선요청 메뉴 (engineer, admin, sysadmin만 표시) ✅
+
+#### 3.12 업무일지 댓글 기능 (PRD 3.2) 🚀 진행 중
+- [ ] **WorklogComments 시트 생성**
+  - [ ] Google Sheets에 WorklogComments 시트 수동 생성
+  - [ ] 헤더: id, worklogId, authorId, authorName, parentId, content, createdAt
+- [x] **타입 정의** (src/types/worklogComment.ts) ✅ (2026-03-06)
+  - [x] WorklogComment, CreateWorklogCommentInput, WorklogCommentThread ✅
+  - [x] SHEET_NAMES에 WORKLOG_COMMENTS 추가 ✅
+- [x] **API Routes** ✅ (2026-03-06)
+  - [x] GET /api/worklogs/[id]/comments - 스레드 구조 댓글 목록 조회 ✅
+  - [x] POST /api/worklogs/[id]/comments - 댓글 작성 (engineer/admin/sysadmin) ✅
+  - [x] DELETE /api/worklogs/[id]/comments/[commentId] - 삭제 (작성자 본인만, 대댓글 있으면 삭제 불가) ✅
+  - [x] GET /api/worklogs/comments/counts - 배치 댓글 수 조회 ✅
+  - [x] 댓글 존재 시 업무일지 삭제 불가 (DELETE /api/worklogs/[id]) ✅
+- [x] **UI 컴포넌트** (src/components/worklogs/WorklogDetailModal.tsx) ✅ (2026-03-06)
+  - [x] 업무일지 상세 + 댓글 모달 ✅
+  - [x] 스레드 표시 (부모 댓글 + 답글) ✅
+  - [x] 댓글 작성/답글/삭제 UI ✅
+- [x] **ProjectDetailClient 통합** ✅ (2026-03-06)
+  - [x] 업무일지 카드에 댓글 수 배지 (💬 N) ✅
+  - [x] "상세 →" 클릭 시 모달 표시 (페이지 이동 대신) ✅
+  - [x] 댓글 수 일괄 조회 연동 ✅
 
 #### 3.11 사용자 매뉴얼 페이지 ✅ 완료 (2026-02-27)
 - [x] **매뉴얼 페이지** (/manual) ✅

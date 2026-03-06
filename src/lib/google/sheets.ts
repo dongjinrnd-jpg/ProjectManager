@@ -40,6 +40,8 @@ export const SHEET_NAMES = {
   IMPROVEMENTS: 'Improvements',
   IMPROVEMENT_HISTORIES: 'ImprovementHistories',
   IMPROVEMENT_COMMENTS: 'ImprovementComments',
+  // 업무일지 댓글
+  WORKLOG_COMMENTS: 'WorklogComments',
 } as const;
 
 export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES];

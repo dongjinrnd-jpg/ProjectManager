@@ -15,6 +15,7 @@ import {
   deleteRow,
   getHeaders,
   objectToRow,
+  getAllAsObjects,
   SHEET_NAMES,
 } from '@/lib/google';
 import { getSession } from '@/lib/auth';
@@ -385,6 +386,25 @@ export async function DELETE(
         { success: false, error: '본인이 작성한 업무일지만 삭제할 수 있습니다.' },
         { status: 403 }
       );
+    }
+
+    // 댓글이 존재하면 삭제 불가
+    try {
+      const allComments = await getAllAsObjects<{ id: string; worklogId: string }>(
+        SHEET_NAMES.WORKLOG_COMMENTS
+      );
+      const commentCount = allComments.filter((c) => c.worklogId === id).length;
+      if (commentCount > 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `댓글이 ${commentCount}건 존재하여 삭제할 수 없습니다. 댓글을 먼저 삭제해주세요.`,
+          },
+          { status: 400 }
+        );
+      }
+    } catch {
+      // WorklogComments 시트가 없는 경우 무시 (댓글 없음)
     }
 
     // 시트에서 삭제

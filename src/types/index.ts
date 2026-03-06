@@ -13,6 +13,9 @@ export * from './project';
 // 업무일지 관련
 export * from './worklog';
 
+// 업무일지 댓글 관련
+export * from './worklogComment';
+
 // 주간 보고 관련
 export * from './weeklyReport';
 

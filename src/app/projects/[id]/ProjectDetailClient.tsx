@@ -20,6 +20,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import GanttChart from '@/components/schedules/GanttChart';
 import ExecutiveCommentsSection from '@/components/projects/ExecutiveCommentsSection';
 import { MeetingMinutesSection } from '@/components/meeting-minutes';
+import WorklogDetailModal from '@/components/worklogs/WorklogDetailModal';
 
 // 사용자 목록 캐시 (페이지 간 공유, 5분 유효)
 let usersCache: { data: User[]; timestamp: number } | null = null;
@@ -70,6 +71,10 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
   const [schedules, setSchedules] = useState<ProjectSchedule[]>([]);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
   const [scheduleViewMode, setScheduleViewMode] = useState<'table' | 'gantt'>('table');
+
+  // 업무일지 상세+댓글 모달
+  const [selectedWorklog, setSelectedWorklog] = useState<WorkLog | null>(null);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
   // 날짜 필터 (기본: 최근 1주일)
   const getDefaultStartDate = () => {
@@ -205,6 +210,22 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
     }
   }, [projectId, startDate, endDate]);
 
+  // 댓글 수 일괄 조회
+  const fetchCommentCounts = useCallback(async (worklogIds: string[]) => {
+    if (worklogIds.length === 0) return;
+    try {
+      const response = await fetch(
+        `/api/worklogs/comments/counts?worklogIds=${worklogIds.join(',')}`
+      );
+      const data = await response.json();
+      if (data.success) {
+        setCommentCounts(data.data);
+      }
+    } catch (err) {
+      console.error('댓글 수 조회 오류:', err);
+    }
+  }, []);
+
   // 세부추진항목 재조회
   const fetchSchedules = useCallback(async () => {
     try {
@@ -251,6 +272,19 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
           setSchedules(schedulesData);
           setIsFavorite(favStatus);
           setError(null);
+
+          // 댓글 수 일괄 조회
+          const allWorklogIds = worklogsData.map((w: WorkLog) => w.id);
+          if (allWorklogIds.length > 0) {
+            fetch(`/api/worklogs/comments/counts?worklogIds=${allWorklogIds.join(',')}`)
+              .then(res => res.json())
+              .then(countData => {
+                if (isMounted && countData.success) {
+                  setCommentCounts(countData.data);
+                }
+              })
+              .catch(() => {});
+          }
         } else {
           setError(data.error || '프로젝트를 불러올 수 없습니다.');
         }
@@ -1079,12 +1113,19 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
                             </span>
                           )}
                         </div>
-                        <Link
-                          href={`/worklogs/${worklog.id}/edit`}
-                          className="text-xs text-brand-orange hover:underline"
-                        >
-                          상세 →
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          {(commentCounts[worklog.id] ?? 0) > 0 && (
+                            <span className="text-xs text-gray-500">
+                              💬 {commentCounts[worklog.id]}
+                            </span>
+                          )}
+                          <button
+                            onClick={() => setSelectedWorklog(worklog)}
+                            className="text-xs text-brand-orange hover:underline"
+                          >
+                            상세 →
+                          </button>
+                        </div>
                       </div>
                       {/* 계획 & 업무내용 2열 레이아웃 (4:6 비율) */}
                       <div className="grid grid-cols-[2fr_3fr] gap-4">
@@ -1816,6 +1857,18 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
             </div>
           </div>
         </div>
+      )}
+      {/* 업무일지 상세+댓글 모달 */}
+      {selectedWorklog && (
+        <WorklogDetailModal
+          worklog={selectedWorklog}
+          assigneeName={getUserName(selectedWorklog.assigneeId)}
+          scheduleName={getScheduleName(selectedWorklog.scheduleId) || undefined}
+          onClose={() => setSelectedWorklog(null)}
+          onCommentCountChange={(worklogId, count) => {
+            setCommentCounts(prev => ({ ...prev, [worklogId]: count }));
+          }}
+        />
       )}
     </AppLayout>
   );

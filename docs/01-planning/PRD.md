@@ -11,7 +11,7 @@ tags:
   - prd
   - codex-context
 created: 2026-01-23
-updated: 2026-02-27
+updated: 2026-03-06
 ---
 
 # PRD: 연구개발 프로젝트 관리 시스템
@@ -355,10 +355,21 @@ updated: 2026-02-27
   - 검색 및 필터링 (날짜, 프로젝트, 작성자)
   - **모든 직원이 전체 업무일지 검색/열람 가능**
   - 수정/삭제는 본인 작성 건만 가능
+  - **댓글이 존재하는 업무일지는 삭제 불가** (댓글 먼저 삭제 필요)
 - [x] **업무일지 작성 화면 (Roadmap 2.12):** ✅
   - 전체 페이지 형식 (/worklogs/new, /worklogs/[id]/edit)
   - Header + Sidebar 레이아웃
   - [ ] 첨부파일은 Phase 3에서 구현
+- [ ] **업무일지 댓글 기능:**
+  - 업무일지별 댓글 작성/조회/삭제
+  - 스레드(답글) 지원: 부모 댓글 + 답글 형식
+  - **권한:**
+    - 작성: engineer, admin, sysadmin
+    - 조회: 모든 로그인 사용자
+    - 삭제: 작성자 본인만 (대댓글이 있는 부모 댓글은 삭제 불가)
+  - **표시 위치:** 프로젝트 상세 → 업무진행사항 탭 → 업무일지 카드에 댓글 수 배지 표시
+  - 업무일지 카드 클릭 시 상세+댓글 모달 표시
+  - Google Sheets WorklogComments 시트에 저장
 
 ### 3.3 일정 관리 (Priority: HIGH)
 - [ ] **전체 일정 (대일정):**
@@ -371,6 +382,7 @@ updated: 2026-02-27
     - [x] 계획 시작일 / 종료일 * ✅
     - [x] 업무 구분: 주관 / 협조 * ✅
     - [x] 관련 부문 (영업/생산/구매/품질/설계) ✅
+    - [x] 담당자 (프로젝트 팀원 중 선택) ✅ (2026-02-27)
     - [x] 비고 ✅
   - [x] **실적 입력 방식 (둘 다 지원):** ✅
     - [x] 직접 수동 입력: 실적 시작일 / 종료일 ✅
@@ -392,6 +404,9 @@ updated: 2026-02-27
     - 주황색: 진행중
     - 회색: 예정
     - 빨간색: 지연
+  - [x] **세부추진항목 자동정렬:** ✅ (2026-02-27)
+    - [x] 단계 진행순 → 계획시작일순 → 등록순 정렬 ✅
+    - [x] 간트차트 좌측에 단계/항목명 컬럼 표시 ✅
 - [ ] 마일스톤 설정 (주요 일정 표시)
 - [ ] 일정 변경 이력 관리
 - [x] **간트차트 드릴다운 (기간별 진행현황 조회):** ✅ (2026-02-09)
@@ -858,6 +873,7 @@ updated: 2026-02-27
   taskName: string                    // 세부추진항목명
   category: string                    // 관련부문 (영업/생산/구매/품질/설계)
   responsibility: 'lead' | 'support'  // 주관/협조
+  assigneeId: string | null           // 담당자 ID (프로젝트 팀원 중 선택)
   plannedStart: string                // 계획 시작일
   plannedEnd: string                  // 계획 종료일
   actualStart: string | null          // 실적 시작일
@@ -933,6 +949,19 @@ updated: 2026-02-27
   name: string                        // 구분명 (농기, 중공업, 해외, 기타)
   order: number                       // 표시 순서
   isActive: boolean                   // 활성화 여부
+}
+```
+
+### 4.12 WorklogComment (업무일지 댓글)
+```typescript
+{
+  id: string                          // WLC-00001 형식
+  worklogId: string                   // FK → WorkLogs.id
+  authorId: string                    // FK → Users.id
+  authorName: string                  // 비정규화 (작성자명)
+  parentId: string | null             // FK → self (답글 시 부모 댓글 ID)
+  content: string                     // 댓글 내용
+  createdAt: string                   // ISO 8601 타임스탬프
 }
 ```
 
