@@ -15,38 +15,10 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import type { WeeklyReport, Project } from '@/types';
 import WorklogImportModal from './WorklogImportModal';
+import { getWeekOfMonth, getWeekRange, getTotalWeeksInMonth, formatDate } from '@/lib/weekUtils';
 
 // 구분 옵션
 const CATEGORY_OPTIONS = ['농기', '중공업', '해외', '기타'];
-
-// 주차 계산 헬퍼
-function getWeekOfMonth(date: Date): number {
-  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  const dayOfWeek = firstDay.getDay();
-  const adjustedDate = date.getDate() + dayOfWeek;
-  return Math.ceil(adjustedDate / 7);
-}
-
-function getWeekRange(year: number, month: number, week: number): { start: Date; end: Date } {
-  const firstDayOfMonth = new Date(year, month - 1, 1);
-  const dayOfWeek = firstDayOfMonth.getDay();
-
-  const firstMonday = new Date(firstDayOfMonth);
-  const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
-  firstMonday.setDate(firstDayOfMonth.getDate() + daysUntilMonday - (dayOfWeek === 1 ? 0 : 7));
-
-  const start = new Date(firstMonday);
-  start.setDate(firstMonday.getDate() + (week - 1) * 7);
-
-  const end = new Date(start);
-  end.setDate(start.getDate() + 4);
-
-  return { start, end };
-}
-
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
 
 interface WeeklyReportFormClientProps {
   editMode?: boolean;
@@ -225,8 +197,7 @@ export default function WeeklyReportFormClient({
 
   // 주차 옵션 생성 (해당 월의 주차)
   const getWeekOptions = () => {
-    const lastDayOfMonth = new Date(formData.year, formData.month, 0);
-    const maxWeek = getWeekOfMonth(lastDayOfMonth);
+    const maxWeek = getTotalWeeksInMonth(formData.year, formData.month);
     return Array.from({ length: maxWeek }, (_, i) => i + 1);
   };
 
