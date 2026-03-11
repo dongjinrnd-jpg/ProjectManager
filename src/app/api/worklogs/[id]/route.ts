@@ -49,6 +49,7 @@ interface SheetProject extends Record<string, unknown> {
   issues: string;
   currentStage: ProjectStage;
   teamLeaderId: string;
+  teamMembers: string;
 }
 
 // 시트에서 가져온 세부추진항목 타입
