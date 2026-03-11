@@ -18,8 +18,8 @@ import {
   getAllAsObjects,
   SHEET_NAMES,
 } from '@/lib/google';
-import { getSession } from '@/lib/auth';
-import type { WorkLog, UpdateWorkLogInput, ProjectStage } from '@/types';
+import { getSession, isAdmin } from '@/lib/auth';
+import type { WorkLog, UpdateWorkLogInput, ProjectStage, UserRole } from '@/types';
 
 // 시트에서 가져온 업무일지 타입
 interface SheetWorkLog extends Record<string, unknown> {
@@ -110,6 +110,39 @@ async function updateScheduleActualDates(
 
   const rowValues = objectToRow(headers, updatedSchedule);
   await updateRow(SHEET_NAMES.PROJECT_SCHEDULES, rowIndex, rowValues);
+}
+
+/**
+ * 프로젝트 팀원 + 관리자 이상 권한 확인
+ * - 본인(작성자)이면 true
+ * - 관리자(admin/sysadmin)이면서 해당 프로젝트 팀원(팀장 포함)이면 true
+ */
+async function canEditWorklog(
+  worklog: SheetWorkLog,
+  userId: string,
+  userRole: UserRole
+): Promise<boolean> {
+  // 본인 작성 건은 항상 수정 가능
+  if (worklog.assigneeId === userId) return true;
+
+  // 관리자 이상이면서 해당 프로젝트 팀원인지 확인
+  if (isAdmin(userRole)) {
+    const projectResult = await findRowByColumn<SheetProject>(
+      SHEET_NAMES.PROJECTS,
+      'id',
+      worklog.projectId
+    );
+    if (projectResult) {
+      const project = projectResult.data;
+      const isTeamLeader = project.teamLeaderId === userId;
+      const isTeamMember = project.teamMembers
+        ? project.teamMembers.split(',').map(id => id.trim()).includes(userId)
+        : false;
+      if (isTeamLeader || isTeamMember) return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -239,10 +272,15 @@ export async function PUT(
 
     const { rowIndex, data: existingWorkLog } = result;
 
-    // 권한 확인 (본인만 수정 가능)
-    if (existingWorkLog.assigneeId !== session.user.id) {
+    // 권한 확인 (본인 또는 관리자 이상 팀원)
+    const canEdit = await canEditWorklog(
+      existingWorkLog,
+      session.user.id,
+      session.user.role as UserRole
+    );
+    if (!canEdit) {
       return NextResponse.json(
-        { success: false, error: '본인이 작성한 업무일지만 수정할 수 있습니다.' },
+        { success: false, error: '수정 권한이 없습니다. 본인 작성 건이거나 관리자 이상의 팀원만 수정할 수 있습니다.' },
         { status: 403 }
       );
     }
@@ -380,10 +418,15 @@ export async function DELETE(
 
     const { rowIndex, data: existingWorkLog } = result;
 
-    // 권한 확인 (본인만 삭제 가능)
-    if (existingWorkLog.assigneeId !== session.user.id) {
+    // 권한 확인 (본인 또는 관리자 이상 팀원)
+    const canDelete = await canEditWorklog(
+      existingWorkLog,
+      session.user.id,
+      session.user.role as UserRole
+    );
+    if (!canDelete) {
       return NextResponse.json(
-        { success: false, error: '본인이 작성한 업무일지만 삭제할 수 있습니다.' },
+        { success: false, error: '삭제 권한이 없습니다. 본인 작성 건이거나 관리자 이상의 팀원만 삭제할 수 있습니다.' },
         { status: 403 }
       );
     }

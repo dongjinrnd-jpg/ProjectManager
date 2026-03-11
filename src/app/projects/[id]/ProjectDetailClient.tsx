@@ -1221,18 +1221,26 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
                                   </div>
                                   <p className="text-sm text-gray-700">{worklog.issue}</p>
                                 </div>
-                                {isResolved ? (
-                                  <span className="text-sm text-green-600 whitespace-nowrap ml-2 pr-[10px]">
-                                    ✅ 해결됨
-                                  </span>
-                                ) : (
-                                  <Link
-                                    href={`/worklogs/${worklog.id}/edit`}
-                                    className="text-sm font-bold text-red-600 hover:text-red-800 hover:underline whitespace-nowrap ml-2 pr-[10px]"
+                                <div className="flex items-center gap-2 whitespace-nowrap ml-2 pr-[10px]">
+                                  {isResolved ? (
+                                    <span className="text-sm text-green-600">
+                                      ✅ 해결됨
+                                    </span>
+                                  ) : (
+                                    <Link
+                                      href={`/worklogs/${worklog.id}/edit`}
+                                      className="text-sm font-bold text-red-600 hover:text-red-800 hover:underline"
+                                    >
+                                      [해결]
+                                    </Link>
+                                  )}
+                                  <button
+                                    onClick={() => setSelectedWorklog(worklog)}
+                                    className="text-xs text-brand-orange hover:underline"
                                   >
-                                    [해결]
-                                  </Link>
-                                )}
+                                    💬 댓글
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           );

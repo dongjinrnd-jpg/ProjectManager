@@ -138,12 +138,30 @@ export default function WorklogEditClient({ worklogId }: WorklogEditClientProps)
     fetchUsers();
   }, [fetchWorklog, fetchProjects, fetchUsers]);
 
-  // 본인 작성 건 확인
+  // 수정 권한 확인 (본인 또는 관리자 이상 팀원)
   useEffect(() => {
-    if (worklog && session?.user?.id && worklog.assigneeId !== session.user.id) {
-      setError('본인이 작성한 업무일지만 수정할 수 있습니다.');
+    if (!worklog || !session?.user?.id) return;
+    const userId = session.user.id;
+    const userRole = (session.user as { role?: string }).role;
+    const isAuthor = worklog.assigneeId === userId;
+    const isAdminRole = userRole === 'admin' || userRole === 'sysadmin';
+
+    if (isAuthor) return; // 본인은 항상 수정 가능
+
+    if (isAdminRole) {
+      // 관리자 이상이면 프로젝트 팀원 여부 확인
+      const project = projects.find(p => p.id === worklog.projectId);
+      if (project) {
+        const isTeamLeader = project.teamLeaderId === userId;
+        const isTeamMember = project.teamMembers
+          ? project.teamMembers.split(',').map(id => id.trim()).includes(userId)
+          : false;
+        if (isTeamLeader || isTeamMember) return; // 팀원이면 수정 가능
+      }
     }
-  }, [worklog, session]);
+
+    setError('수정 권한이 없습니다. 본인 작성 건이거나 관리자 이상의 팀원만 수정할 수 있습니다.');
+  }, [worklog, session, projects]);
 
   // 팀장 여부 확인
   const isTeamLeader = (projectId: string): boolean => {
