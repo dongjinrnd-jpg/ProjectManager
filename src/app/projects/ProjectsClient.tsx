@@ -115,6 +115,9 @@ export default function ProjectsClient() {
     }
   };
 
+  // 즐겨찾기 로드 완료 여부
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+
   // 프로젝트 목록 가져오기
   const fetchProjects = useCallback(async () => {
     try {
@@ -124,6 +127,17 @@ export default function ProjectsClient() {
       if (filterStatus) params.set('status', filterStatus);
       if (filterDivision) params.set('division', filterDivision);
       if (filterStage) params.set('stage', filterStage);
+
+      // 즐겨찾기 모드: 해당 프로젝트 ID만 서버에 요청
+      if (showFavoritesOnly && favoriteProjectIds.length > 0) {
+        params.set('ids', favoriteProjectIds.join(','));
+      } else if (showFavoritesOnly && favoriteProjectIds.length === 0) {
+        // 즐겨찾기가 없으면 빈 결과
+        setProjects([]);
+        setError(null);
+        setIsLoading(false);
+        return;
+      }
 
       const response = await fetch(`/api/projects?${params.toString()}`);
       const data = await response.json();
@@ -140,16 +154,19 @@ export default function ProjectsClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, filterStatus, filterDivision, filterStage]);
+  }, [searchQuery, filterStatus, filterDivision, filterStage, showFavoritesOnly, favoriteProjectIds]);
 
   useEffect(() => {
     fetchUsers();
-    fetchFavorites();
+    fetchFavorites().then(() => setFavoritesLoaded(true));
   }, [fetchUsers, fetchFavorites]);
 
+  // 즐겨찾기 로드 완료 후 프로젝트 조회 (즐겨찾기 ID가 필요하므로 순차 실행)
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    if (favoritesLoaded) {
+      fetchProjects();
+    }
+  }, [favoritesLoaded, fetchProjects]);
 
   // 사용자 이름 찾기
   const getUserName = (userId: string) => {
@@ -157,15 +174,10 @@ export default function ProjectsClient() {
     return user?.name || userId;
   };
 
-  // 즐겨찾기 필터 적용
-  const filteredProjects = showFavoritesOnly
-    ? projects.filter(p => favoriteProjectIds.includes(p.id))
-    : projects;
-
-  // 페이지네이션 계산
-  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  // 페이지네이션 계산 (서버에서 이미 필터링되어 옴)
+  const totalPages = Math.ceil(projects.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProjects = filteredProjects.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedProjects = projects.slice(startIndex, startIndex + itemsPerPage);
 
   // 페이지 변경 시 첫 페이지로 리셋 (필터 변경 시)
   useEffect(() => {
@@ -435,7 +447,7 @@ export default function ProjectsClient() {
       {/* 페이지네이션 */}
       <div className="mt-4 flex justify-between items-center">
         <div className="text-sm text-gray-500">
-          총 {filteredProjects.length}건 {showFavoritesOnly && `(즐겨찾기 필터 적용)`}
+          총 {projects.length}건 {showFavoritesOnly && `(즐겨찾기 필터 적용)`}
         </div>
         {totalPages > 1 && (
           <div className="flex items-center gap-1">

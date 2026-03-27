@@ -62,9 +62,18 @@ export async function GET(request: Request) {
     const division = searchParams.get('division') || '';
     const stage = searchParams.get('stage') as ProjectStage | null;
     const teamLeaderId = searchParams.get('teamLeaderId') || '';
+    const ids = searchParams.get('ids') || ''; // 즐겨찾기 등 특정 ID 목록
 
     // 서버사이드 필터링으로 조회
-    const filters: Array<{ column: string; op: 'eq' | 'ilike'; value: unknown }> = [];
+    const filters: Array<{ column: string; op: 'eq' | 'ilike' | 'in'; value: unknown }> = [];
+    if (ids) {
+      const idList = ids.split(',').filter(Boolean);
+      if (idList.length === 0) {
+        // 빈 ID 목록이면 빈 결과 반환
+        return NextResponse.json({ success: true, data: [], total: 0 });
+      }
+      filters.push({ column: 'id', op: 'in', value: idList });
+    }
     if (status) filters.push({ column: 'status', op: 'eq', value: status });
     if (division) filters.push({ column: 'division', op: 'eq', value: division });
     if (stage) filters.push({ column: 'currentStage', op: 'eq', value: stage });
