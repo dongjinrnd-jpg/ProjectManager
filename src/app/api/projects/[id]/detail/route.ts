@@ -17,9 +17,7 @@ import { NextResponse } from 'next/server';
 import {
   getAllAsObjects,
   findRowByColumn,
-  getRows,
-  getHeaders,
-  rowToObject,
+  query,
   SHEET_NAMES,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
@@ -51,7 +49,7 @@ interface SheetUser extends Record<string, unknown> {
   email: string;
   name: string;
   role: string;
-  isActive: string;
+  isActive: boolean | string;
 }
 
 interface SheetWorkLog extends Record<string, unknown> {
@@ -124,9 +122,6 @@ export async function GET(
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const oneWeekAgoStr = oneWeekAgo.toISOString().split('T')[0];
 
-    // 모든 데이터를 순차적으로 조회 (150ms 간격)
-    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
     // 1. 프로젝트 조회
     const projectResult = await findRowByColumn<SheetProject>(
       SHEET_NAMES.PROJECTS,
@@ -147,64 +142,75 @@ export async function GET(
       currentStage: projectResult.data.currentStage as ProjectStage,
     } as Project;
 
-    await delay(150);
+    // 2~5. 나머지 데이터 병렬 조회 (서버사이드 필터링)
+    const [usersData, recentWorklogs, allProjectWorklogs, schedulesData, favoriteResults] = await Promise.all([
+      // 사용자 목록
+      getAllAsObjects<SheetUser>(SHEET_NAMES.USERS),
+      // 최근 1주일 업무일지 (해당 프로젝트)
+      query<SheetWorkLog>(SHEET_NAMES.WORKLOGS, {
+        filters: [
+          { column: 'projectId', op: 'eq', value: projectId },
+          { column: 'date', op: 'gte', value: oneWeekAgoStr },
+        ],
+        orderBy: { column: 'date', ascending: false },
+      }),
+      // 이슈용 전체 업무일지 (해당 프로젝트, issue가 있는 것만은 JS에서 필터)
+      query<SheetWorkLog>(SHEET_NAMES.WORKLOGS, {
+        filters: [{ column: 'projectId', op: 'eq', value: projectId }],
+        orderBy: { column: 'date', ascending: false },
+      }),
+      // 세부추진항목 (해당 프로젝트)
+      query<SheetSchedule>(SHEET_NAMES.PROJECT_SCHEDULES, {
+        filters: [{ column: 'projectId', op: 'eq', value: projectId }],
+      }),
+      // 즐겨찾기 상태
+      query<SheetFavorite>(SHEET_NAMES.FAVORITES, {
+        filters: [
+          { column: 'userId', op: 'eq', value: userId },
+          { column: 'projectId', op: 'eq', value: projectId },
+        ],
+        limit: 1,
+      }),
+    ]);
 
-    // 2. 사용자 목록 조회
-    const usersData = await getAllAsObjects<SheetUser>(SHEET_NAMES.USERS);
+    // 사용자 목록 변환
     const users: User[] = usersData
-      .filter(u => u.isActive === 'TRUE')
+      .filter(u => u.isActive === true || u.isActive === 'TRUE')
       .map(u => ({
         ...u,
-        isActive: u.isActive === 'TRUE',
+        isActive: u.isActive === true || u.isActive === 'TRUE',
         role: u.role as User['role'],
       })) as User[];
 
-    await delay(150);
-
-    // 3. 업무일지 조회 (해당 프로젝트)
-    const worklogsData = await getAllAsObjects<SheetWorkLog>(SHEET_NAMES.WORKLOGS);
-    const projectWorklogs = worklogsData.filter(w => w.projectId === projectId);
-
-    // 최근 1주일 업무일지 (목록 표시용)
-    const worklogs: WorkLog[] = projectWorklogs
-      .filter(w => w.date >= oneWeekAgoStr)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .map(w => ({
-        ...w,
-        stage: w.stage as ProjectStage,
-        issueStatus: (w.issueStatus || 'none') as WorkLog['issueStatus'],
-      })) as WorkLog[];
+    // 최근 1주일 업무일지
+    const worklogs: WorkLog[] = recentWorklogs.map(w => ({
+      ...w,
+      stage: w.stage as ProjectStage,
+      issueStatus: (w.issueStatus || 'none') as WorkLog['issueStatus'],
+    })) as WorkLog[];
 
     // 이슈사항 (전체 기간에서 이슈가 있는 업무일지만)
-    const issues: WorkLog[] = projectWorklogs
+    const issues: WorkLog[] = allProjectWorklogs
       .filter(w => w.issue && w.issue.trim() !== '')
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .map(w => ({
         ...w,
         stage: w.stage as ProjectStage,
         issueStatus: (w.issueStatus || 'open') as WorkLog['issueStatus'],
       })) as WorkLog[];
 
-    await delay(150);
-
-    // 4. 세부추진항목 조회 (해당 프로젝트)
+    // 세부추진항목 정렬 및 변환
     const stageOrder = projectResult.data.stages
       ? projectResult.data.stages.split(',').map((s: string) => s.trim())
       : [];
-    const schedulesData = await getAllAsObjects<SheetSchedule>(SHEET_NAMES.PROJECT_SCHEDULES);
     const schedules: ProjectSchedule[] = schedulesData
-      .filter(s => s.projectId === projectId)
       .sort((a, b) => {
-        // 1차: 단계 순서 (프로젝트 단계진행 순서 기준)
         const idxA = stageOrder.indexOf(a.stage || '');
         const idxB = stageOrder.indexOf(b.stage || '');
         const safeA = idxA === -1 ? stageOrder.length : idxA;
         const safeB = idxB === -1 ? stageOrder.length : idxB;
         if (safeA !== safeB) return safeA - safeB;
-        // 2차: 계획시작일 오름차순
         const dateCompare = (a.plannedStart || '').localeCompare(b.plannedStart || '');
         if (dateCompare !== 0) return dateCompare;
-        // 3차: 등록순
         return Number(a.sortOrder || 0) - Number(b.sortOrder || 0);
       })
       .map(s => ({
@@ -223,13 +229,8 @@ export async function GET(
         order: Number(s.sortOrder || 0),
       })) as ProjectSchedule[];
 
-    await delay(150);
-
-    // 5. 즐겨찾기 상태 조회
-    const favoritesData = await getAllAsObjects<SheetFavorite>(SHEET_NAMES.FAVORITES);
-    const isFavorite = favoritesData.some(
-      f => f.userId === userId && f.projectId === projectId
-    );
+    // 즐겨찾기 상태
+    const isFavorite = favoriteResults.length > 0;
 
     return NextResponse.json({
       success: true,
