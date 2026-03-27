@@ -15,7 +15,7 @@
 
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
-import { getAllAsObjects, SHEET_NAMES } from '@/lib/google';
+import { getAllAsObjects, SHEET_NAMES } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { ProjectStatus, ProjectStage } from '@/types';
 

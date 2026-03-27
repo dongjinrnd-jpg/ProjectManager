@@ -11,59 +11,12 @@ import { NextResponse } from 'next/server';
 import {
   getAllAsObjects,
   findRowByColumn,
-  appendRow,
-  getHeaders,
-  getRows,
-  updateRow,
-  objectToRow,
+  insertRow,
+  updateById,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { WorkLog, CreateWorkLogInput, ProjectStage } from '@/types';
-
-// 시트에서 가져온 업무일지 타입
-interface SheetWorkLog extends Record<string, unknown> {
-  id: string;
-  date: string;
-  projectId: string;
-  item: string;
-  customer: string;
-  stage: ProjectStage;
-  assigneeId: string;
-  participants: string;
-  plan: string;
-  content: string;
-  issue: string;
-  issueStatus: string;
-  issueResolvedAt: string;
-  scheduleId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// 시트에서 가져온 프로젝트 타입
-interface SheetProject extends Record<string, unknown> {
-  id: string;
-  item: string;
-  customer: string;
-  progress: string;
-  issues: string;
-  currentStage: ProjectStage;
-  teamLeaderId: string;
-}
-
-// 시트에서 가져온 세부추진항목 타입
-interface SheetSchedule extends Record<string, unknown> {
-  id: string;
-  projectId: string;
-  stage: string;
-  taskName: string;
-  plannedStart: string;
-  plannedEnd: string;
-  actualStart: string;
-  actualEnd: string;
-  status: string;
-}
 
 /**
  * 새 업무일지 ID 생성
@@ -72,12 +25,12 @@ interface SheetSchedule extends Record<string, unknown> {
 async function generateWorkLogId(date: string): Promise<string> {
   const dateStr = date.replace(/-/g, '');
   const prefix = `WL-${dateStr}-`;
-  const rows = await getRows(SHEET_NAMES.WORKLOGS);
+  const allWorklogs = await getAllAsObjects<{ id: string }>(SHEET_NAMES.WORKLOGS);
 
   let maxNum = 0;
-  for (const row of rows) {
-    if (row[0] && row[0].startsWith(prefix)) {
-      const num = parseInt(row[0].replace(prefix, ''), 10);
+  for (const row of allWorklogs) {
+    if (row.id && row.id.startsWith(prefix)) {
+      const num = parseInt(row.id.replace(prefix, ''), 10);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -92,7 +45,7 @@ async function updateProjectProgress(
   projectId: string,
   newContent: string
 ): Promise<void> {
-  const result = await findRowByColumn<SheetProject>(
+  const result = await findRowByColumn<Record<string, unknown>>(
     SHEET_NAMES.PROJECTS,
     'id',
     projectId
@@ -100,21 +53,16 @@ async function updateProjectProgress(
 
   if (!result) return;
 
-  const { rowIndex, data: project } = result;
-  const headers = await getHeaders(SHEET_NAMES.PROJECTS);
+  const { data: project } = result;
 
   // 기존 progress에 새 내용 추가 (최신 내용이 위로)
-  const existingProgress = project.progress || '';
+  const existingProgress = (project.progress as string) || '';
   const updatedProgress = newContent + (existingProgress ? '\n---\n' + existingProgress : '');
 
-  const updatedProject = {
-    ...project,
+  await updateById(SHEET_NAMES.PROJECTS, projectId, {
     progress: updatedProgress,
     updatedAt: new Date().toISOString(),
-  };
-
-  const rowValues = objectToRow(headers, updatedProject);
-  await updateRow(SHEET_NAMES.PROJECTS, rowIndex, rowValues);
+  });
 }
 
 /**
@@ -127,7 +75,7 @@ async function updateProjectIssueAndStage(
   newStage: ProjectStage | undefined,
   updateStage: boolean
 ): Promise<void> {
-  const result = await findRowByColumn<SheetProject>(
+  const result = await findRowByColumn<Record<string, unknown>>(
     SHEET_NAMES.PROJECTS,
     'id',
     projectId
@@ -135,29 +83,27 @@ async function updateProjectIssueAndStage(
 
   if (!result) return;
 
-  const { rowIndex, data: project } = result;
-  const headers = await getHeaders(SHEET_NAMES.PROJECTS);
+  const { data: project } = result;
 
-  const updatedProject = { ...project };
+  const updatedFields: Record<string, unknown> = {};
 
   // 이슈사항 업데이트
   if (issue && issueStatus === 'open') {
     // 새 이슈사항 또는 미해결 이슈사항 → 프로젝트에 반영
-    updatedProject.issues = issue;
+    updatedFields.issues = issue;
   } else if (issueStatus === 'resolved') {
     // 해결됨 → 프로젝트 이슈사항 클리어
-    updatedProject.issues = '';
+    updatedFields.issues = '';
   }
 
   // 단계 업데이트 (팀장이 변경 요청한 경우)
   if (updateStage && newStage && project.currentStage !== newStage) {
-    updatedProject.currentStage = newStage;
+    updatedFields.currentStage = newStage;
   }
 
-  updatedProject.updatedAt = new Date().toISOString();
+  updatedFields.updatedAt = new Date().toISOString();
 
-  const rowValues = objectToRow(headers, updatedProject);
-  await updateRow(SHEET_NAMES.PROJECTS, rowIndex, rowValues);
+  await updateById(SHEET_NAMES.PROJECTS, projectId, updatedFields);
 }
 
 /**
@@ -174,7 +120,7 @@ async function updateScheduleActualDates(
   scheduleId: string,
   worklogDate: string
 ): Promise<void> {
-  const result = await findRowByColumn<SheetSchedule>(
+  const result = await findRowByColumn<Record<string, unknown>>(
     SHEET_NAMES.PROJECT_SCHEDULES,
     'id',
     scheduleId
@@ -185,27 +131,25 @@ async function updateScheduleActualDates(
     return;
   }
 
-  const { rowIndex, data: schedule } = result;
-  const headers = await getHeaders(SHEET_NAMES.PROJECT_SCHEDULES);
+  const { data: schedule } = result;
 
-  const updatedSchedule = { ...schedule };
+  const updatedFields: Record<string, unknown> = {};
 
   // actualStart가 없으면 설정 (처음 업무일지 작성 시)
   if (!schedule.actualStart) {
-    updatedSchedule.actualStart = worklogDate;
+    updatedFields.actualStart = worklogDate;
   }
 
   // actualEnd는 항상 최신 날짜로 업데이트 (실적 기간 표시용)
-  updatedSchedule.actualEnd = worklogDate;
+  updatedFields.actualEnd = worklogDate;
 
   // status 자동 업데이트 (planned → in_progress)
   // 완료 처리는 팀장/관리자가 "완료" 버튼으로 별도 처리
   if (schedule.status === 'planned') {
-    updatedSchedule.status = 'in_progress';
+    updatedFields.status = 'in_progress';
   }
 
-  const rowValues = objectToRow(headers, updatedSchedule);
-  await updateRow(SHEET_NAMES.PROJECT_SCHEDULES, rowIndex, rowValues);
+  await updateById(SHEET_NAMES.PROJECT_SCHEDULES, scheduleId, updatedFields);
 }
 
 /**
@@ -233,17 +177,17 @@ export async function GET(request: Request) {
     const keyword = searchParams.get('keyword') || '';
 
     // 모든 업무일지 조회
-    const allWorkLogs = await getAllAsObjects<SheetWorkLog>(SHEET_NAMES.WORKLOGS);
+    const allWorkLogs = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.WORKLOGS);
 
     // 필터링
     let workLogs = allWorkLogs.filter((log) => {
       // 시작 날짜 필터
-      if (startDate && log.date < startDate) {
+      if (startDate && (log.date as string) < startDate) {
         return false;
       }
 
       // 종료 날짜 필터
-      if (endDate && log.date > endDate) {
+      if (endDate && (log.date as string) > endDate) {
         return false;
       }
 
@@ -266,10 +210,10 @@ export async function GET(request: Request) {
       if (keyword) {
         const keywordLower = keyword.toLowerCase();
         if (
-          !log.content.toLowerCase().includes(keywordLower) &&
-          !(log.plan || '').toLowerCase().includes(keywordLower) &&
-          !log.item.toLowerCase().includes(keywordLower) &&
-          !log.customer.toLowerCase().includes(keywordLower)
+          !(log.content as string).toLowerCase().includes(keywordLower) &&
+          !((log.plan as string) || '').toLowerCase().includes(keywordLower) &&
+          !(log.item as string).toLowerCase().includes(keywordLower) &&
+          !(log.customer as string).toLowerCase().includes(keywordLower)
         ) {
           return false;
         }
@@ -280,9 +224,9 @@ export async function GET(request: Request) {
 
     // 최신순 정렬 (날짜 기준, 같은 날짜면 생성일시 기준)
     workLogs.sort((a, b) => {
-      const dateCompare = b.date.localeCompare(a.date);
+      const dateCompare = (b.date as string).localeCompare(a.date as string);
       if (dateCompare !== 0) return dateCompare;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime();
     });
 
     return NextResponse.json({
@@ -329,7 +273,7 @@ export async function POST(request: Request) {
     }
 
     // 프로젝트 존재 확인 및 정보 가져오기
-    const projectResult = await findRowByColumn<SheetProject>(
+    const projectResult = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.PROJECTS,
       'id',
       body.projectId
@@ -349,9 +293,6 @@ export async function POST(request: Request) {
 
     // 현재 시간
     const now = new Date().toISOString();
-
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.WORKLOGS);
 
     // 확장된 body 타입 (updateProjectStage, scheduleId 포함)
     const extendedBody = body as CreateWorkLogInput & {
@@ -381,15 +322,8 @@ export async function POST(request: Request) {
       updatedAt: now,
     };
 
-    // 행 데이터 생성
-    const rowValues = headers.map((header) => {
-      const value = newWorkLog[header];
-      if (value === null || value === undefined) return '';
-      return String(value);
-    });
-
     // 시트에 추가
-    await appendRow(SHEET_NAMES.WORKLOGS, rowValues);
+    await insertRow(SHEET_NAMES.WORKLOGS, newWorkLog);
 
     // 프로젝트 업무진행사항 업데이트
     const progressEntry = `[${body.date}] ${body.stage}: ${body.content}`;

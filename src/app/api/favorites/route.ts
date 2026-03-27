@@ -12,36 +12,27 @@ import { NextResponse } from 'next/server';
 import {
   getAllAsObjects,
   findRowByColumn,
-  appendRow,
-  deleteRow,
-  getHeaders,
-  getRows,
+  insertRow,
+  deleteById,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { Favorite } from '@/types';
-
-// 시트에서 가져온 즐겨찾기 타입
-interface SheetFavorite extends Record<string, unknown> {
-  id: string;
-  userId: string;
-  projectId: string;
-  createdAt: string;
-}
 
 /**
  * 새 즐겨찾기 ID 생성
  */
 async function generateFavoriteId(): Promise<string> {
-  const rows = await getRows(SHEET_NAMES.FAVORITES);
+  const allItems = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.FAVORITES);
 
   // 최대 번호 계산
   const prefix = 'FAV-';
   let maxNum = 0;
 
-  for (const row of rows) {
-    if (row[0] && row[0].startsWith(prefix)) {
-      const num = parseInt(row[0].replace(prefix, ''), 10);
+  for (const item of allItems) {
+    const id = item.id as string;
+    if (id && id.startsWith(prefix)) {
+      const num = parseInt(id.replace(prefix, ''), 10);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -69,7 +60,12 @@ export async function GET(request: Request) {
     const userId = searchParams.get('userId') || session.user.id;
 
     // 모든 즐겨찾기 조회
-    const allFavorites = await getAllAsObjects<SheetFavorite>(SHEET_NAMES.FAVORITES);
+    const allFavorites = await getAllAsObjects<Record<string, unknown> & {
+      id: string;
+      userId: string;
+      projectId: string;
+      createdAt: string;
+    }>(SHEET_NAMES.FAVORITES);
 
     // 사용자별 필터링
     const favorites = allFavorites.filter((fav) => fav.userId === userId);
@@ -132,7 +128,12 @@ export async function POST(request: Request) {
     }
 
     // 이미 즐겨찾기 등록된 프로젝트인지 확인
-    const allFavorites = await getAllAsObjects<SheetFavorite>(SHEET_NAMES.FAVORITES);
+    const allFavorites = await getAllAsObjects<Record<string, unknown> & {
+      id: string;
+      userId: string;
+      projectId: string;
+      createdAt: string;
+    }>(SHEET_NAMES.FAVORITES);
     const existingFavorite = allFavorites.find(
       (fav) => fav.userId === session.user.id && fav.projectId === body.projectId
     );
@@ -150,9 +151,6 @@ export async function POST(request: Request) {
     // 현재 시간
     const now = new Date().toISOString();
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.FAVORITES);
-
     // 새 즐겨찾기 데이터
     const newFavorite: Record<string, unknown> = {
       id: favoriteId,
@@ -161,15 +159,8 @@ export async function POST(request: Request) {
       createdAt: now,
     };
 
-    // 행 데이터 생성
-    const rowValues = headers.map((header) => {
-      const value = newFavorite[header];
-      if (value === null || value === undefined) return '';
-      return String(value);
-    });
-
     // 시트에 추가
-    await appendRow(SHEET_NAMES.FAVORITES, rowValues);
+    await insertRow(SHEET_NAMES.FAVORITES, newFavorite);
 
     return NextResponse.json({
       success: true,
@@ -215,32 +206,26 @@ export async function DELETE(request: Request) {
     }
 
     // 해당 사용자의 즐겨찾기 찾기
-    const headers = await getHeaders(SHEET_NAMES.FAVORITES);
-    const rows = await getRows(SHEET_NAMES.FAVORITES);
-    const userIdIndex = headers.indexOf('userId');
-    const projectIdIndex = headers.indexOf('projectId');
+    const allFavorites = await getAllAsObjects<Record<string, unknown> & {
+      id: string;
+      userId: string;
+      projectId: string;
+      createdAt: string;
+    }>(SHEET_NAMES.FAVORITES);
 
-    let foundRowIndex: number | null = null;
+    const foundFavorite = allFavorites.find(
+      (fav) => fav.userId === session.user.id && fav.projectId === projectId
+    );
 
-    for (let i = 0; i < rows.length; i++) {
-      if (
-        rows[i][userIdIndex] === session.user.id &&
-        rows[i][projectIdIndex] === projectId
-      ) {
-        foundRowIndex = i + 2; // 헤더 제외, 1-based index
-        break;
-      }
-    }
-
-    if (foundRowIndex === null) {
+    if (!foundFavorite) {
       return NextResponse.json(
         { success: false, error: '즐겨찾기를 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
 
-    // 행 삭제
-    await deleteRow(SHEET_NAMES.FAVORITES, foundRowIndex);
+    // Supabase에서 삭제
+    await deleteById(SHEET_NAMES.FAVORITES, foundFavorite.id);
 
     return NextResponse.json({
       success: true,

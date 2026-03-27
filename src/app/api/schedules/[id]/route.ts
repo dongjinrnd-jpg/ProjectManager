@@ -11,34 +11,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   findRowByColumn,
-  getHeaders,
-  updateRow,
-  deleteRow,
-  objectToRow,
+  updateById,
+  deleteById,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { ProjectSchedule, UpdateScheduleInput } from '@/types';
-
-// 시트에서 가져온 세부추진항목 타입
-interface SheetSchedule extends Record<string, unknown> {
-  id: string;
-  projectId: string;
-  stage: string;
-  taskName: string;
-  category: string;
-  responsibility: string;
-  assigneeId: string;
-  plannedStart: string;
-  plannedEnd: string;
-  actualStart: string;
-  actualEnd: string;
-  status: string;
-  note: string;
-  order: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -62,7 +40,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // 세부추진항목 조회
-    const result = await findRowByColumn<SheetSchedule>(
+    const result = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.PROJECT_SCHEDULES,
       'id',
       id
@@ -79,20 +57,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // 타입 변환
     const schedule: ProjectSchedule = {
-      id: s.id,
-      projectId: s.projectId,
-      stage: s.stage || undefined,
-      taskName: s.taskName,
+      id: s.id as string,
+      projectId: s.projectId as string,
+      stage: (s.stage as string) || undefined,
+      taskName: s.taskName as string,
       category: s.category as ProjectSchedule['category'] || undefined,
       responsibility: s.responsibility as ProjectSchedule['responsibility'] || undefined,
-      assigneeId: s.assigneeId || undefined,
-      plannedStart: s.plannedStart,
-      plannedEnd: s.plannedEnd,
-      actualStart: s.actualStart || undefined,
-      actualEnd: s.actualEnd || undefined,
-      status: (s.status || 'planned') as ProjectSchedule['status'],
-      note: s.note || undefined,
-      order: parseInt(s.order || '0', 10),
+      assigneeId: (s.assigneeId as string) || undefined,
+      plannedStart: s.plannedStart as string,
+      plannedEnd: s.plannedEnd as string,
+      actualStart: (s.actualStart as string) || undefined,
+      actualEnd: (s.actualEnd as string) || undefined,
+      status: ((s.status as string) || 'planned') as ProjectSchedule['status'],
+      note: (s.note as string) || undefined,
+      order: parseInt((s.order as string) || '0', 10),
     };
 
     return NextResponse.json({
@@ -150,7 +128,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // 기존 데이터 조회
-    const result = await findRowByColumn<SheetSchedule>(
+    const result = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.PROJECT_SCHEDULES,
       'id',
       id
@@ -163,12 +141,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { rowIndex, data: existingSchedule } = result;
+    const { data: existingSchedule } = result;
 
     const now = new Date().toISOString();
 
     // 업데이트할 데이터 병합
-    const updatedSchedule: SheetSchedule = {
+    const updatedSchedule: Record<string, unknown> = {
       ...existingSchedule,
       stage: body.stage ?? existingSchedule.stage,
       taskName: body.taskName ?? existingSchedule.taskName,
@@ -186,26 +164,24 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     };
 
     // 시트 업데이트
-    const headers = await getHeaders(SHEET_NAMES.PROJECT_SCHEDULES);
-    const rowValues = objectToRow(headers, updatedSchedule);
-    await updateRow(SHEET_NAMES.PROJECT_SCHEDULES, rowIndex, rowValues);
+    await updateById(SHEET_NAMES.PROJECT_SCHEDULES, id, updatedSchedule);
 
     // 응답 타입 변환
     const schedule: ProjectSchedule = {
-      id: updatedSchedule.id,
-      projectId: updatedSchedule.projectId,
-      stage: updatedSchedule.stage || undefined,
-      taskName: updatedSchedule.taskName,
+      id: updatedSchedule.id as string,
+      projectId: updatedSchedule.projectId as string,
+      stage: (updatedSchedule.stage as string) || undefined,
+      taskName: updatedSchedule.taskName as string,
       category: updatedSchedule.category as ProjectSchedule['category'] || undefined,
       responsibility: updatedSchedule.responsibility as ProjectSchedule['responsibility'] || undefined,
-      assigneeId: updatedSchedule.assigneeId || undefined,
-      plannedStart: updatedSchedule.plannedStart,
-      plannedEnd: updatedSchedule.plannedEnd,
-      actualStart: updatedSchedule.actualStart || undefined,
-      actualEnd: updatedSchedule.actualEnd || undefined,
-      status: (updatedSchedule.status || 'planned') as ProjectSchedule['status'],
-      note: updatedSchedule.note || undefined,
-      order: parseInt(updatedSchedule.order || '0', 10),
+      assigneeId: (updatedSchedule.assigneeId as string) || undefined,
+      plannedStart: updatedSchedule.plannedStart as string,
+      plannedEnd: updatedSchedule.plannedEnd as string,
+      actualStart: (updatedSchedule.actualStart as string) || undefined,
+      actualEnd: (updatedSchedule.actualEnd as string) || undefined,
+      status: ((updatedSchedule.status as string) || 'planned') as ProjectSchedule['status'],
+      note: (updatedSchedule.note as string) || undefined,
+      order: parseInt((updatedSchedule.order as string) || '0', 10),
     };
 
     return NextResponse.json({
@@ -222,12 +198,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       { status: 500 }
     );
   }
-}
-
-// 프로젝트 타입 (teamLeaderId 조회용)
-interface SheetProject extends Record<string, unknown> {
-  id: string;
-  teamLeaderId: string;
 }
 
 /**
@@ -252,7 +222,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const userId = session.user.id;
 
     // 기존 데이터 조회
-    const result = await findRowByColumn<SheetSchedule>(
+    const result = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.PROJECT_SCHEDULES,
       'id',
       id
@@ -265,20 +235,20 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { rowIndex, data: schedule } = result;
+    const { data: schedule } = result;
 
     // 프로젝트 조회하여 팀장 확인
-    const projectResult = await findRowByColumn<SheetProject>(
+    const projectResult = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.PROJECTS,
       'id',
-      schedule.projectId
+      schedule.projectId as string
     );
 
     const isTeamLeader = projectResult?.data.teamLeaderId === userId;
-    const isAdmin = ['sysadmin', 'admin'].includes(userRole);
+    const isAdminRole = ['sysadmin', 'admin'].includes(userRole);
 
     // 권한 확인: 팀장 또는 관리자만 삭제 가능
-    if (!isTeamLeader && !isAdmin) {
+    if (!isTeamLeader && !isAdminRole) {
       return NextResponse.json(
         { success: false, error: '세부추진항목 삭제 권한이 없습니다. (팀장 또는 관리자만 가능)' },
         { status: 403 }
@@ -286,7 +256,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // 시트에서 삭제
-    await deleteRow(SHEET_NAMES.PROJECT_SCHEDULES, rowIndex);
+    await deleteById(SHEET_NAMES.PROJECT_SCHEDULES, id);
 
     return NextResponse.json({
       success: true,

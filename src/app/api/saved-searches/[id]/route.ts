@@ -7,7 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { findRowByColumn, deleteRow, SHEET_NAMES } from '@/lib/google';
+import { findRowByColumn, deleteById, SHEET_NAMES } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { SavedSearch } from '@/types';
 
@@ -56,7 +56,7 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     // 삭제
-    await deleteRow(SHEET_NAMES.SAVED_SEARCHES, result.rowIndex);
+    await deleteById(SHEET_NAMES.SAVED_SEARCHES, id);
 
     return NextResponse.json({
       success: true,

@@ -8,7 +8,7 @@
 import NextAuth, { type DefaultSession } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { findRowByColumn, SHEET_NAMES } from '@/lib/google';
+import { findRowByColumn, SHEET_NAMES } from '@/lib/supabase/db';
 import type { UserRole } from '@/types';
 import { authConfig } from './auth.config';
 

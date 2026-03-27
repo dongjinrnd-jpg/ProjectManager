@@ -11,51 +11,27 @@ import { NextResponse } from 'next/server';
 import {
   getAllAsObjects,
   findRowByColumn,
-  appendRow,
-  getHeaders,
-  getRows,
+  insertRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { Project, CreateProjectInput, ProjectStatus, ProjectStage, UserRole } from '@/types';
-
-// 시트에서 가져온 프로젝트 타입
-interface SheetProject extends Record<string, unknown> {
-  id: string;
-  status: ProjectStatus;
-  customer: string;
-  division: string;
-  category: string;
-  model: string;
-  item: string;
-  partNo: string;
-  teamLeaderId: string;
-  teamMembers: string;
-  currentStage: ProjectStage;
-  stages: string;
-  progress: string;
-  issues: string;
-  scheduleStart: string;
-  scheduleEnd: string;
-  note: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 /**
  * 새 프로젝트 ID 생성
  */
 async function generateProjectId(): Promise<string> {
   const year = new Date().getFullYear();
-  const rows = await getRows(SHEET_NAMES.PROJECTS);
+  const allItems = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.PROJECTS);
 
   // 올해 프로젝트 수 계산
   const prefix = `PRJ-${year}-`;
   let maxNum = 0;
 
-  for (const row of rows) {
-    if (row[0] && row[0].startsWith(prefix)) {
-      const num = parseInt(row[0].replace(prefix, ''), 10);
+  for (const item of allItems) {
+    const id = item.id as string;
+    if (id && id.startsWith(prefix)) {
+      const num = parseInt(id.replace(prefix, ''), 10);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -87,7 +63,27 @@ export async function GET(request: Request) {
     const teamLeaderId = searchParams.get('teamLeaderId') || '';
 
     // 모든 프로젝트 조회
-    const allProjects = await getAllAsObjects<SheetProject>(SHEET_NAMES.PROJECTS);
+    const allProjects = await getAllAsObjects<Record<string, unknown> & {
+      id: string;
+      status: ProjectStatus;
+      customer: string;
+      division: string;
+      category: string;
+      model: string;
+      item: string;
+      partNo: string;
+      teamLeaderId: string;
+      teamMembers: string;
+      currentStage: ProjectStage;
+      stages: string;
+      progress: string;
+      issues: string;
+      scheduleStart: string;
+      scheduleEnd: string;
+      note: string;
+      createdAt: string;
+      updatedAt: string;
+    }>(SHEET_NAMES.PROJECTS);
 
     // 필터링
     let projects = allProjects.filter((project) => {
@@ -202,9 +198,6 @@ export async function POST(request: Request) {
     const stagesStr = Array.isArray(body.stages) ? body.stages.join(',') : body.stages || '';
     const firstStage = stagesStr.split(',')[0] || '검토';
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.PROJECTS);
-
     // 새 프로젝트 데이터
     const newProject: Record<string, unknown> = {
       id: projectId,
@@ -228,15 +221,8 @@ export async function POST(request: Request) {
       updatedAt: now,
     };
 
-    // 행 데이터 생성
-    const rowValues = headers.map((header) => {
-      const value = newProject[header];
-      if (value === null || value === undefined) return '';
-      return String(value);
-    });
-
     // 시트에 추가
-    await appendRow(SHEET_NAMES.PROJECTS, rowValues);
+    await insertRow(SHEET_NAMES.PROJECTS, newProject);
 
     return NextResponse.json({
       success: true,

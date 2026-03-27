@@ -9,13 +9,11 @@
 import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
-  getHeaders,
-  getRows,
-  updateRow,
-  appendRow,
-  objectToRow,
+  getAllAsObjects,
+  updateById,
+  insertRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
   Improvement,
@@ -25,25 +23,6 @@ import type {
   ImprovementPriority,
   RelatedMenu,
 } from '@/types/improvement';
-
-// 시트에서 가져온 개선요청 타입
-interface SheetImprovement extends Record<string, unknown> {
-  id: string;
-  title: string;
-  type: ImprovementType;
-  status: ImprovementStatus;
-  priority: ImprovementPriority;
-  content: string;
-  relatedMenu: RelatedMenu;
-  reproductionSteps: string;
-  screenshotUrl: string;
-  authorId: string;
-  authorName: string;
-  createdAt: string;
-  updatedAt: string;
-  dueDate: string;
-  completedAt: string;
-}
 
 /**
  * PATCH /api/improvements/[id]/status
@@ -74,7 +53,7 @@ export async function PATCH(
     }
 
     // 개선요청 조회
-    const result = await findRowByColumn<SheetImprovement>(
+    const result = await findRowByColumn<Improvement & Record<string, unknown>>(
       SHEET_NAMES.IMPROVEMENTS,
       'id',
       id
@@ -101,7 +80,7 @@ export async function PATCH(
     const now = new Date().toISOString();
 
     // 업데이트할 데이터
-    const updatedImprovement: SheetImprovement = {
+    const updatedImprovement: Record<string, unknown> = {
       ...result.data,
       status: body.status,
       priority: body.priority ?? result.data.priority,
@@ -111,12 +90,8 @@ export async function PATCH(
       completedAt: body.status === 'completed' ? now : result.data.completedAt,
     };
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.IMPROVEMENTS);
-
     // 행 업데이트
-    const rowValues = objectToRow(headers, updatedImprovement);
-    await updateRow(SHEET_NAMES.IMPROVEMENTS, result.rowIndex, rowValues);
+    await updateById(SHEET_NAMES.IMPROVEMENTS, id, updatedImprovement);
 
     // 처리 이력 추가
     await addHistory(
@@ -154,14 +129,13 @@ async function addHistory(
   changedBy: string,
   changedByName: string
 ): Promise<void> {
-  const headers = await getHeaders(SHEET_NAMES.IMPROVEMENT_HISTORIES);
-  const rows = await getRows(SHEET_NAMES.IMPROVEMENT_HISTORIES);
+  const allHistories = await getAllAsObjects<{ id: string }>(SHEET_NAMES.IMPROVEMENT_HISTORIES);
 
   // 새 ID 생성
   let maxNum = 0;
-  for (const row of rows) {
-    if (row[0] && row[0].startsWith('IMPH-')) {
-      const num = parseInt(row[0].replace('IMPH-', ''), 10);
+  for (const row of allHistories) {
+    if (row.id && row.id.startsWith('IMPH-')) {
+      const num = parseInt(row.id.replace('IMPH-', ''), 10);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -179,11 +153,5 @@ async function addHistory(
     changedAt: now,
   };
 
-  const rowValues = headers.map((header) => {
-    const value = historyData[header];
-    if (value === null || value === undefined) return '';
-    return String(value);
-  });
-
-  await appendRow(SHEET_NAMES.IMPROVEMENT_HISTORIES, rowValues);
+  await insertRow(SHEET_NAMES.IMPROVEMENT_HISTORIES, historyData);
 }

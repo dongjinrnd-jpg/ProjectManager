@@ -16,7 +16,7 @@ import {
   getRows,
   deleteRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 
 // 시트에서 가져온 코멘트 타입

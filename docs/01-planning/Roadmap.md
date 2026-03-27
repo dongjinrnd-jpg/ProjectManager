@@ -9,7 +9,7 @@ tags:
   - roadmap
   - wireframe
 created: 2026-01-23
-updated: 2026-03-06
+updated: 2026-03-27
 ---
 
 # Roadmap: 연구개발 프로젝트 관리 시스템
@@ -164,7 +164,7 @@ updated: 2026-03-06
 - [x] Google Service Account로 시트 연결 ✅
 - [x] 프로젝트 CRUD (팀장 1명 + 팀원 여러 명) ✅
 - [x] 업무일지 CRUD (담당자 자동입력, 전체 열람 가능) ✅
-- [x] 구글 시트 양방향 동기화 ✅
+- [x] ~~구글 시트 양방향 동기화~~ → Supabase (PostgreSQL) 마이그레이션 완료 ✅ (2026-03-27)
 
 ---
 

@@ -12,10 +12,9 @@ import bcrypt from 'bcryptjs';
 import {
   getAllAsObjects,
   findRowByColumn,
-  appendRow,
-  getHeaders,
+  insertRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession, canManageUsers } from '@/lib/auth';
 import type { User, CreateUserInput, UserRole, Division } from '@/types';
 
@@ -51,17 +50,10 @@ export async function GET(request: Request) {
 
     // 모든 사용자 조회
     interface SheetUser extends Record<string, unknown> {
-      id: string;
-      password: string;
-      name: string;
-      email: string;
-      role: UserRole;
-      division: Division;
-      isActive: string;
-      createdAt: string;
-      updatedAt: string;
+      id: string; name: string; email: string; password: string;
+      role: UserRole; division: Division; isActive: boolean;
+      createdAt: string; updatedAt: string;
     }
-
     const allUsers = await getAllAsObjects<SheetUser>(SHEET_NAMES.USERS);
 
     // 필터링
@@ -90,9 +82,8 @@ export async function GET(request: Request) {
 
       // 활성화 상태 필터
       if (isActive !== null) {
-        const activeValue = user.isActive === 'TRUE' || user.isActive === 'true';
-        if (isActive === 'true' && !activeValue) return false;
-        if (isActive === 'false' && activeValue) return false;
+        if (isActive === 'true' && !user.isActive) return false;
+        if (isActive === 'false' && user.isActive) return false;
       }
 
       return true;
@@ -101,8 +92,8 @@ export async function GET(request: Request) {
     // 비밀번호 제외하고 반환
     const safeUsers: SafeUser[] = users.map(({ password, ...rest }) => ({
       ...rest,
-      isActive: rest.isActive === 'TRUE' || rest.isActive === 'true',
-    }));
+      isActive: !!rest.isActive,
+    })) as SafeUser[];
 
     return NextResponse.json({
       success: true,
@@ -170,11 +161,8 @@ export async function POST(request: Request) {
     // 현재 시간
     const now = new Date().toISOString();
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.USERS);
-
     // 새 사용자 데이터
-    const newUser: Record<string, unknown> = {
+    const newUser = {
       id: body.id,
       password: hashedPassword,
       name: body.name,
@@ -186,16 +174,8 @@ export async function POST(request: Request) {
       updatedAt: now,
     };
 
-    // 행 데이터 생성
-    const rowValues = headers.map((header) => {
-      const value = newUser[header];
-      if (value === null || value === undefined) return '';
-      if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
-      return String(value);
-    });
-
-    // 시트에 추가
-    await appendRow(SHEET_NAMES.USERS, rowValues);
+    // DB에 추가
+    await insertRow(SHEET_NAMES.USERS, newUser);
 
     // 비밀번호 제외하고 반환
     const safeUser: SafeUser = {

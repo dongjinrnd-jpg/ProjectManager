@@ -21,7 +21,7 @@ import {
   getHeaders,
   rowToObject,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { Project, User, WorkLog, ProjectSchedule, ProjectStage } from '@/types';
 

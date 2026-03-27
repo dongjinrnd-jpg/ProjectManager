@@ -1,36 +1,30 @@
 /**
  * Health Check API
  *
- * Google Sheets 연결 상태를 확인합니다.
+ * Supabase 연결 상태를 확인합니다.
  * GET /api/health
  */
 
 import { NextResponse } from 'next/server';
-import { checkConnection, SHEET_NAMES } from '@/lib/google';
+import { checkConnection, SHEET_NAMES } from '@/lib/supabase/db';
 
 export async function GET() {
   try {
-    // Google Sheets 연결 확인
-    const sheetsStatus = await checkConnection();
+    const status = await checkConnection();
 
-    // 응답 데이터
     const healthData = {
-      status: sheetsStatus.connected ? 'healthy' : 'unhealthy',
+      status: status.connected ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
       services: {
-        googleSheets: {
-          connected: sheetsStatus.connected,
-          spreadsheetId: sheetsStatus.spreadsheetId,
-          spreadsheetTitle: sheetsStatus.spreadsheetTitle,
-          sheetCount: sheetsStatus.sheetCount,
-          expectedSheets: Object.keys(SHEET_NAMES).length,
-          error: sheetsStatus.error,
+        supabase: {
+          connected: status.connected,
+          tableCount: Object.keys(SHEET_NAMES).length,
+          error: status.error,
         },
       },
     };
 
-    // 연결 실패 시 503 반환
-    if (!sheetsStatus.connected) {
+    if (!status.connected) {
       return NextResponse.json(healthData, { status: 503 });
     }
 

@@ -12,33 +12,15 @@ import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
   getAllAsObjects,
-  appendRow,
-  getHeaders,
-  getRows,
+  insertRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
   WorklogComment,
   CreateWorklogCommentInput,
   WorklogCommentThread,
 } from '@/types/worklogComment';
-
-// 시트에서 가져온 워크로그 타입 (존재 확인용)
-interface SheetWorklog extends Record<string, unknown> {
-  id: string;
-}
-
-// 시트에서 가져온 댓글 타입
-interface SheetComment extends Record<string, unknown> {
-  id: string;
-  worklogId: string;
-  authorId: string;
-  authorName: string;
-  parentId: string;
-  content: string;
-  createdAt: string;
-}
 
 // 댓글 작성 권한 확인
 function canWriteComment(role: string): boolean {
@@ -66,7 +48,7 @@ export async function GET(
     }
 
     // 댓글 조회
-    const allComments = await getAllAsObjects<SheetComment>(
+    const allComments = await getAllAsObjects<Record<string, unknown>>(
       SHEET_NAMES.WORKLOG_COMMENTS
     );
 
@@ -75,7 +57,7 @@ export async function GET(
       .filter((c) => c.worklogId === id)
       .sort(
         (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime()
       );
 
     // 부모 댓글과 답글 분리
@@ -136,7 +118,7 @@ export async function POST(
     }
 
     // 업무일지 존재 확인
-    const worklog = await findRowByColumn<SheetWorklog>(
+    const worklog = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.WORKLOGS,
       'id',
       id
@@ -162,7 +144,7 @@ export async function POST(
 
     // 답글인 경우 부모 댓글 존재 확인
     if (body.parentId) {
-      const parentComment = await findRowByColumn<SheetComment>(
+      const parentComment = await findRowByColumn<Record<string, unknown>>(
         SHEET_NAMES.WORKLOG_COMMENTS,
         'id',
         body.parentId
@@ -176,13 +158,12 @@ export async function POST(
     }
 
     // 새 ID 생성
-    const headers = await getHeaders(SHEET_NAMES.WORKLOG_COMMENTS);
-    const rows = await getRows(SHEET_NAMES.WORKLOG_COMMENTS);
+    const allComments = await getAllAsObjects<{ id: string }>(SHEET_NAMES.WORKLOG_COMMENTS);
 
     let maxNum = 0;
-    for (const row of rows) {
-      if (row[0] && row[0].startsWith('WLC-')) {
-        const num = parseInt(row[0].replace('WLC-', ''), 10);
+    for (const row of allComments) {
+      if (row.id && row.id.startsWith('WLC-')) {
+        const num = parseInt(row.id.replace('WLC-', ''), 10);
         if (num > maxNum) maxNum = num;
       }
     }
@@ -201,15 +182,8 @@ export async function POST(
       createdAt: now,
     };
 
-    // 행 데이터 생성
-    const rowValues = headers.map((header) => {
-      const value = newComment[header];
-      if (value === null || value === undefined) return '';
-      return String(value);
-    });
-
     // 시트에 추가
-    await appendRow(SHEET_NAMES.WORKLOG_COMMENTS, rowValues);
+    await insertRow(SHEET_NAMES.WORKLOG_COMMENTS, newComment);
 
     return NextResponse.json({
       success: true,

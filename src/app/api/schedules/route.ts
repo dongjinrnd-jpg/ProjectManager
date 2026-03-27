@@ -10,34 +10,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getAllAsObjects,
-  appendRow,
-  getHeaders,
-  getRows,
-  objectToRow,
+  insertRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { ProjectSchedule, CreateScheduleInput } from '@/types';
-
-// 시트에서 가져온 세부추진항목 타입
-interface SheetSchedule extends Record<string, unknown> {
-  id: string;
-  projectId: string;
-  stage: string;
-  taskName: string;
-  category: string;
-  responsibility: string;
-  assigneeId: string;
-  plannedStart: string;
-  plannedEnd: string;
-  actualStart: string;
-  actualEnd: string;
-  status: string;
-  note: string;
-  order: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 /**
  * 새 세부추진항목 ID 생성
@@ -45,12 +22,12 @@ interface SheetSchedule extends Record<string, unknown> {
  */
 async function generateScheduleId(): Promise<string> {
   const prefix = 'PS-';
-  const rows = await getRows(SHEET_NAMES.PROJECT_SCHEDULES);
+  const allSchedules = await getAllAsObjects<{ id: string }>(SHEET_NAMES.PROJECT_SCHEDULES);
 
   let maxNum = 0;
-  for (const row of rows) {
-    if (row[0] && row[0].startsWith(prefix)) {
-      const num = parseInt(row[0].replace(prefix, ''), 10);
+  for (const row of allSchedules) {
+    if (row.id && row.id.startsWith(prefix)) {
+      const num = parseInt(row.id.replace(prefix, ''), 10);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -62,12 +39,12 @@ async function generateScheduleId(): Promise<string> {
  * 프로젝트별 세부추진항목의 최대 order 조회
  */
 async function getMaxOrder(projectId: string): Promise<number> {
-  const allSchedules = await getAllAsObjects<SheetSchedule>(SHEET_NAMES.PROJECT_SCHEDULES);
+  const allSchedules = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.PROJECT_SCHEDULES);
   const projectSchedules = allSchedules.filter((s) => s.projectId === projectId);
 
   if (projectSchedules.length === 0) return 0;
 
-  return Math.max(...projectSchedules.map((s) => parseInt(s.order || '0', 10)));
+  return Math.max(...projectSchedules.map((s) => parseInt((s.order as string) || '0', 10)));
 }
 
 /**
@@ -105,41 +82,41 @@ export async function GET(request: NextRequest) {
       : [];
 
     // 세부추진항목 조회
-    const allSchedules = await getAllAsObjects<SheetSchedule>(SHEET_NAMES.PROJECT_SCHEDULES);
+    const allSchedules = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.PROJECT_SCHEDULES);
 
     // 프로젝트별 필터링 및 정렬: 단계순 → 계획시작일순 → 등록순
     const projectSchedules = allSchedules
       .filter((s) => s.projectId === projectId)
       .sort((a, b) => {
         // 1차: 단계 순서
-        const stageA = stageOrder.indexOf(a.stage || '');
-        const stageB = stageOrder.indexOf(b.stage || '');
+        const stageA = stageOrder.indexOf((a.stage as string) || '');
+        const stageB = stageOrder.indexOf((b.stage as string) || '');
         const safeStageA = stageA === -1 ? stageOrder.length : stageA;
         const safeStageB = stageB === -1 ? stageOrder.length : stageB;
         if (safeStageA !== safeStageB) return safeStageA - safeStageB;
         // 2차: 계획시작일 오름차순
-        const dateCompare = (a.plannedStart || '').localeCompare(b.plannedStart || '');
+        const dateCompare = ((a.plannedStart as string) || '').localeCompare((b.plannedStart as string) || '');
         if (dateCompare !== 0) return dateCompare;
         // 3차: 등록순
-        return parseInt(a.order || '0', 10) - parseInt(b.order || '0', 10);
+        return parseInt((a.order as string) || '0', 10) - parseInt((b.order as string) || '0', 10);
       });
 
     // 타입 변환
     const schedules: ProjectSchedule[] = projectSchedules.map((s) => ({
-      id: s.id,
-      projectId: s.projectId,
-      stage: s.stage || undefined,
-      taskName: s.taskName,
+      id: s.id as string,
+      projectId: s.projectId as string,
+      stage: (s.stage as string) || undefined,
+      taskName: s.taskName as string,
       category: s.category as ProjectSchedule['category'],
       responsibility: s.responsibility as ProjectSchedule['responsibility'],
-      assigneeId: s.assigneeId || undefined,
-      plannedStart: s.plannedStart,
-      plannedEnd: s.plannedEnd,
-      actualStart: s.actualStart || undefined,
-      actualEnd: s.actualEnd || undefined,
-      status: (s.status || 'planned') as ProjectSchedule['status'],
-      note: s.note || undefined,
-      order: parseInt(s.order || '0', 10),
+      assigneeId: (s.assigneeId as string) || undefined,
+      plannedStart: s.plannedStart as string,
+      plannedEnd: s.plannedEnd as string,
+      actualStart: (s.actualStart as string) || undefined,
+      actualEnd: (s.actualEnd as string) || undefined,
+      status: ((s.status as string) || 'planned') as ProjectSchedule['status'],
+      note: (s.note as string) || undefined,
+      order: parseInt((s.order as string) || '0', 10),
     }));
 
     return NextResponse.json({
@@ -203,7 +180,7 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
 
     // 새 세부추진항목 데이터
-    const newSchedule: SheetSchedule = {
+    const newSchedule: Record<string, unknown> = {
       id,
       projectId: body.projectId,
       stage: body.stage || '',
@@ -223,23 +200,21 @@ export async function POST(request: NextRequest) {
     };
 
     // 시트에 추가
-    const headers = await getHeaders(SHEET_NAMES.PROJECT_SCHEDULES);
-    const rowValues = objectToRow(headers, newSchedule);
-    await appendRow(SHEET_NAMES.PROJECT_SCHEDULES, rowValues);
+    await insertRow(SHEET_NAMES.PROJECT_SCHEDULES, newSchedule);
 
     // 응답 타입 변환
     const schedule: ProjectSchedule = {
-      id: newSchedule.id,
-      projectId: newSchedule.projectId,
-      stage: newSchedule.stage || undefined,
-      taskName: newSchedule.taskName,
+      id: newSchedule.id as string,
+      projectId: newSchedule.projectId as string,
+      stage: (newSchedule.stage as string) || undefined,
+      taskName: newSchedule.taskName as string,
       category: newSchedule.category as ProjectSchedule['category'] || undefined,
       responsibility: newSchedule.responsibility as ProjectSchedule['responsibility'] || undefined,
-      assigneeId: newSchedule.assigneeId || undefined,
-      plannedStart: newSchedule.plannedStart,
-      plannedEnd: newSchedule.plannedEnd,
+      assigneeId: (newSchedule.assigneeId as string) || undefined,
+      plannedStart: newSchedule.plannedStart as string,
+      plannedEnd: newSchedule.plannedEnd as string,
       status: 'planned',
-      note: newSchedule.note || undefined,
+      note: (newSchedule.note as string) || undefined,
       order,
     };
 

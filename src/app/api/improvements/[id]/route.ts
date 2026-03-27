@@ -14,12 +14,10 @@ import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
   getAllAsObjects,
-  getHeaders,
-  updateRow,
-  deleteRow,
-  objectToRow,
+  updateById,
+  deleteById,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
   Improvement,
@@ -32,46 +30,6 @@ import type {
   ImprovementPriority,
   RelatedMenu,
 } from '@/types/improvement';
-
-// 시트에서 가져온 개선요청 타입
-interface SheetImprovement extends Record<string, unknown> {
-  id: string;
-  title: string;
-  type: ImprovementType;
-  status: ImprovementStatus;
-  priority: ImprovementPriority;
-  content: string;
-  relatedMenu: RelatedMenu;
-  reproductionSteps: string;
-  screenshotUrl: string;
-  authorId: string;
-  authorName: string;
-  createdAt: string;
-  updatedAt: string;
-  dueDate: string;
-  completedAt: string;
-}
-
-// 시트에서 가져온 이력 타입
-interface SheetHistory extends Record<string, unknown> {
-  id: string;
-  improvementId: string;
-  status: ImprovementStatus;
-  memo: string;
-  changedBy: string;
-  changedByName: string;
-  changedAt: string;
-}
-
-// 시트에서 가져온 댓글 타입
-interface SheetComment extends Record<string, unknown> {
-  id: string;
-  improvementId: string;
-  content: string;
-  authorId: string;
-  authorName: string;
-  createdAt: string;
-}
 
 // 허용된 역할 확인
 function hasAccess(role: string): boolean {
@@ -112,7 +70,7 @@ export async function GET(
     }
 
     // 개선요청 조회
-    const result = await findRowByColumn<SheetImprovement>(
+    const result = await findRowByColumn<Improvement & Record<string, unknown>>(
       SHEET_NAMES.IMPROVEMENTS,
       'id',
       id
@@ -128,7 +86,7 @@ export async function GET(
     const improvement = result.data as Improvement;
 
     // 처리 이력 조회
-    const allHistories = await getAllAsObjects<SheetHistory>(
+    const allHistories = await getAllAsObjects<ImprovementHistory & Record<string, unknown>>(
       SHEET_NAMES.IMPROVEMENT_HISTORIES
     );
     const histories: ImprovementHistory[] = allHistories
@@ -136,7 +94,7 @@ export async function GET(
       .sort((a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime());
 
     // 댓글 조회
-    const allComments = await getAllAsObjects<SheetComment>(
+    const allComments = await getAllAsObjects<ImprovementComment & Record<string, unknown>>(
       SHEET_NAMES.IMPROVEMENT_COMMENTS
     );
     const comments: ImprovementComment[] = allComments
@@ -195,7 +153,7 @@ export async function PUT(
     }
 
     // 개선요청 조회
-    const result = await findRowByColumn<SheetImprovement>(
+    const result = await findRowByColumn<Improvement & Record<string, unknown>>(
       SHEET_NAMES.IMPROVEMENTS,
       'id',
       id
@@ -220,7 +178,7 @@ export async function PUT(
     const body: UpdateImprovementInput = await request.json();
 
     // 업데이트할 데이터
-    const updatedImprovement: SheetImprovement = {
+    const updatedImprovement: Record<string, unknown> = {
       ...result.data,
       title: body.title ?? result.data.title,
       type: body.type ?? result.data.type,
@@ -232,12 +190,8 @@ export async function PUT(
       updatedAt: new Date().toISOString(),
     };
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.IMPROVEMENTS);
-
     // 행 업데이트
-    const rowValues = objectToRow(headers, updatedImprovement);
-    await updateRow(SHEET_NAMES.IMPROVEMENTS, result.rowIndex, rowValues);
+    await updateById(SHEET_NAMES.IMPROVEMENTS, id, updatedImprovement);
 
     return NextResponse.json({
       success: true,
@@ -285,7 +239,7 @@ export async function DELETE(
     }
 
     // 개선요청 조회
-    const result = await findRowByColumn<SheetImprovement>(
+    const result = await findRowByColumn<Improvement & Record<string, unknown>>(
       SHEET_NAMES.IMPROVEMENTS,
       'id',
       id
@@ -307,7 +261,7 @@ export async function DELETE(
     }
 
     // 행 삭제
-    await deleteRow(SHEET_NAMES.IMPROVEMENTS, result.rowIndex);
+    await deleteById(SHEET_NAMES.IMPROVEMENTS, id);
 
     return NextResponse.json({
       success: true,

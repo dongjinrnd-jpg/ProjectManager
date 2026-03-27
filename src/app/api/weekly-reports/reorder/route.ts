@@ -13,7 +13,7 @@ import {
   getHeaders,
   objectToRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 
 // 시트에서 가져온 주간 보고 타입

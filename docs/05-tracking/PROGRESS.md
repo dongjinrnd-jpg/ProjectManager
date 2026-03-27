@@ -3,7 +3,7 @@ type: tracking
 doc_type: Progress
 status: In Progress
 created: 2026-01-29
-updated: 2026-03-06
+updated: 2026-03-27
 ---
 
   
@@ -783,6 +783,36 @@ updated: 2026-03-06
 
 ---
 
+### Phase 4: Supabase 마이그레이션 ✅ 완료 (2026-03-27)
+
+#### 4.1 마이그레이션 배경
+- Google Sheets API 분당 60회 제한으로 Quota exceeded 에러 빈번 발생
+- 프로젝트 상세 페이지 로딩 시 150ms 인위적 딜레이 필요
+
+#### 4.2 Supabase 설정 ✅ 완료 (2026-03-27)
+- [x] Supabase 프로젝트 생성 (dongjinrnd / ProjectManager) ✅
+- [x] 21개 테이블 SQL 스키마 작성 및 실행 ✅
+- [x] 환경 변수 설정 ✅
+
+#### 4.3 데이터 접근 레이어 ✅ 완료 (2026-03-27)
+- [x] `src/lib/supabase/` 모듈 생성 (client, mappers, db, index) ✅
+- [x] camelCase ↔ snake_case 자동 변환 ✅
+- [x] 레거시 호환 함수 (기존 코드 수정 최소화) ✅
+
+#### 4.4 데이터 마이그레이션 ✅ 완료 (2026-03-27)
+- [x] 마이그레이션 스크립트 (`scripts/migrate-to-supabase.ts`) ✅
+- [x] 21개 시트 → 21개 테이블, 531건 이전 완료 ✅
+
+#### 4.5 API 라우트 전환 ✅ 완료 (2026-03-27)
+- [x] 42개 파일 import 변경 ✅
+- [x] TypeScript 빌드 0 에러, Next.js 빌드 성공 ✅
+
+#### 4.6 백업
+- [x] Git 태그 `v1.0-google-sheets` (영구 복원 지점) ✅
+- [x] Google Sheets 데이터 유지 (삭제하지 않음) ✅
+
+---
+
 
 
 ## 🎯 핵심 결정 사항
@@ -793,7 +823,7 @@ updated: 2026-03-06
 
 - **프레임워크**: Next.js 14+ (App Router)
 
-- **데이터베이스**: Google Sheets (Service Account 연동)
+- **데이터베이스**: Supabase (PostgreSQL) — Google Sheets에서 마이그레이션 (2026-03-27)
 
 - **인증**: 자체 로그인 (ID/Password)
 
@@ -925,4 +955,5 @@ ProjectManager/
 
 - 간트차트는 업무일지 대신 주간 보고로 드릴다운 (항목 최소화)
 
-- 모든 데이터는 Google Sheets에 저장, 별도 DB 없음
+- 모든 데이터는 Supabase (PostgreSQL)에 저장 — Google Sheets에서 마이그레이션 완료 (2026-03-27)
+- Google Drive 연동은 유지 (회의록 마크다운 파일 저장용)

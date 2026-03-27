@@ -11,7 +11,7 @@ tags:
   - prd
   - codex-context
 created: 2026-01-23
-updated: 2026-03-06
+updated: 2026-03-27
 ---
 
 # PRD: 연구개발 프로젝트 관리 시스템
@@ -509,10 +509,13 @@ updated: 2026-03-06
   - [x] 프로젝트 상세 페이지: 팀장 코멘트 확인/답변 탭 ✅
   - [ ] 코멘트 알림: 해당 팀장에게 알림 발송 (Phase 3.4)
 
-### 3.6 구글 시트 연동 (Priority: HIGH)
-- [ ] 기존 구글 시트 데이터 읽기
-- [ ] 웹에서 수정 시 구글 시트 동기화
-- [ ] 연동 상태 표시
+### 3.6 데이터베이스 (Priority: HIGH)
+- [x] ~~구글 시트 연동~~ → **Supabase (PostgreSQL) 마이그레이션 완료** ✅ (2026-03-27)
+  - [x] Google Sheets → Supabase 21개 테이블 마이그레이션 ✅
+  - [x] 531건 데이터 이전 완료 ✅
+  - [x] 42개 API 라우트 Supabase 전환 ✅
+  - [x] Google Drive 연동 유지 (회의록 파일 저장) ✅
+- [x] 연동 상태 표시 ✅
 
 ### 3.7 파일 첨부 (Priority: MEDIUM) ⚠️ Google Workspace 필요
 > **참고:** Service Account는 Google Drive 저장 공간이 없어 파일 업로드 불가.
@@ -975,7 +978,7 @@ updated: 2026-03-06
 | Language | TypeScript | 타입 안전성 |
 | UI Library | Ant Design 또는 shadcn/ui | 대시보드/테이블 친화적 |
 | 간트 차트 | dhtmlx-gantt 또는 frappe-gantt | 계획/실적 비교 지원 |
-| Database | **구글 시트 (Google Sheets API)** | 기존 데이터 활용, 원본 역할 |
+| Database | **Supabase (PostgreSQL)** | Google Sheets에서 마이그레이션 (2026-03-27) |
 | Auth | **자체 로그인 (Credentials)** | 담당자 시트 기반 인증 |
 | Google 연동 | **Service Account** | 서버에서 상시 연결 |
 | 이메일 | Nodemailer + Gmail API | 알림 발송 |
@@ -998,12 +1001,12 @@ updated: 2026-03-06
 └─────────────────────┬───────────────────────────────────────┘
                       │ Service Account (상시 연결)
 ┌─────────────────────▼───────────────────────────────────────┐
-│                 Google Cloud Platform                       │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │Google Sheets│  │Google Drive │  │  Gmail API  │         │
-│  │  (Database) │  │   (Files)   │  │  (알림)     │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
-└─────────────────────────────────────────────────────────────┘
+│           Supabase          │   Google Cloud Platform      │
+│  ┌─────────────────────────┐│  ┌─────────────┐  ┌────────┐ │
+│  │  PostgreSQL (Database)  ││  │Google Drive │  │Gmail   │ │
+│  │  21 Tables, REST API    ││  │  (Files)    │  │(알림)  │ │
+│  └─────────────────────────┘│  └─────────────┘  └────────┘ │
+└─────────────────────────────┴──────────────────────────────┘
 ```
 
 ---
@@ -1045,7 +1048,7 @@ updated: 2026-03-06
 - [x] 모바일 지원 필요 여부 → **반응형 웹으로 지원**
 - [x] 동시 사용자 수 예상 → **5~20명**
 - [x] 추가 요청 기능 확인 → **파일 첨부, 이메일 알림, 고급 ��색**
-- [x] 기술 스택 → **Next.js + Google Sheets API**
+- [x] 기술 스택 → **Next.js + Supabase (PostgreSQL)** (Google Sheets에서 마이그레이션)
 - [x] 배포 환경 → **회사 내부 서버 (On-premise)**
 - [x] 로그인 방식 → **자체 로그인 (ID/Password) + Service Account**
 - [x] 업무일지 연동 → **프로젝트에 자동 반영**
@@ -1059,10 +1062,10 @@ updated: 2026-03-06
 | 항목 | 내용 |
 |------|------|
 | 프로젝트명 | 연구개발 프로젝트 관리 시스템 |
-| 목표 | 구글 시트 기반 통합 프로젝트 관리 웹 |
+| 목표 | Supabase 기반 통합 프로젝트 관리 웹 |
 | 사용자 | 연구개발 담당자 (5~20명) |
-| 기술 스택 | Next.js + TypeScript + Google APIs |
+| 기술 스택 | Next.js + TypeScript + Supabase + Google Drive |
 | 배포 | 회사 내부 서버 |
 | 핵심 기능 | 프로젝트 관리, 업무일지, 간트차트, 대시보드 |
-| 데이터 | 구글 시트 (원본), 양방향 동기화 |
+| 데이터 | Supabase PostgreSQL (Google Sheets에서 마이그레이션) |
 

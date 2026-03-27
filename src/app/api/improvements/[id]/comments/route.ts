@@ -11,31 +11,14 @@ import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
   getAllAsObjects,
-  appendRow,
-  getHeaders,
-  getRows,
+  insertRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
   ImprovementComment,
   CreateCommentInput,
 } from '@/types/improvement';
-
-// 시트에서 가져온 개선요청 타입 (존재 확인용)
-interface SheetImprovement extends Record<string, unknown> {
-  id: string;
-}
-
-// 시트에서 가져온 댓글 타입
-interface SheetComment extends Record<string, unknown> {
-  id: string;
-  improvementId: string;
-  content: string;
-  authorId: string;
-  authorName: string;
-  createdAt: string;
-}
 
 // 허용된 역할 확인
 function hasAccess(role: string): boolean {
@@ -71,7 +54,7 @@ export async function GET(
     }
 
     // 개선요청 존재 확인
-    const improvement = await findRowByColumn<SheetImprovement>(
+    const improvement = await findRowByColumn<{ id: string }>(
       SHEET_NAMES.IMPROVEMENTS,
       'id',
       id
@@ -85,7 +68,7 @@ export async function GET(
     }
 
     // 댓글 조회
-    const allComments = await getAllAsObjects<SheetComment>(
+    const allComments = await getAllAsObjects<ImprovementComment & Record<string, unknown>>(
       SHEET_NAMES.IMPROVEMENT_COMMENTS
     );
 
@@ -139,7 +122,7 @@ export async function POST(
     }
 
     // 개선요청 존재 확인
-    const improvement = await findRowByColumn<SheetImprovement>(
+    const improvement = await findRowByColumn<{ id: string }>(
       SHEET_NAMES.IMPROVEMENTS,
       'id',
       id
@@ -164,13 +147,12 @@ export async function POST(
     }
 
     // 새 ID 생성
-    const headers = await getHeaders(SHEET_NAMES.IMPROVEMENT_COMMENTS);
-    const rows = await getRows(SHEET_NAMES.IMPROVEMENT_COMMENTS);
+    const allComments = await getAllAsObjects<{ id: string }>(SHEET_NAMES.IMPROVEMENT_COMMENTS);
 
     let maxNum = 0;
-    for (const row of rows) {
-      if (row[0] && row[0].startsWith('IMPC-')) {
-        const num = parseInt(row[0].replace('IMPC-', ''), 10);
+    for (const row of allComments) {
+      if (row.id && row.id.startsWith('IMPC-')) {
+        const num = parseInt(row.id.replace('IMPC-', ''), 10);
         if (num > maxNum) maxNum = num;
       }
     }
@@ -188,15 +170,8 @@ export async function POST(
       createdAt: now,
     };
 
-    // 행 데이터 생성
-    const rowValues = headers.map((header) => {
-      const value = newComment[header];
-      if (value === null || value === undefined) return '';
-      return String(value);
-    });
-
     // 시트에 추가
-    await appendRow(SHEET_NAMES.IMPROVEMENT_COMMENTS, rowValues);
+    await insertRow(SHEET_NAMES.IMPROVEMENT_COMMENTS, newComment);
 
     return NextResponse.json({
       success: true,

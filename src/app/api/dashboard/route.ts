@@ -9,7 +9,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getAllAsObjects, SHEET_NAMES } from '@/lib/google';
+import { getAllAsObjects, SHEET_NAMES } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { ProjectStage, ProjectStatus } from '@/types';
 

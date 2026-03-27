@@ -9,7 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { getRows, updateRow, getHeaders, SHEET_NAMES } from '@/lib/google';
+import { getAllAsObjects, updateById, SHEET_NAMES } from '@/lib/supabase/db';
 
 // 기본 테스트 비밀번호
 const DEFAULT_PASSWORD = 'test1234';
@@ -20,21 +20,14 @@ export async function POST(request: Request) {
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
 
-    const headers = await getHeaders(SHEET_NAMES.USERS);
-    const users = await getRows(SHEET_NAMES.USERS);
+    const users = await getAllAsObjects<Record<string, unknown> & {
+      id: string;
+      password: string;
+    }>(SHEET_NAMES.USERS);
 
     if (users.length === 0) {
       return NextResponse.json(
         { success: false, message: '사용자가 없습니다.' },
-        { status: 400 }
-      );
-    }
-
-    // 비밀번호 컬럼 인덱스 찾기
-    const passwordIndex = headers.indexOf('password');
-    if (passwordIndex === -1) {
-      return NextResponse.json(
-        { success: false, message: 'password 컬럼을 찾을 수 없습니다.' },
         { status: 400 }
       );
     }
@@ -44,15 +37,11 @@ export async function POST(request: Request) {
 
     // 모든 사용자의 비밀번호 업데이트
     const updatedUsers = [];
-    for (let i = 0; i < users.length; i++) {
-      const row = users[i];
-      const rowIndex = i + 2; // 헤더 제외, 1-based index
-
+    for (const user of users) {
       // force=true면 모두 업데이트, 아니면 해시 아닌 것만
-      if (force || !row[passwordIndex].startsWith('$2')) {
-        row[passwordIndex] = hashedPassword;
-        await updateRow(SHEET_NAMES.USERS, rowIndex, row);
-        updatedUsers.push(row[0]); // id
+      if (force || !user.password.startsWith('$2')) {
+        await updateById(SHEET_NAMES.USERS, user.id, { password: hashedPassword });
+        updatedUsers.push(user.id);
       }
     }
 

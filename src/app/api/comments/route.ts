@@ -13,43 +13,25 @@
 import { NextResponse } from 'next/server';
 import {
   getAllAsObjects,
-  appendRow,
-  getHeaders,
-  getRows,
+  insertRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { Comment, CreateCommentInput, CommentThread } from '@/types';
-
-// 시트에서 가져온 코멘트 타입
-interface SheetComment extends Record<string, unknown> {
-  id: string;
-  projectId: string;
-  authorId: string;
-  parentId: string;
-  content: string;
-  createdAt: string;
-}
-
-// 시트에서 가져온 사용자 타입
-interface SheetUser extends Record<string, unknown> {
-  id: string;
-  name: string;
-}
 
 /**
  * 새 코멘트 ID 생성
  */
 async function generateCommentId(): Promise<string> {
-  const rows = await getRows(SHEET_NAMES.COMMENTS);
+  const allComments = await getAllAsObjects<{ id: string }>(SHEET_NAMES.COMMENTS);
 
   // 최대 번호 계산
   const prefix = 'CMT-';
   let maxNum = 0;
 
-  for (const row of rows) {
-    if (row[0] && row[0].startsWith(prefix)) {
-      const num = parseInt(row[0].replace(prefix, ''), 10);
+  for (const row of allComments) {
+    if (row.id && row.id.startsWith(prefix)) {
+      const num = parseInt(row.id.replace(prefix, ''), 10);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -84,7 +66,7 @@ export async function GET(request: Request) {
     }
 
     // 모든 코멘트 조회
-    const allComments = await getAllAsObjects<SheetComment>(SHEET_NAMES.COMMENTS);
+    const allComments = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.COMMENTS);
 
     // 해당 프로젝트의 코멘트 필터링
     const projectComments = allComments.filter(
@@ -92,8 +74,8 @@ export async function GET(request: Request) {
     );
 
     // 사용자 정보 조회 (작성자 이름 표시용)
-    const users = await getAllAsObjects<SheetUser>(SHEET_NAMES.USERS);
-    const userMap = new Map(users.map((u) => [u.id, u.name]));
+    const users = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.USERS);
+    const userMap = new Map(users.map((u) => [u.id as string, u.name as string]));
 
     // 스레드 구성: 부모 코멘트와 답변 분리
     const parentComments = projectComments.filter((c) => !c.parentId);
@@ -104,27 +86,27 @@ export async function GET(request: Request) {
       const replies = replyComments
         .filter((r) => r.parentId === parent.id)
         .sort(
-          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          (a, b) => new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime()
         );
 
       return {
         comment: {
-          id: parent.id,
-          projectId: parent.projectId,
-          authorId: parent.authorId,
-          parentId: parent.parentId || undefined,
-          content: parent.content,
-          createdAt: parent.createdAt,
+          id: parent.id as string,
+          projectId: parent.projectId as string,
+          authorId: parent.authorId as string,
+          parentId: (parent.parentId as string) || undefined,
+          content: parent.content as string,
+          createdAt: parent.createdAt as string,
         },
         replies: replies.map((r) => ({
-          id: r.id,
-          projectId: r.projectId,
-          authorId: r.authorId,
-          parentId: r.parentId || undefined,
-          content: r.content,
-          createdAt: r.createdAt,
+          id: r.id as string,
+          projectId: r.projectId as string,
+          authorId: r.authorId as string,
+          parentId: (r.parentId as string) || undefined,
+          content: r.content as string,
+          createdAt: r.createdAt as string,
         })),
-        authorName: userMap.get(parent.authorId) || parent.authorId,
+        authorName: userMap.get(parent.authorId as string) || (parent.authorId as string),
       };
     });
 
@@ -191,7 +173,7 @@ export async function POST(request: Request) {
       }
 
       // 부모 코멘트 존재 확인
-      const allComments = await getAllAsObjects<SheetComment>(SHEET_NAMES.COMMENTS);
+      const allComments = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.COMMENTS);
       const parentComment = allComments.find((c) => c.id === body.parentId);
       if (!parentComment) {
         return NextResponse.json(
@@ -215,9 +197,6 @@ export async function POST(request: Request) {
     // 현재 시간
     const now = new Date().toISOString();
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.COMMENTS);
-
     // 새 코멘트 데이터
     const newComment: Record<string, unknown> = {
       id: commentId,
@@ -228,15 +207,8 @@ export async function POST(request: Request) {
       createdAt: now,
     };
 
-    // 행 데이터 생성
-    const rowValues = headers.map((header) => {
-      const value = newComment[header];
-      if (value === null || value === undefined) return '';
-      return String(value);
-    });
-
     // 시트에 추가
-    await appendRow(SHEET_NAMES.COMMENTS, rowValues);
+    await insertRow(SHEET_NAMES.COMMENTS, newComment);
 
     // 응답 데이터 구성
     const responseData: Comment = {

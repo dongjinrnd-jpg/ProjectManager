@@ -11,59 +11,13 @@
 import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
-  updateRow,
-  deleteRow,
-  getHeaders,
-  objectToRow,
+  updateById,
+  deleteById,
   getAllAsObjects,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession, isAdmin } from '@/lib/auth';
 import type { WorkLog, UpdateWorkLogInput, ProjectStage, UserRole } from '@/types';
-
-// 시트에서 가져온 업무일지 타입
-interface SheetWorkLog extends Record<string, unknown> {
-  id: string;
-  date: string;
-  projectId: string;
-  item: string;
-  customer: string;
-  stage: ProjectStage;
-  assigneeId: string;
-  participants: string;
-  plan: string;
-  content: string;
-  issue: string;
-  issueStatus: string;
-  issueResolvedAt: string;
-  scheduleId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// 시트에서 가져온 프로젝트 타입
-interface SheetProject extends Record<string, unknown> {
-  id: string;
-  item: string;
-  customer: string;
-  issues: string;
-  currentStage: ProjectStage;
-  teamLeaderId: string;
-  teamMembers: string;
-}
-
-// 시트에서 가져온 세부추진항목 타입
-interface SheetSchedule extends Record<string, unknown> {
-  id: string;
-  projectId: string;
-  stage: string;
-  taskName: string;
-  plannedStart: string;
-  plannedEnd: string;
-  actualStart: string;
-  actualEnd: string;
-  status: string;
-}
 
 /**
  * 세부추진항목 실적 날짜 자동 업데이트
@@ -79,7 +33,7 @@ async function updateScheduleActualDates(
   scheduleId: string,
   worklogDate: string
 ): Promise<void> {
-  const result = await findRowByColumn<SheetSchedule>(
+  const result = await findRowByColumn<Record<string, unknown>>(
     SHEET_NAMES.PROJECT_SCHEDULES,
     'id',
     scheduleId
@@ -90,27 +44,25 @@ async function updateScheduleActualDates(
     return;
   }
 
-  const { rowIndex, data: schedule } = result;
-  const headers = await getHeaders(SHEET_NAMES.PROJECT_SCHEDULES);
+  const { data: schedule } = result;
 
-  const updatedSchedule = { ...schedule };
+  const updatedFields: Record<string, unknown> = {};
 
   // actualStart가 없으면 설정 (처음 업무일지 작성 시)
   if (!schedule.actualStart) {
-    updatedSchedule.actualStart = worklogDate;
+    updatedFields.actualStart = worklogDate;
   }
 
   // actualEnd는 항상 최신 날짜로 업데이트 (실적 기간 표시용)
-  updatedSchedule.actualEnd = worklogDate;
+  updatedFields.actualEnd = worklogDate;
 
   // status 자동 업데이트 (planned → in_progress)
   // 완료 처리는 팀장/관리자가 "완료" 버튼으로 별도 처리
   if (schedule.status === 'planned') {
-    updatedSchedule.status = 'in_progress';
+    updatedFields.status = 'in_progress';
   }
 
-  const rowValues = objectToRow(headers, updatedSchedule);
-  await updateRow(SHEET_NAMES.PROJECT_SCHEDULES, rowIndex, rowValues);
+  await updateById(SHEET_NAMES.PROJECT_SCHEDULES, scheduleId, updatedFields);
 }
 
 /**
@@ -119,7 +71,7 @@ async function updateScheduleActualDates(
  * - 관리자(admin/sysadmin)이면서 해당 프로젝트 팀원(팀장 포함)이면 true
  */
 async function canEditWorklog(
-  worklog: SheetWorkLog,
+  worklog: Record<string, unknown>,
   userId: string,
   userRole: UserRole
 ): Promise<boolean> {
@@ -128,16 +80,16 @@ async function canEditWorklog(
 
   // 관리자 이상이면서 해당 프로젝트 팀원인지 확인
   if (isAdmin(userRole)) {
-    const projectResult = await findRowByColumn<SheetProject>(
+    const projectResult = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.PROJECTS,
       'id',
-      worklog.projectId
+      worklog.projectId as string
     );
     if (projectResult) {
       const project = projectResult.data;
       const isTeamLeader = project.teamLeaderId === userId;
       const isTeamMember = project.teamMembers
-        ? project.teamMembers.split(',').map(id => id.trim()).includes(userId)
+        ? (project.teamMembers as string).split(',').map(id => id.trim()).includes(userId)
         : false;
       if (isTeamLeader || isTeamMember) return true;
     }
@@ -156,7 +108,7 @@ async function updateProjectIssueAndStage(
   newStage: ProjectStage | undefined,
   updateStage: boolean
 ): Promise<void> {
-  const result = await findRowByColumn<SheetProject>(
+  const result = await findRowByColumn<Record<string, unknown>>(
     SHEET_NAMES.PROJECTS,
     'id',
     projectId
@@ -164,27 +116,25 @@ async function updateProjectIssueAndStage(
 
   if (!result) return;
 
-  const { rowIndex, data: project } = result;
-  const headers = await getHeaders(SHEET_NAMES.PROJECTS);
+  const { data: project } = result;
 
-  const updatedProject = { ...project };
+  const updatedFields: Record<string, unknown> = {};
 
   // 이슈사항 업데이트
   if (issue && issueStatus === 'open') {
-    updatedProject.issues = issue;
+    updatedFields.issues = issue;
   } else if (issueStatus === 'resolved') {
-    updatedProject.issues = '';
+    updatedFields.issues = '';
   }
 
   // 단계 업데이트 (팀장이 변경 요청한 경우)
   if (updateStage && newStage && project.currentStage !== newStage) {
-    updatedProject.currentStage = newStage;
+    updatedFields.currentStage = newStage;
   }
 
-  updatedProject.updatedAt = new Date().toISOString();
+  updatedFields.updatedAt = new Date().toISOString();
 
-  const rowValues = objectToRow(headers, updatedProject);
-  await updateRow(SHEET_NAMES.PROJECTS, rowIndex, rowValues);
+  await updateById(SHEET_NAMES.PROJECTS, projectId, updatedFields);
 }
 
 /**
@@ -208,7 +158,7 @@ export async function GET(
     }
 
     // 업무일지 찾기
-    const result = await findRowByColumn<SheetWorkLog>(
+    const result = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.WORKLOGS,
       'id',
       id
@@ -258,7 +208,7 @@ export async function PUT(
     }
 
     // 업무일지 찾기
-    const result = await findRowByColumn<SheetWorkLog>(
+    const result = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.WORKLOGS,
       'id',
       id
@@ -271,7 +221,7 @@ export async function PUT(
       );
     }
 
-    const { rowIndex, data: existingWorkLog } = result;
+    const { data: existingWorkLog } = result;
 
     // 권한 확인 (본인 또는 관리자 이상 팀원)
     const canEdit = await canEditWorklog(
@@ -297,7 +247,7 @@ export async function PUT(
     let customer = existingWorkLog.customer;
 
     if (body.projectId && body.projectId !== existingWorkLog.projectId) {
-      const projectResult = await findRowByColumn<SheetProject>(
+      const projectResult = await findRowByColumn<Record<string, unknown>>(
         SHEET_NAMES.PROJECTS,
         'id',
         body.projectId
@@ -340,28 +290,22 @@ export async function PUT(
       updatedAt: now,
     };
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.WORKLOGS);
-
-    // 행 데이터 생성
-    const rowValues = objectToRow(headers, updatedWorkLog);
-
     // 시트 업데이트
-    await updateRow(SHEET_NAMES.WORKLOGS, rowIndex, rowValues);
+    await updateById(SHEET_NAMES.WORKLOGS, id, updatedWorkLog);
 
     // 프로젝트 이슈사항 및 단계 업데이트
-    const finalProjectId = body.projectId ?? existingWorkLog.projectId;
+    const finalProjectId = (body.projectId ?? existingWorkLog.projectId) as string;
     await updateProjectIssueAndStage(
       finalProjectId,
-      body.issue ?? existingWorkLog.issue,
-      body.issueStatus ?? existingWorkLog.issueStatus,
-      body.stage ?? existingWorkLog.stage,
+      (body.issue ?? existingWorkLog.issue) as string | undefined,
+      (body.issueStatus ?? existingWorkLog.issueStatus) as string | undefined,
+      (body.stage ?? existingWorkLog.stage) as ProjectStage | undefined,
       body.updateProjectStage || false
     );
 
     // 세부추진항목 실적 날짜 자동 업데이트
-    const finalScheduleId = body.scheduleId ?? existingWorkLog.scheduleId;
-    const finalDate = body.date ?? existingWorkLog.date;
+    const finalScheduleId = (body.scheduleId ?? existingWorkLog.scheduleId) as string;
+    const finalDate = (body.date ?? existingWorkLog.date) as string;
     if (finalScheduleId) {
       await updateScheduleActualDates(finalScheduleId, finalDate);
     }
@@ -404,7 +348,7 @@ export async function DELETE(
     }
 
     // 업무일지 찾기
-    const result = await findRowByColumn<SheetWorkLog>(
+    const result = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.WORKLOGS,
       'id',
       id
@@ -417,7 +361,7 @@ export async function DELETE(
       );
     }
 
-    const { rowIndex, data: existingWorkLog } = result;
+    const { data: existingWorkLog } = result;
 
     // 권한 확인 (본인 또는 관리자 이상 팀원)
     const canDelete = await canEditWorklog(
@@ -452,7 +396,7 @@ export async function DELETE(
     }
 
     // 시트에서 삭제
-    await deleteRow(SHEET_NAMES.WORKLOGS, rowIndex);
+    await deleteById(SHEET_NAMES.WORKLOGS, id);
 
     return NextResponse.json({
       success: true,

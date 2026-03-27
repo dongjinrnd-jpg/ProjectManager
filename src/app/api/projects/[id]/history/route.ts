@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllAsObjects, SHEET_NAMES } from '@/lib/google';
+import { getAllAsObjects, SHEET_NAMES } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 
 // 시트에서 가져온 이력 타입

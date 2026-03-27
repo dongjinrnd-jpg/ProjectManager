@@ -21,7 +21,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getAllAsObjects, SHEET_NAMES } from '@/lib/google';
+import { getAllAsObjects, SHEET_NAMES } from '@/lib/supabase/db';
 import { getSession, hasMinRole } from '@/lib/auth';
 import type {
   ProjectStage,

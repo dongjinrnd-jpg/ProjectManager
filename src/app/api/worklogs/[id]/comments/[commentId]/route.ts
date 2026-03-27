@@ -11,18 +11,10 @@ import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
   getAllAsObjects,
-  deleteRow,
+  deleteById,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
-
-// 시트에서 가져온 댓글 타입
-interface SheetComment extends Record<string, unknown> {
-  id: string;
-  worklogId: string;
-  authorId: string;
-  parentId: string;
-}
 
 /**
  * DELETE /api/worklogs/[id]/comments/[commentId]
@@ -45,7 +37,7 @@ export async function DELETE(
     }
 
     // 댓글 조회
-    const result = await findRowByColumn<SheetComment>(
+    const result = await findRowByColumn<Record<string, unknown>>(
       SHEET_NAMES.WORKLOG_COMMENTS,
       'id',
       commentId
@@ -76,7 +68,7 @@ export async function DELETE(
 
     // 부모 댓글인 경우 대댓글 존재 여부 확인
     if (!result.data.parentId) {
-      const allComments = await getAllAsObjects<SheetComment>(
+      const allComments = await getAllAsObjects<Record<string, unknown>>(
         SHEET_NAMES.WORKLOG_COMMENTS
       );
 
@@ -91,7 +83,7 @@ export async function DELETE(
     }
 
     // 댓글 삭제
-    await deleteRow(SHEET_NAMES.WORKLOG_COMMENTS, result.rowIndex);
+    await deleteById(SHEET_NAMES.WORKLOG_COMMENTS, commentId);
 
     return NextResponse.json({
       success: true,

@@ -16,7 +16,7 @@ import {
   getHeaders,
   getRows,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
   MeetingMinutes,

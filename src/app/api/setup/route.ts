@@ -9,7 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { appendRow, getRows, SHEET_NAMES } from '@/lib/google';
+import { insertRow, getAllAsObjects, SHEET_NAMES } from '@/lib/supabase/db';
 
 // 초기 테스트 사용자 데이터
 const TEST_USERS = [
@@ -42,7 +42,7 @@ const TEST_USERS = [
 export async function POST() {
   try {
     // 기존 사용자 확인
-    const existingUsers = await getRows(SHEET_NAMES.USERS);
+    const existingUsers = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.USERS);
 
     if (existingUsers.length > 0) {
       return NextResponse.json(
@@ -64,17 +64,17 @@ export async function POST() {
       const hashedPassword = await bcrypt.hash(user.password, 10);
 
       // 시트에 추가
-      await appendRow(SHEET_NAMES.USERS, [
-        user.id,
-        hashedPassword,
-        user.name,
-        user.email,
-        user.role,
-        user.division,
-        'TRUE', // isActive
-        now, // createdAt
-        now, // updatedAt
-      ]);
+      await insertRow(SHEET_NAMES.USERS, {
+        id: user.id,
+        password: hashedPassword,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        division: user.division,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
 
       createdUsers.push({
         id: user.id,
@@ -105,15 +105,20 @@ export async function POST() {
 // GET: 현재 상태 확인
 export async function GET() {
   try {
-    const users = await getRows(SHEET_NAMES.USERS);
+    const users = await getAllAsObjects<Record<string, unknown> & {
+      id: string;
+      name: string;
+      role: string;
+      isActive: boolean;
+    }>(SHEET_NAMES.USERS);
 
     return NextResponse.json({
       userCount: users.length,
-      users: users.map((row) => ({
-        id: row[0],
-        name: row[2],
-        role: row[4],
-        isActive: row[6],
+      users: users.map((user) => ({
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        isActive: user.isActive,
       })),
     });
   } catch (error) {

@@ -11,39 +11,14 @@
 import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
-  updateRow,
-  deleteRow,
-  getHeaders,
-  objectToRow,
-  appendRow,
-  getRows,
+  updateById,
+  deleteById,
+  insertRow,
+  getAllAsObjects,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession, hasMinRole, isAdmin } from '@/lib/auth';
 import type { Project, UpdateProjectInput, ProjectStatus, ProjectStage, UserRole } from '@/types';
-
-// 시트에서 가져온 프로젝트 타입
-interface SheetProject extends Record<string, unknown> {
-  id: string;
-  status: ProjectStatus;
-  customer: string;
-  division: string;
-  category: string;
-  model: string;
-  item: string;
-  partNo: string;
-  teamLeaderId: string;
-  teamMembers: string;
-  currentStage: ProjectStage;
-  stages: string;
-  progress: string;
-  issues: string;
-  scheduleStart: string;
-  scheduleEnd: string;
-  note: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 /**
  * 프로젝트 이력 기록
@@ -55,13 +30,13 @@ async function recordHistory(
   newValue: string,
   changedById: string
 ): Promise<void> {
-  const headers = await getHeaders(SHEET_NAMES.PROJECT_HISTORY);
-  const rows = await getRows(SHEET_NAMES.PROJECT_HISTORY);
+  const allItems = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.PROJECT_HISTORY);
 
   // 새 ID 생성
-  const maxNum = rows.reduce((max, row) => {
-    if (row[0] && row[0].startsWith('PH-')) {
-      const num = parseInt(row[0].replace('PH-', ''), 10);
+  const maxNum = allItems.reduce((max, item) => {
+    const id = item.id as string;
+    if (id && id.startsWith('PH-')) {
+      const num = parseInt(id.replace('PH-', ''), 10);
       return num > max ? num : max;
     }
     return max;
@@ -79,13 +54,7 @@ async function recordHistory(
     changedAt: now,
   };
 
-  const rowValues = headers.map((header) => {
-    const value = historyData[header];
-    if (value === null || value === undefined) return '';
-    return String(value);
-  });
-
-  await appendRow(SHEET_NAMES.PROJECT_HISTORY, rowValues);
+  await insertRow(SHEET_NAMES.PROJECT_HISTORY, historyData);
 }
 
 /**
@@ -109,7 +78,27 @@ export async function GET(
     }
 
     // 프로젝트 찾기
-    const result = await findRowByColumn<SheetProject>(
+    const result = await findRowByColumn<Record<string, unknown> & {
+      id: string;
+      status: ProjectStatus;
+      customer: string;
+      division: string;
+      category: string;
+      model: string;
+      item: string;
+      partNo: string;
+      teamLeaderId: string;
+      teamMembers: string;
+      currentStage: ProjectStage;
+      stages: string;
+      progress: string;
+      issues: string;
+      scheduleStart: string;
+      scheduleEnd: string;
+      note: string;
+      createdAt: string;
+      updatedAt: string;
+    }>(
       SHEET_NAMES.PROJECTS,
       'id',
       id
@@ -159,7 +148,27 @@ export async function PUT(
     }
 
     // 프로젝트 찾기
-    const result = await findRowByColumn<SheetProject>(
+    const result = await findRowByColumn<Record<string, unknown> & {
+      id: string;
+      status: ProjectStatus;
+      customer: string;
+      division: string;
+      category: string;
+      model: string;
+      item: string;
+      partNo: string;
+      teamLeaderId: string;
+      teamMembers: string;
+      currentStage: ProjectStage;
+      stages: string;
+      progress: string;
+      issues: string;
+      scheduleStart: string;
+      scheduleEnd: string;
+      note: string;
+      createdAt: string;
+      updatedAt: string;
+    }>(
       SHEET_NAMES.PROJECTS,
       'id',
       id
@@ -172,7 +181,7 @@ export async function PUT(
       );
     }
 
-    const { rowIndex, data: existingProject } = result;
+    const { data: existingProject } = result;
 
     // 권한 확인 (팀장, 팀원, 또는 admin 이상)
     const userRole = session.user.role as UserRole;
@@ -227,14 +236,8 @@ export async function PUT(
       updatedAt: now,
     };
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.PROJECTS);
-
-    // 행 데이터 생성
-    const rowValues = objectToRow(headers, updatedProject);
-
-    // 시트 업데이트
-    await updateRow(SHEET_NAMES.PROJECTS, rowIndex, rowValues);
+    // Supabase 업데이트
+    await updateById(SHEET_NAMES.PROJECTS, id, updatedProject);
 
     return NextResponse.json({
       success: true,
@@ -282,7 +285,7 @@ export async function DELETE(
     }
 
     // 프로젝트 찾기
-    const result = await findRowByColumn<SheetProject>(
+    const result = await findRowByColumn(
       SHEET_NAMES.PROJECTS,
       'id',
       id
@@ -298,8 +301,8 @@ export async function DELETE(
     // 삭제 이력 기록
     await recordHistory(id, 'deleted', '', 'true', session.user.id);
 
-    // 시트에서 삭제
-    await deleteRow(SHEET_NAMES.PROJECTS, result.rowIndex);
+    // Supabase에서 삭제
+    await deleteById(SHEET_NAMES.PROJECTS, id);
 
     return NextResponse.json({
       success: true,

@@ -10,11 +10,9 @@
 import { NextResponse } from 'next/server';
 import {
   getAllAsObjects,
-  appendRow,
-  getHeaders,
-  getRows,
+  insertRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
   Improvement,
@@ -26,25 +24,6 @@ import type {
   RelatedMenu,
 } from '@/types/improvement';
 
-// 시트에서 가져온 개선요청 타입
-interface SheetImprovement extends Record<string, unknown> {
-  id: string;
-  title: string;
-  type: ImprovementType;
-  status: ImprovementStatus;
-  priority: ImprovementPriority;
-  content: string;
-  relatedMenu: RelatedMenu;
-  reproductionSteps: string;
-  screenshotUrl: string;
-  authorId: string;
-  authorName: string;
-  createdAt: string;
-  updatedAt: string;
-  dueDate: string;
-  completedAt: string;
-}
-
 // 허용된 역할 확인
 function hasAccess(role: string): boolean {
   return ['engineer', 'admin', 'sysadmin'].includes(role);
@@ -55,12 +34,12 @@ function hasAccess(role: string): boolean {
  * 형식: IMP-001, IMP-002, ...
  */
 async function generateImprovementId(): Promise<string> {
-  const rows = await getRows(SHEET_NAMES.IMPROVEMENTS);
+  const rows = await getAllAsObjects<{ id: string }>(SHEET_NAMES.IMPROVEMENTS);
 
   let maxNum = 0;
   for (const row of rows) {
-    if (row[0] && row[0].startsWith('IMP-')) {
-      const num = parseInt(row[0].replace('IMP-', ''), 10);
+    if (row.id && row.id.startsWith('IMP-')) {
+      const num = parseInt(row.id.replace('IMP-', ''), 10);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -99,7 +78,7 @@ export async function GET(request: Request) {
     const keyword = searchParams.get('keyword') || '';
 
     // 모든 개선요청 조회
-    const allImprovements = await getAllAsObjects<SheetImprovement>(
+    const allImprovements = await getAllAsObjects<Improvement & Record<string, unknown>>(
       SHEET_NAMES.IMPROVEMENTS
     );
 
@@ -210,9 +189,6 @@ export async function POST(request: Request) {
     // 현재 시간
     const now = new Date().toISOString();
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.IMPROVEMENTS);
-
     // 새 개선요청 데이터
     const newImprovement: Record<string, unknown> = {
       id: improvementId,
@@ -232,15 +208,8 @@ export async function POST(request: Request) {
       completedAt: '',
     };
 
-    // 행 데이터 생성
-    const rowValues = headers.map((header) => {
-      const value = newImprovement[header];
-      if (value === null || value === undefined) return '';
-      return String(value);
-    });
-
     // 시트에 추가
-    await appendRow(SHEET_NAMES.IMPROVEMENTS, rowValues);
+    await insertRow(SHEET_NAMES.IMPROVEMENTS, newImprovement);
 
     // 초기 이력 추가 (접수)
     await addHistory(improvementId, 'submitted', '요청 등록', session.user.id, session.user.name || '');
@@ -272,14 +241,13 @@ async function addHistory(
   changedBy: string,
   changedByName: string
 ): Promise<void> {
-  const headers = await getHeaders(SHEET_NAMES.IMPROVEMENT_HISTORIES);
-  const rows = await getRows(SHEET_NAMES.IMPROVEMENT_HISTORIES);
+  const allHistories = await getAllAsObjects<{ id: string }>(SHEET_NAMES.IMPROVEMENT_HISTORIES);
 
   // 새 ID 생성
   let maxNum = 0;
-  for (const row of rows) {
-    if (row[0] && row[0].startsWith('IMPH-')) {
-      const num = parseInt(row[0].replace('IMPH-', ''), 10);
+  for (const row of allHistories) {
+    if (row.id && row.id.startsWith('IMPH-')) {
+      const num = parseInt(row.id.replace('IMPH-', ''), 10);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -297,11 +265,5 @@ async function addHistory(
     changedAt: now,
   };
 
-  const rowValues = headers.map((header) => {
-    const value = historyData[header];
-    if (value === null || value === undefined) return '';
-    return String(value);
-  });
-
-  await appendRow(SHEET_NAMES.IMPROVEMENT_HISTORIES, rowValues);
+  await insertRow(SHEET_NAMES.IMPROVEMENT_HISTORIES, historyData);
 }

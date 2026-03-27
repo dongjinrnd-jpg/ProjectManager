@@ -9,20 +9,10 @@
 import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
-  deleteRow,
+  deleteById,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
-
-// 시트에서 가져온 댓글 타입
-interface SheetComment extends Record<string, unknown> {
-  id: string;
-  improvementId: string;
-  content: string;
-  authorId: string;
-  authorName: string;
-  createdAt: string;
-}
 
 // 허용된 역할 확인
 function hasAccess(role: string): boolean {
@@ -63,7 +53,14 @@ export async function DELETE(
     }
 
     // 댓글 조회
-    const result = await findRowByColumn<SheetComment>(
+    const result = await findRowByColumn<{
+      id: string;
+      improvementId: string;
+      content: string;
+      authorId: string;
+      authorName: string;
+      createdAt: string;
+    }>(
       SHEET_NAMES.IMPROVEMENT_COMMENTS,
       'id',
       commentId
@@ -93,7 +90,7 @@ export async function DELETE(
     }
 
     // 행 삭제
-    await deleteRow(SHEET_NAMES.IMPROVEMENT_COMMENTS, result.rowIndex);
+    await deleteById(SHEET_NAMES.IMPROVEMENT_COMMENTS, commentId);
 
     return NextResponse.json({
       success: true,

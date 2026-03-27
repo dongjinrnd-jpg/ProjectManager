@@ -18,7 +18,7 @@ import {
   getHeaders,
   objectToRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { WeeklyReport, UpdateWeeklyReportInput } from '@/types';
 

@@ -12,26 +12,11 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import {
   findRowByColumn,
-  updateRow,
-  getHeaders,
-  objectToRow,
+  updateById,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession, canManageUsers } from '@/lib/auth';
 import type { User, UpdateUserInput, UserRole, Division } from '@/types';
-
-// 시트에서 가져온 사용자 타입
-interface SheetUser extends Record<string, unknown> {
-  id: string;
-  password: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  division: Division;
-  isActive: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 // 비밀번호를 제외한 사용자 정보 타입
 type SafeUser = Omit<User, 'password'>;
@@ -65,7 +50,17 @@ export async function GET(
     }
 
     // 사용자 찾기
-    const result = await findRowByColumn<SheetUser>(
+    const result = await findRowByColumn<Record<string, unknown> & {
+      id: string;
+      password: string;
+      name: string;
+      email: string;
+      role: UserRole;
+      division: Division;
+      isActive: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }>(
       SHEET_NAMES.USERS,
       'id',
       id
@@ -82,7 +77,7 @@ export async function GET(
     const { password, ...userData } = result.data;
     const safeUser: SafeUser = {
       ...userData,
-      isActive: userData.isActive === 'TRUE' || userData.isActive === 'true',
+      isActive: userData.isActive === true,
     };
 
     return NextResponse.json({
@@ -133,7 +128,17 @@ export async function PUT(
     const body: UpdateUserInput & { password?: string } = await request.json();
 
     // 사용자 찾기
-    const result = await findRowByColumn<SheetUser>(
+    const result = await findRowByColumn<Record<string, unknown> & {
+      id: string;
+      password: string;
+      name: string;
+      email: string;
+      role: UserRole;
+      division: Division;
+      isActive: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }>(
       SHEET_NAMES.USERS,
       'id',
       id
@@ -146,7 +151,7 @@ export async function PUT(
       );
     }
 
-    const { rowIndex, data: existingUser } = result;
+    const { data: existingUser } = result;
 
     // 현재 시간
     const now = new Date().toISOString();
@@ -160,7 +165,7 @@ export async function PUT(
       division: body.division ?? existingUser.division,
       isActive: body.isActive !== undefined
         ? body.isActive
-        : existingUser.isActive === 'TRUE' || existingUser.isActive === 'true',
+        : existingUser.isActive === true,
       updatedAt: now,
     };
 
@@ -169,14 +174,8 @@ export async function PUT(
       updatedUser.password = await bcrypt.hash(body.password, 10);
     }
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.USERS);
-
-    // 행 데이터 생성
-    const rowValues = objectToRow(headers, updatedUser);
-
-    // 시트 업데이트
-    await updateRow(SHEET_NAMES.USERS, rowIndex, rowValues);
+    // Supabase 업데이트
+    await updateById(SHEET_NAMES.USERS, id, updatedUser);
 
     // 비밀번호 제외하고 반환
     const safeUser: SafeUser = {
@@ -244,7 +243,17 @@ export async function DELETE(
     }
 
     // 사용자 찾기
-    const result = await findRowByColumn<SheetUser>(
+    const result = await findRowByColumn<Record<string, unknown> & {
+      id: string;
+      password: string;
+      name: string;
+      email: string;
+      role: UserRole;
+      division: Division;
+      isActive: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }>(
       SHEET_NAMES.USERS,
       'id',
       id
@@ -257,7 +266,7 @@ export async function DELETE(
       );
     }
 
-    const { rowIndex, data: existingUser } = result;
+    const { data: existingUser } = result;
 
     // 현재 시간
     const now = new Date().toISOString();
@@ -269,14 +278,8 @@ export async function DELETE(
       updatedAt: now,
     };
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.USERS);
-
-    // 행 데이터 생성
-    const rowValues = objectToRow(headers, updatedUser);
-
-    // 시트 업데이트
-    await updateRow(SHEET_NAMES.USERS, rowIndex, rowValues);
+    // Supabase 업데이트
+    await updateById(SHEET_NAMES.USERS, id, updatedUser);
 
     return NextResponse.json({
       success: true,

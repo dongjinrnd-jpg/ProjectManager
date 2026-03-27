@@ -10,11 +10,9 @@
 import { NextResponse } from 'next/server';
 import {
   getAllAsObjects,
-  appendRow,
-  getHeaders,
-  getRows,
+  insertRow,
   SHEET_NAMES,
-} from '@/lib/google';
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { SavedSearch, SavedSearchParsed, CreateSavedSearchInput } from '@/types';
 
@@ -24,12 +22,12 @@ import type { SavedSearch, SavedSearchParsed, CreateSavedSearchInput } from '@/t
  */
 async function generateSavedSearchId(): Promise<string> {
   const prefix = 'SS-';
-  const rows = await getRows(SHEET_NAMES.SAVED_SEARCHES);
+  const allRows = await getAllAsObjects<{ id: string }>(SHEET_NAMES.SAVED_SEARCHES);
 
   let maxNum = 0;
-  for (const row of rows) {
-    if (row[0] && row[0].startsWith(prefix)) {
-      const num = parseInt(row[0].replace(prefix, ''), 10);
+  for (const row of allRows) {
+    if (row.id && row.id.startsWith(prefix)) {
+      const num = parseInt(row.id.replace(prefix, ''), 10);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -121,9 +119,6 @@ export async function POST(request: Request) {
     const savedSearchId = await generateSavedSearchId();
     const now = new Date().toISOString();
 
-    // 헤더 가져오기
-    const headers = await getHeaders(SHEET_NAMES.SAVED_SEARCHES);
-
     // 새 저장된 검색 객체
     const newSavedSearch: SavedSearch = {
       id: savedSearchId,
@@ -135,12 +130,7 @@ export async function POST(request: Request) {
     };
 
     // 시트에 추가
-    const rowValues = headers.map((h) => {
-      const value = newSavedSearch[h as keyof SavedSearch];
-      return value !== undefined ? String(value) : '';
-    });
-
-    await appendRow(SHEET_NAMES.SAVED_SEARCHES, rowValues);
+    await insertRow(SHEET_NAMES.SAVED_SEARCHES, newSavedSearch);
 
     // 응답
     const response: SavedSearchParsed = {

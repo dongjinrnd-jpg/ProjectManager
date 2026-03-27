@@ -7,7 +7,7 @@
 
 import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/auth';
-import { findRowByColumn, SHEET_NAMES } from '@/lib/google';
+import { findRowByColumn, SHEET_NAMES } from '@/lib/supabase/db';
 import ImprovementFormClient from '../../ImprovementFormClient';
 import type {
   Improvement,
