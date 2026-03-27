@@ -12,6 +12,7 @@ import {
   getAllAsObjects,
   findRowByColumn,
   insertRow,
+  query,
   SHEET_NAMES,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
@@ -62,70 +63,23 @@ export async function GET(request: Request) {
     const stage = searchParams.get('stage') as ProjectStage | null;
     const teamLeaderId = searchParams.get('teamLeaderId') || '';
 
-    // 모든 프로젝트 조회
-    const allProjects = await getAllAsObjects<Record<string, unknown> & {
-      id: string;
-      status: ProjectStatus;
-      customer: string;
-      division: string;
-      category: string;
-      model: string;
-      item: string;
-      partNo: string;
-      teamLeaderId: string;
-      teamMembers: string;
-      currentStage: ProjectStage;
-      stages: string;
-      progress: string;
-      issues: string;
-      scheduleStart: string;
-      scheduleEnd: string;
-      note: string;
-      createdAt: string;
-      updatedAt: string;
-    }>(SHEET_NAMES.PROJECTS);
+    // 서버사이드 필터링으로 조회
+    const filters: Array<{ column: string; op: 'eq' | 'ilike'; value: unknown }> = [];
+    if (status) filters.push({ column: 'status', op: 'eq', value: status });
+    if (division) filters.push({ column: 'division', op: 'eq', value: division });
+    if (stage) filters.push({ column: 'currentStage', op: 'eq', value: stage });
+    if (teamLeaderId) filters.push({ column: 'teamLeaderId', op: 'eq', value: teamLeaderId });
 
-    // 필터링
-    let projects = allProjects.filter((project) => {
-      // 검색어 필터 (고객사, ITEM)
-      if (search) {
-        const searchLower = search.toLowerCase();
-        if (
-          !project.customer.toLowerCase().includes(searchLower) &&
-          !project.item.toLowerCase().includes(searchLower) &&
-          !project.id.toLowerCase().includes(searchLower)
-        ) {
-          return false;
-        }
-      }
+    // 검색어: OR 조건 (customer, item, id)
+    const orFilter = search
+      ? `customer.ilike.%${search}%,item.ilike.%${search}%,id.ilike.%${search}%`
+      : undefined;
 
-      // 상태 필터
-      if (status && project.status !== status) {
-        return false;
-      }
-
-      // 소속 필터
-      if (division && project.division !== division) {
-        return false;
-      }
-
-      // 단계 필터
-      if (stage && project.currentStage !== stage) {
-        return false;
-      }
-
-      // 팀장 필터
-      if (teamLeaderId && project.teamLeaderId !== teamLeaderId) {
-        return false;
-      }
-
-      return true;
+    const projects = await query<Record<string, unknown>>(SHEET_NAMES.PROJECTS, {
+      filters,
+      or: orFilter,
+      orderBy: { column: 'createdAt', ascending: false },
     });
-
-    // 최신순 정렬
-    projects.sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
 
     return NextResponse.json({
       success: true,

@@ -209,7 +209,8 @@ export async function query<T extends Record<string, unknown>>(
   tableName: SheetName,
   options?: {
     filters?: Array<{ column: string; op: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'in'; value: unknown }>;
-    orderBy?: { column: string; ascending?: boolean };
+    or?: string;
+    orderBy?: { column: string; ascending?: boolean } | Array<{ column: string; ascending?: boolean }>;
     limit?: number;
     select?: string;
   }
@@ -235,11 +236,19 @@ export async function query<T extends Record<string, unknown>>(
     }
   }
 
-  // 정렬
+  // OR 조건 (PostgREST 문법: "col1.ilike.%val%,col2.ilike.%val%")
+  if (options?.or) {
+    q = q.or(options.or);
+  }
+
+  // 정렬 (단일 또는 다중)
   if (options?.orderBy) {
-    q = q.order(fieldToSnake(options.orderBy.column), {
-      ascending: options.orderBy.ascending ?? true,
-    });
+    const orders = Array.isArray(options.orderBy) ? options.orderBy : [options.orderBy];
+    for (const order of orders) {
+      q = q.order(fieldToSnake(order.column), {
+        ascending: order.ascending ?? true,
+      });
+    }
   }
 
   // 제한

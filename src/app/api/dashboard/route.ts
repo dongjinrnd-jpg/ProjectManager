@@ -9,7 +9,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getAllAsObjects, SHEET_NAMES } from '@/lib/supabase/db';
+import { getAllAsObjects, query, SHEET_NAMES } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { ProjectStage, ProjectStatus } from '@/types';
 
@@ -54,15 +54,23 @@ export async function GET() {
       );
     }
 
-    // 프로젝트 목록 조회
-    const projects = await getAllAsObjects<SheetProject>(SHEET_NAMES.PROJECTS);
+    // 1주일 전 날짜 계산
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const oneWeekAgoStr = oneWeekAgo.toISOString().split('T')[0];
 
-    // 업무일지 목록 조회
-    const worklogs = await getAllAsObjects<SheetWorkLog>(SHEET_NAMES.WORKLOGS);
+    // 병렬 조회: 프로젝트, 최근 업무일지, 사용자 즐겨찾기
+    const [projects, recentWorklogsFiltered, userFavorites] = await Promise.all([
+      getAllAsObjects<SheetProject>(SHEET_NAMES.PROJECTS),
+      query<SheetWorkLog>(SHEET_NAMES.WORKLOGS, {
+        filters: [{ column: 'date', op: 'gte', value: oneWeekAgoStr }],
+        orderBy: { column: 'date', ascending: false },
+      }),
+      query<SheetFavorite>(SHEET_NAMES.FAVORITES, {
+        filters: [{ column: 'userId', op: 'eq', value: session.user.id }],
+      }),
+    ]);
 
-    // 즐겨찾기 목록 조회 (현재 사용자)
-    const allFavorites = await getAllAsObjects<SheetFavorite>(SHEET_NAMES.FAVORITES);
-    const userFavorites = allFavorites.filter(f => f.userId === session.user.id);
     const favoriteProjectIds = userFavorites.map(f => f.projectId);
 
     // 즐겨찾기 프로젝트 필터링
@@ -98,15 +106,6 @@ export async function GET() {
       stageCounts[stage] = activeProjects.filter(p => p.currentStage === stage).length;
       favoriteStageCounts[stage] = activeFavoriteProjects.filter(p => p.currentStage === stage).length;
     });
-
-    // 3. 업무 진행사항 (1주일간 프로젝트별 최신 1개)
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-    // 1주일 이내 업무일지 필터링 후 날짜순 정렬
-    const recentWorklogsFiltered = [...worklogs]
-      .filter(w => new Date(w.date) >= oneWeekAgo)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     // 프로젝트별 최신 1개만 추출
     const projectWorklogMap = new Map<string, SheetWorkLog>();

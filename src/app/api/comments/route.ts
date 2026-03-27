@@ -14,6 +14,7 @@ import { NextResponse } from 'next/server';
 import {
   getAllAsObjects,
   insertRow,
+  query,
   SHEET_NAMES,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
@@ -65,16 +66,14 @@ export async function GET(request: Request) {
       );
     }
 
-    // 모든 코멘트 조회
-    const allComments = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.COMMENTS);
-
-    // 해당 프로젝트의 코멘트 필터링
-    const projectComments = allComments.filter(
-      (comment) => comment.projectId === projectId
-    );
-
-    // 사용자 정보 조회 (작성자 이름 표시용)
-    const users = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.USERS);
+    // 해당 프로젝트의 코멘트 서버사이드 필터링
+    const [projectComments, users] = await Promise.all([
+      query<Record<string, unknown>>(SHEET_NAMES.COMMENTS, {
+        filters: [{ column: 'projectId', op: 'eq', value: projectId }],
+        orderBy: { column: 'createdAt', ascending: true },
+      }),
+      getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.USERS),
+    ]);
     const userMap = new Map(users.map((u) => [u.id as string, u.name as string]));
 
     // 스레드 구성: 부모 코멘트와 답변 분리
@@ -173,8 +172,11 @@ export async function POST(request: Request) {
       }
 
       // 부모 코멘트 존재 확인
-      const allComments = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.COMMENTS);
-      const parentComment = allComments.find((c) => c.id === body.parentId);
+      const parentResults = await query<Record<string, unknown>>(SHEET_NAMES.COMMENTS, {
+        filters: [{ column: 'id', op: 'eq', value: body.parentId }],
+        limit: 1,
+      });
+      const parentComment = parentResults[0];
       if (!parentComment) {
         return NextResponse.json(
           { success: false, error: '부모 코멘트를 찾을 수 없습니다.' },

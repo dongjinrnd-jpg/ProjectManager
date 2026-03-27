@@ -11,6 +11,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getAllAsObjects,
   insertRow,
+  query,
+  getById,
   SHEET_NAMES,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
@@ -73,20 +75,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 프로젝트 정보 조회 (단계 순서 확인용)
-    const allProjects = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.PROJECTS);
-    const project = allProjects.find((p) => p.id === projectId);
+    // 프로젝트 정보 조회 (단계 순서 확인용)와 세부추진항목 병렬 조회
+    const [project, projectSchedulesRaw] = await Promise.all([
+      getById<Record<string, unknown>>(SHEET_NAMES.PROJECTS, projectId),
+      query<Record<string, unknown>>(SHEET_NAMES.PROJECT_SCHEDULES, {
+        filters: [{ column: 'projectId', op: 'eq', value: projectId }],
+      }),
+    ]);
     const stagesRaw = project?.stages as string | undefined;
     const stageOrder = stagesRaw
       ? stagesRaw.split(',').map((s) => s.trim())
       : [];
 
-    // 세부추진항목 조회
-    const allSchedules = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.PROJECT_SCHEDULES);
-
-    // 프로젝트별 필터링 및 정렬: 단계순 → 계획시작일순 → 등록순
-    const projectSchedules = allSchedules
-      .filter((s) => s.projectId === projectId)
+    // 정렬: 단계순 → 계획시작일순 → 등록순
+    const projectSchedules = projectSchedulesRaw
       .sort((a, b) => {
         // 1차: 단계 순서
         const stageA = stageOrder.indexOf((a.stage as string) || '');

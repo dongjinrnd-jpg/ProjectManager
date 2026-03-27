@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 import {
   getAllAsObjects,
   insertRow,
+  query,
   SHEET_NAMES,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
@@ -77,46 +78,25 @@ export async function GET(request: Request) {
     const priority = searchParams.get('priority') as ImprovementPriority | null;
     const keyword = searchParams.get('keyword') || '';
 
-    // 모든 개선요청 조회
-    const allImprovements = await getAllAsObjects<Improvement & Record<string, unknown>>(
-      SHEET_NAMES.IMPROVEMENTS
+    // 서버사이드 필터링으로 조회
+    const filters: Array<{ column: string; op: 'eq'; value: unknown }> = [];
+    if (status) filters.push({ column: 'status', op: 'eq', value: status });
+    if (type) filters.push({ column: 'type', op: 'eq', value: type });
+    if (priority) filters.push({ column: 'priority', op: 'eq', value: priority });
+
+    // 키워드 검색: OR 조건 (title, content)
+    const orFilter = keyword
+      ? `title.ilike.%${keyword}%,content.ilike.%${keyword}%`
+      : undefined;
+
+    const improvements = await query<Improvement & Record<string, unknown>>(
+      SHEET_NAMES.IMPROVEMENTS,
+      {
+        filters,
+        or: orFilter,
+        orderBy: { column: 'createdAt', ascending: false },
+      }
     );
-
-    // 필터링
-    const improvements = allImprovements.filter((item) => {
-      // 상태 필터
-      if (status && item.status !== status) {
-        return false;
-      }
-
-      // 유형 필터
-      if (type && item.type !== type) {
-        return false;
-      }
-
-      // 우선순위 필터
-      if (priority && item.priority !== priority) {
-        return false;
-      }
-
-      // 키워드 검색 (제목, 내용)
-      if (keyword) {
-        const keywordLower = keyword.toLowerCase();
-        if (
-          !item.title.toLowerCase().includes(keywordLower) &&
-          !item.content.toLowerCase().includes(keywordLower)
-        ) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    // 최신순 정렬 (생성일시 기준)
-    improvements.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
 
     // 목록용 간략 정보로 변환
     const listItems: ImprovementListItem[] = improvements.map((item) => ({

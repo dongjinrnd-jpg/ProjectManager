@@ -13,6 +13,7 @@ import {
   findRowByColumn,
   getAllAsObjects,
   insertRow,
+  query,
   SHEET_NAMES,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
@@ -47,18 +48,14 @@ export async function GET(
       );
     }
 
-    // 댓글 조회
-    const allComments = await getAllAsObjects<Record<string, unknown>>(
-      SHEET_NAMES.WORKLOG_COMMENTS
+    // 해당 업무일지의 댓글만 서버사이드 필터링
+    const worklogComments = await query<Record<string, unknown>>(
+      SHEET_NAMES.WORKLOG_COMMENTS,
+      {
+        filters: [{ column: 'worklogId', op: 'eq', value: id }],
+        orderBy: { column: 'createdAt', ascending: true },
+      }
     );
-
-    // 해당 업무일지의 댓글만 필터
-    const worklogComments = allComments
-      .filter((c) => c.worklogId === id)
-      .sort(
-        (a, b) =>
-          new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime()
-      );
 
     // 부모 댓글과 답글 분리
     const parentComments = worklogComments.filter((c) => !c.parentId);

@@ -13,6 +13,7 @@ import {
   findRowByColumn,
   insertRow,
   updateById,
+  query,
   SHEET_NAMES,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
@@ -176,57 +177,26 @@ export async function GET(request: Request) {
     const stage = searchParams.get('stage') as ProjectStage | null;
     const keyword = searchParams.get('keyword') || '';
 
-    // 모든 업무일지 조회
-    const allWorkLogs = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.WORKLOGS);
+    // 서버사이드 필터링으로 조회
+    const filters: Array<{ column: string; op: 'eq' | 'gte' | 'lte'; value: unknown }> = [];
+    if (startDate) filters.push({ column: 'date', op: 'gte', value: startDate });
+    if (endDate) filters.push({ column: 'date', op: 'lte', value: endDate });
+    if (projectId) filters.push({ column: 'projectId', op: 'eq', value: projectId });
+    if (assigneeId) filters.push({ column: 'assigneeId', op: 'eq', value: assigneeId });
+    if (stage) filters.push({ column: 'stage', op: 'eq', value: stage });
 
-    // 필터링
-    let workLogs = allWorkLogs.filter((log) => {
-      // 시작 날짜 필터
-      if (startDate && (log.date as string) < startDate) {
-        return false;
-      }
+    // 키워드 검색: OR 조건 (content, plan, item, customer)
+    const orFilter = keyword
+      ? `content.ilike.%${keyword}%,plan.ilike.%${keyword}%,item.ilike.%${keyword}%,customer.ilike.%${keyword}%`
+      : undefined;
 
-      // 종료 날짜 필터
-      if (endDate && (log.date as string) > endDate) {
-        return false;
-      }
-
-      // 프로젝트 필터
-      if (projectId && log.projectId !== projectId) {
-        return false;
-      }
-
-      // 담당자 필터
-      if (assigneeId && log.assigneeId !== assigneeId) {
-        return false;
-      }
-
-      // 단계 필터
-      if (stage && log.stage !== stage) {
-        return false;
-      }
-
-      // 키워드 검색 (내용, 계획)
-      if (keyword) {
-        const keywordLower = keyword.toLowerCase();
-        if (
-          !(log.content as string).toLowerCase().includes(keywordLower) &&
-          !((log.plan as string) || '').toLowerCase().includes(keywordLower) &&
-          !(log.item as string).toLowerCase().includes(keywordLower) &&
-          !(log.customer as string).toLowerCase().includes(keywordLower)
-        ) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    // 최신순 정렬 (날짜 기준, 같은 날짜면 생성일시 기준)
-    workLogs.sort((a, b) => {
-      const dateCompare = (b.date as string).localeCompare(a.date as string);
-      if (dateCompare !== 0) return dateCompare;
-      return new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime();
+    let workLogs = await query<Record<string, unknown>>(SHEET_NAMES.WORKLOGS, {
+      filters,
+      or: orFilter,
+      orderBy: [
+        { column: 'date', ascending: false },
+        { column: 'createdAt', ascending: false },
+      ],
     });
 
     return NextResponse.json({

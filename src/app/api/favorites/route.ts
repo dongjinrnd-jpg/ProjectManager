@@ -14,6 +14,7 @@ import {
   findRowByColumn,
   insertRow,
   deleteById,
+  query,
   SHEET_NAMES,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
@@ -59,21 +60,16 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || session.user.id;
 
-    // 모든 즐겨찾기 조회
-    const allFavorites = await getAllAsObjects<Record<string, unknown> & {
+    // 서버사이드 필터링으로 사용자 즐겨찾기 조회
+    const favorites = await query<Record<string, unknown> & {
       id: string;
       userId: string;
       projectId: string;
       createdAt: string;
-    }>(SHEET_NAMES.FAVORITES);
-
-    // 사용자별 필터링
-    const favorites = allFavorites.filter((fav) => fav.userId === userId);
-
-    // 최신순 정렬
-    favorites.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    }>(SHEET_NAMES.FAVORITES, {
+      filters: [{ column: 'userId', op: 'eq', value: userId }],
+      orderBy: { column: 'createdAt', ascending: false },
+    });
 
     return NextResponse.json({
       success: true,
@@ -128,15 +124,19 @@ export async function POST(request: Request) {
     }
 
     // 이미 즐겨찾기 등록된 프로젝트인지 확인
-    const allFavorites = await getAllAsObjects<Record<string, unknown> & {
+    const existingFavorites = await query<Record<string, unknown> & {
       id: string;
       userId: string;
       projectId: string;
       createdAt: string;
-    }>(SHEET_NAMES.FAVORITES);
-    const existingFavorite = allFavorites.find(
-      (fav) => fav.userId === session.user.id && fav.projectId === body.projectId
-    );
+    }>(SHEET_NAMES.FAVORITES, {
+      filters: [
+        { column: 'userId', op: 'eq', value: session.user.id },
+        { column: 'projectId', op: 'eq', value: body.projectId },
+      ],
+      limit: 1,
+    });
+    const existingFavorite = existingFavorites[0];
 
     if (existingFavorite) {
       return NextResponse.json(
@@ -206,16 +206,19 @@ export async function DELETE(request: Request) {
     }
 
     // 해당 사용자의 즐겨찾기 찾기
-    const allFavorites = await getAllAsObjects<Record<string, unknown> & {
+    const matchedFavorites = await query<Record<string, unknown> & {
       id: string;
       userId: string;
       projectId: string;
       createdAt: string;
-    }>(SHEET_NAMES.FAVORITES);
-
-    const foundFavorite = allFavorites.find(
-      (fav) => fav.userId === session.user.id && fav.projectId === projectId
-    );
+    }>(SHEET_NAMES.FAVORITES, {
+      filters: [
+        { column: 'userId', op: 'eq', value: session.user.id },
+        { column: 'projectId', op: 'eq', value: projectId },
+      ],
+      limit: 1,
+    });
+    const foundFavorite = matchedFavorites[0];
 
     if (!foundFavorite) {
       return NextResponse.json(

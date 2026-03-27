@@ -7,7 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getAllAsObjects, SHEET_NAMES } from '@/lib/supabase/db';
+import { query, SHEET_NAMES } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 
 // 시트에서 가져온 댓글 타입 (count용 최소 필드)
@@ -50,21 +50,24 @@ export async function GET(request: Request) {
       });
     }
 
-    // 전체 댓글 조회
-    let allComments: SheetComment[] = [];
+    // 해당 worklogId들의 댓글만 서버사이드 필터링
+    let filteredComments: SheetComment[] = [];
     try {
-      allComments = await getAllAsObjects<SheetComment>(
-        SHEET_NAMES.WORKLOG_COMMENTS
+      filteredComments = await query<SheetComment>(
+        SHEET_NAMES.WORKLOG_COMMENTS,
+        {
+          filters: [{ column: 'worklogId', op: 'in', value: worklogIds }],
+        }
       );
     } catch {
-      // 시트가 아직 없는 경우 빈 배열
-      allComments = [];
+      // 테이블이 아직 없는 경우 빈 배열
+      filteredComments = [];
     }
 
     // worklogId별 댓글 수 계산
     const counts: Record<string, number> = {};
     for (const wlId of worklogIds) {
-      counts[wlId] = allComments.filter((c) => c.worklogId === wlId).length;
+      counts[wlId] = filteredComments.filter((c) => c.worklogId === wlId).length;
     }
 
     return NextResponse.json({
