@@ -64,6 +64,7 @@ export default function WorklogFormClient({ worklog, isEdit }: WorklogFormClient
   const [schedules, setSchedules] = useState<ProjectSchedule[]>([]);
   const [formData, setFormData] = useState<WorklogFormData>(initialFormData);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   // 팀장 여부 확인
   const isTeamLeader = (projectId: string): boolean => {
@@ -276,6 +277,7 @@ export default function WorklogFormClient({ worklog, isEdit }: WorklogFormClient
       const data = await response.json();
       if (data.success) {
         alert('저장되었습니다.');
+        if (!isEdit) setIsSaved(true);
       } else {
         alert(data.error || '저장에 실패했습니다.');
       }
@@ -303,6 +305,18 @@ export default function WorklogFormClient({ worklog, isEdit }: WorklogFormClient
           </h1>
         </div>
         <div className="flex gap-2">
+          {isSaved && !isEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                setFormData(initialFormData);
+                setIsSaved(false);
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              + 신규 작성
+            </button>
+          )}
           <button
             type="button"
             onClick={() => router.push('/worklogs')}
