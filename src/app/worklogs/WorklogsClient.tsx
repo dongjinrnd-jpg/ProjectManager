@@ -56,42 +56,8 @@ export default function WorklogsClient() {
   // 상세 보기 모달
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // 마스터 데이터 로드 (프로젝트 + 사용자, 캐시 사용)
-  const fetchMasterData = useCallback(async () => {
-    const promises: Promise<void>[] = [];
-
-    if (!projectsCache || Date.now() - projectsCache.timestamp >= CACHE_TTL) {
-      promises.push(
-        fetch('/api/projects').then(r => r.json()).then(data => {
-          if (data.success) {
-            setProjects(data.data);
-            projectsCache = { data: data.data, timestamp: Date.now() };
-          }
-        }).catch(err => console.error('프로젝트 목록 조회 오류:', err))
-      );
-    } else {
-      setProjects(projectsCache.data);
-    }
-
-    if (!usersCache || Date.now() - usersCache.timestamp >= CACHE_TTL) {
-      promises.push(
-        fetch('/api/users').then(r => r.json()).then(data => {
-          if (data.success) {
-            const activeUsers = data.data.filter((u: User) => u.isActive);
-            setUsers(activeUsers);
-            usersCache = { data: activeUsers, timestamp: Date.now() };
-          }
-        }).catch(err => console.error('사용자 목록 조회 오류:', err))
-      );
-    } else {
-      setUsers(usersCache.data);
-    }
-
-    await Promise.all(promises);
-  }, []);
-
-  // 업무일지 목록 가져오기
-  const fetchWorklogs = useCallback(async () => {
+  // 통합 API로 데이터 가져오기 (1회 호출)
+  const fetchPageData = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -101,11 +67,15 @@ export default function WorklogsClient() {
       if (filterAssigneeId) params.set('assigneeId', filterAssigneeId);
       if (filterKeyword) params.set('keyword', filterKeyword);
 
-      const response = await fetch(`/api/worklogs?${params.toString()}`);
+      const response = await fetch(`/api/worklogs/list-page?${params.toString()}`);
       const data = await response.json();
 
       if (data.success) {
-        setWorklogs(data.data);
+        setWorklogs(data.data.worklogs);
+        setUsers(data.data.users);
+        usersCache = { data: data.data.users, timestamp: Date.now() };
+        setProjects(data.data.projects);
+        projectsCache = { data: data.data.projects, timestamp: Date.now() };
         setError(null);
       } else {
         setError(data.error || '업무일지 목록을 불러올 수 없습니다.');
@@ -118,10 +88,10 @@ export default function WorklogsClient() {
     }
   }, [filterStartDate, filterEndDate, filterProjectId, filterAssigneeId, filterKeyword]);
 
-  // 초기 로드: 마스터 데이터 + 업무일지 병렬 조회
+  // 통합 API 1회 호출 (필터 변경 시 자동 재조회)
   useEffect(() => {
-    Promise.all([fetchMasterData(), fetchWorklogs()]);
-  }, [fetchMasterData, fetchWorklogs]);
+    fetchPageData();
+  }, [fetchPageData]);
 
   // 사용자 이름 찾기
   const getUserName = (userId: string) => {
@@ -166,7 +136,7 @@ export default function WorklogsClient() {
       if (data.success) {
         setShowDeleteModal(false);
         setSelectedWorklog(null);
-        fetchWorklogs();
+        fetchPageData();
       } else {
         alert(data.error || '업무일지 삭제에 실패했습니다.');
       }

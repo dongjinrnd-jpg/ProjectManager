@@ -53,22 +53,6 @@ export default function ProjectsClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // 즐겨찾기 목록 가져오기 (반환값 사용 가능)
-  const fetchFavorites = useCallback(async (): Promise<string[]> => {
-    try {
-      const response = await fetch('/api/favorites');
-      const data = await response.json();
-      if (data.success) {
-        const ids = data.data.map((f: { projectId: string }) => f.projectId);
-        setFavoriteProjectIds(ids);
-        return ids;
-      }
-    } catch (err) {
-      console.error('즐겨찾기 목록 조회 오류:', err);
-    }
-    return [];
-  }, []);
-
   // 즐겨찾기 토글
   const toggleFavorite = async (projectId: string) => {
     if (favoriteLoading) return;
@@ -78,7 +62,6 @@ export default function ProjectsClient() {
       const isFavorite = favoriteProjectIds.includes(projectId);
 
       if (isFavorite) {
-        // 즐겨찾기 해제
         const response = await fetch(`/api/favorites?projectId=${projectId}`, {
           method: 'DELETE',
         });
@@ -87,7 +70,6 @@ export default function ProjectsClient() {
           setFavoriteProjectIds(prev => prev.filter(id => id !== projectId));
         }
       } else {
-        // 즐겨찾기 등록
         const response = await fetch('/api/favorites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -105,8 +87,8 @@ export default function ProjectsClient() {
     }
   };
 
-  // 프로젝트 목록 가져오기 (favIds를 직접 받을 수 있음)
-  const fetchProjects = useCallback(async (favIds?: string[]) => {
+  // 통합 API로 데이터 가져오기 (1회 호출)
+  const fetchPageData = useCallback(async (favIds?: string[]) => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -119,18 +101,23 @@ export default function ProjectsClient() {
       const ids = favIds ?? favoriteProjectIds;
       if (showFavoritesOnly && ids.length > 0) {
         params.set('ids', ids.join(','));
-      } else if (showFavoritesOnly && ids.length === 0) {
+      } else if (showFavoritesOnly && ids.length === 0 && favIds !== undefined) {
         setProjects([]);
         setError(null);
         setIsLoading(false);
         return;
       }
 
-      const response = await fetch(`/api/projects?${params.toString()}`);
+      const response = await fetch(`/api/projects/list-page?${params.toString()}`);
       const data = await response.json();
 
       if (data.success) {
-        setProjects(data.data);
+        setProjects(data.data.projects);
+        setUsers(data.data.users);
+        // 초기 로드 시에만 즐겨찾기 세팅 (이후에는 토글로 관리)
+        if (favIds === undefined && !initialLoaded) {
+          setFavoriteProjectIds(data.data.favoriteProjectIds);
+        }
         setError(null);
       } else {
         setError(data.error || '프로젝트 목록을 불러올 수 없습니다.');
@@ -141,33 +128,40 @@ export default function ProjectsClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, filterStatus, filterDivision, filterStage, showFavoritesOnly, favoriteProjectIds]);
+  }, [searchQuery, filterStatus, filterDivision, filterStage, showFavoritesOnly, favoriteProjectIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 초기 로드 완료 여부
   const [initialLoaded, setInitialLoaded] = useState(false);
 
-  // 초기 로드: 사용자 + 즐겨찾기 병렬 → 프로젝트 조회
+  // 초기 로드: 통합 API 1회 호출
   useEffect(() => {
     const loadInitial = async () => {
-      // 사용자와 즐겨찾기를 병렬로 가져옴
-      const [, favIds] = await Promise.all([
-        fetch('/api/users').then(r => r.json()).then(data => {
-          if (data.success) setUsers(data.data.filter((u: User) => u.isActive));
-        }).catch(err => console.error('사용자 목록 조회 오류:', err)),
-        fetchFavorites(),
-      ]);
-      // 즐겨찾기 ID를 바로 프로젝트 API에 전달
-      await fetchProjects(favIds);
+      // 즐겨찾기 모드인 경우 즐겨찾기 ID를 먼저 가져와야 함
+      if (showFavoritesOnly) {
+        try {
+          const favResponse = await fetch('/api/favorites');
+          const favData = await favResponse.json();
+          if (favData.success) {
+            const ids = favData.data.map((f: { projectId: string }) => f.projectId);
+            setFavoriteProjectIds(ids);
+            await fetchPageData(ids);
+          }
+        } catch (err) {
+          console.error('초기 로드 오류:', err);
+        }
+      } else {
+        await fetchPageData();
+      }
       setInitialLoaded(true);
     };
     loadInitial();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 필터 변경 시 프로젝트 재조회 (초기 로드 이후만)
+  // 필터 변경 시 재조회 (초기 로드 이후만)
   useEffect(() => {
     if (initialLoaded) {
-      fetchProjects();
+      fetchPageData();
     }
   }, [searchQuery, filterStatus, filterDivision, filterStage, showFavoritesOnly, favoriteProjectIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
