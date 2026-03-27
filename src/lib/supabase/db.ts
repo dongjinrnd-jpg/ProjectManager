@@ -355,7 +355,7 @@ const TABLE_HEADERS: Record<string, string[]> = {
   models: ['id', 'name', 'order', 'isActive', 'createdAt', 'updatedAt'],
   report_categories: ['id', 'name', 'order', 'isActive'],
   settings: ['key', 'value', 'description', 'updatedAt'],
-  projects: ['id', 'status', 'customer', 'division', 'category', 'model', 'item', 'partNo', 'teamLeaderId', 'teamMembers', 'currentStage', 'stages', 'progress', 'issues', 'scheduleStart', 'scheduleEnd', 'note', 'createdAt', 'updatedAt'],
+  projects: ['id', 'status', 'customer', 'division', 'category', 'model', 'item', 'partNo', 'teamLeaderId', 'teamMembers', 'currentStage', 'stages', 'progress', 'issues', 'scheduleStart', 'scheduleEnd', 'note', 'productImageUrl', 'createdAt', 'updatedAt'],
   project_history: ['id', 'projectId', 'changedField', 'oldValue', 'newValue', 'changedById', 'changedAt'],
   project_schedules: ['id', 'projectId', 'stage', 'taskName', 'category', 'responsibility', 'assigneeId', 'plannedStart', 'plannedEnd', 'actualStart', 'actualEnd', 'status', 'note', 'order', 'createdAt', 'updatedAt'],
   worklogs: ['id', 'date', 'projectId', 'item', 'customer', 'stage', 'assigneeId', 'participants', 'plan', 'content', 'issue', 'issueStatus', 'issueResolvedAt', 'scheduleId', 'createdAt', 'updatedAt'],

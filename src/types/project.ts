@@ -70,6 +70,8 @@ export interface Project {
   scheduleEnd: string;
   /** 비고 */
   note?: string;
+  /** 제품 이미지 URL (Supabase Storage) */
+  productImageUrl?: string;
   /** 생성일시 */
   createdAt: string;
   /** 수정일시 */
@@ -92,6 +94,7 @@ export interface CreateProjectInput {
   teamMembers?: string;
   stages: string[];
   note?: string;
+  productImageUrl?: string;
 }
 
 /**

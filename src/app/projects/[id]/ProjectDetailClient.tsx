@@ -11,7 +11,7 @@
  * - 탭: 업무일지, 일정, 원가, 첨부파일
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -61,6 +61,11 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('worklog');
+
+  // 제품 이미지
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [isImageUploading, setIsImageUploading] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   // 업무일지 목록
   const [worklogs, setWorklogs] = useState<WorkLog[]>([]);
@@ -136,6 +141,70 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
   // 세부추진항목 삭제 권한: 팀장 또는 sysadmin/admin만 가능
   const isTeamLeader = project?.teamLeaderId === userId;
   const canDeleteSchedule = isTeamLeader || userRole === 'sysadmin' || userRole === 'admin';
+
+  // 이미지 업로드 핸들러
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !project) return;
+
+    // 이미지 파일 검증
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+
+    setIsImageUploading(true);
+    try {
+      // 클라이언트에서 리사이즈
+      const { resizeImage } = await import('@/lib/utils/imageResize');
+      const resized = await resizeImage(file, 800, 0.8);
+
+      const formData = new FormData();
+      formData.append('image', resized, `${project.id}.jpg`);
+
+      const response = await fetch(`/api/projects/${project.id}/image`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setProject({ ...project, productImageUrl: data.data.imageUrl });
+      } else {
+        alert(data.error || '이미지 업로드에 실패했습니다.');
+      }
+    } catch (err) {
+      alert('이미지 업로드 중 오류가 발생했습니다.');
+      console.error('이미지 업로드 오류:', err);
+    } finally {
+      setIsImageUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = '';
+    }
+  };
+
+  // 이미지 삭제 핸들러
+  const handleImageDelete = async () => {
+    if (!project || !confirm('제품 이미지를 삭제하시겠습니까?')) return;
+
+    setIsImageUploading(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}/image`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setProject({ ...project, productImageUrl: undefined });
+      } else {
+        alert(data.error || '이미지 삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      alert('이미지 삭제 중 오류가 발생했습니다.');
+      console.error('이미지 삭제 오류:', err);
+    } finally {
+      setIsImageUploading(false);
+    }
+  };
 
   // 즐겨찾기 토글
   const toggleFavorite = async () => {
@@ -898,16 +967,50 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
         <div className="flex gap-6">
           {/* 제품 이미지 */}
           <div className="flex-shrink-0">
-            <div className="w-32 h-32 bg-gray-100 rounded-lg flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
-              <span className="text-3xl mb-1">📷</span>
-              <span className="text-xs">제품 이미지</span>
-            </div>
-            <button
-              disabled
-              className="mt-2 w-full text-xs text-gray-400 border border-gray-200 rounded py-1 cursor-not-allowed"
-            >
-              [변경]
-            </button>
+            {project.productImageUrl ? (
+              <div
+                className="w-32 h-32 rounded-lg overflow-hidden cursor-pointer border border-gray-200"
+                onClick={() => setShowImageModal(true)}
+              >
+                <img
+                  src={project.productImageUrl}
+                  alt="제품 이미지"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-32 h-32 bg-gray-100 rounded-lg flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
+                <span className="text-3xl mb-1">📷</span>
+                <span className="text-xs">제품 이미지</span>
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              ref={imageInputRef}
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+            {canEdit && (
+              <div className="mt-2 flex gap-1">
+                <button
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isImageUploading}
+                  className="flex-1 text-xs text-brand-orange border border-brand-orange rounded py-1 hover:bg-orange-50 disabled:opacity-50"
+                >
+                  {isImageUploading ? '업로드 중...' : '[변경]'}
+                </button>
+                {project.productImageUrl && (
+                  <button
+                    onClick={handleImageDelete}
+                    disabled={isImageUploading}
+                    className="text-xs text-red-500 border border-red-300 rounded py-1 px-2 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    [삭제]
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 정보 그리드 */}
@@ -1877,6 +1980,28 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
             setCommentCounts(prev => ({ ...prev, [worklogId]: count }));
           }}
         />
+      )}
+
+      {/* 이미지 확대 모달 */}
+      {showImageModal && project?.productImageUrl && (
+        <div
+          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <div className="relative max-w-3xl max-h-[80vh]">
+            <img
+              src={project.productImageUrl}
+              alt="제품 이미지"
+              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+            />
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center text-gray-600 hover:text-gray-900"
+            >
+              X
+            </button>
+          </div>
+        </div>
       )}
     </AppLayout>
   );
