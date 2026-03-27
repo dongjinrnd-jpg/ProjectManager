@@ -56,45 +56,38 @@ export default function WorklogsClient() {
   // 상세 보기 모달
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // 프로젝트 목록 가져오기 (캐시 사용)
-  const fetchProjects = useCallback(async () => {
-    try {
-      // 캐시가 유효하면 API 호출 스킵
-      if (projectsCache && Date.now() - projectsCache.timestamp < CACHE_TTL) {
-        setProjects(projectsCache.data);
-        return;
-      }
+  // 마스터 데이터 로드 (프로젝트 + 사용자, 캐시 사용)
+  const fetchMasterData = useCallback(async () => {
+    const promises: Promise<void>[] = [];
 
-      const response = await fetch('/api/projects');
-      const data = await response.json();
-      if (data.success) {
-        setProjects(data.data);
-        projectsCache = { data: data.data, timestamp: Date.now() };
-      }
-    } catch (err) {
-      console.error('프로젝트 목록 조회 오류:', err);
+    if (!projectsCache || Date.now() - projectsCache.timestamp >= CACHE_TTL) {
+      promises.push(
+        fetch('/api/projects').then(r => r.json()).then(data => {
+          if (data.success) {
+            setProjects(data.data);
+            projectsCache = { data: data.data, timestamp: Date.now() };
+          }
+        }).catch(err => console.error('프로젝트 목록 조회 오류:', err))
+      );
+    } else {
+      setProjects(projectsCache.data);
     }
-  }, []);
 
-  // 사용자 목록 가져오기 (캐시 사용)
-  const fetchUsers = useCallback(async () => {
-    try {
-      // 캐시가 유효하면 API 호출 스킵
-      if (usersCache && Date.now() - usersCache.timestamp < CACHE_TTL) {
-        setUsers(usersCache.data);
-        return;
-      }
-
-      const response = await fetch('/api/users');
-      const data = await response.json();
-      if (data.success) {
-        const activeUsers = data.data.filter((u: User) => u.isActive);
-        setUsers(activeUsers);
-        usersCache = { data: activeUsers, timestamp: Date.now() };
-      }
-    } catch (err) {
-      console.error('사용자 목록 조회 오류:', err);
+    if (!usersCache || Date.now() - usersCache.timestamp >= CACHE_TTL) {
+      promises.push(
+        fetch('/api/users').then(r => r.json()).then(data => {
+          if (data.success) {
+            const activeUsers = data.data.filter((u: User) => u.isActive);
+            setUsers(activeUsers);
+            usersCache = { data: activeUsers, timestamp: Date.now() };
+          }
+        }).catch(err => console.error('사용자 목록 조회 오류:', err))
+      );
+    } else {
+      setUsers(usersCache.data);
     }
+
+    await Promise.all(promises);
   }, []);
 
   // 업무일지 목록 가져오기
@@ -125,14 +118,10 @@ export default function WorklogsClient() {
     }
   }, [filterStartDate, filterEndDate, filterProjectId, filterAssigneeId, filterKeyword]);
 
+  // 초기 로드: 마스터 데이터 + 업무일지 병렬 조회
   useEffect(() => {
-    fetchProjects();
-    fetchUsers();
-  }, [fetchProjects, fetchUsers]);
-
-  useEffect(() => {
-    fetchWorklogs();
-  }, [fetchWorklogs]);
+    Promise.all([fetchMasterData(), fetchWorklogs()]);
+  }, [fetchMasterData, fetchWorklogs]);
 
   // 사용자 이름 찾기
   const getUserName = (userId: string) => {
