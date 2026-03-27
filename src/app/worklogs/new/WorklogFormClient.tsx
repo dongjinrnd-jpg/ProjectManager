@@ -9,11 +9,11 @@
  * - 프로젝트 '업무진행사항' 자동 반영 체크박스
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { Project, User, ProjectStage, WorkLog, ProjectSchedule } from '@/types';
+import type { Project, User, ProjectStage, WorkLog, ProjectSchedule, Attachment } from '@/types';
 import AppLayout from '@/components/layout/AppLayout';
 
 // 단계 목록
@@ -65,6 +65,84 @@ export default function WorklogFormClient({ worklog, isEdit }: WorklogFormClient
   const [formData, setFormData] = useState<WorklogFormData>(initialFormData);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+
+  // 첨부파일
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const [pendingPdf, setPendingPdf] = useState<File | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+
+  // PDF 파일 선택
+  const handlePdfSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      alert('PDF 파일만 업로드할 수 있습니다.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert('파일 크기는 10MB 이하여야 합니다.');
+      return;
+    }
+    setPendingPdf(file);
+  };
+
+  // 첨부파일 업로드 (업무일지 ID 필요)
+  const uploadPdf = async (worklogId: string) => {
+    if (!pendingPdf) return;
+    setIsUploadingPdf(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', pendingPdf);
+      formData.append('entityType', 'worklog');
+      formData.append('entityId', worklogId);
+
+      const response = await fetch('/api/attachments', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAttachments(prev => [...prev, data.data]);
+        setPendingPdf(null);
+        if (pdfInputRef.current) pdfInputRef.current.value = '';
+      } else {
+        alert(data.error || '파일 업로드에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('PDF 업로드 오류:', err);
+    } finally {
+      setIsUploadingPdf(false);
+    }
+  };
+
+  // 첨부파일 삭제
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!confirm('첨부파일을 삭제하시겠습니까?')) return;
+    try {
+      const response = await fetch(`/api/attachments/${attachmentId}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (data.success) {
+        setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+      } else {
+        alert(data.error || '삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('첨부파일 삭제 오류:', err);
+    }
+  };
+
+  // 수정 모드: 기존 첨부파일 로드
+  useEffect(() => {
+    if (isEdit && worklog) {
+      fetch(`/api/attachments?entityType=worklog&entityId=${worklog.id}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) setAttachments(data.data);
+        })
+        .catch(err => console.error('첨부파일 로드 오류:', err));
+    }
+  }, [isEdit, worklog]);
 
   // 팀장 여부 확인
   const isTeamLeader = (projectId: string): boolean => {
@@ -276,6 +354,11 @@ export default function WorklogFormClient({ worklog, isEdit }: WorklogFormClient
 
       const data = await response.json();
       if (data.success) {
+        // 대기 중인 PDF가 있으면 업로드
+        const savedId = data.data?.id || worklog?.id;
+        if (pendingPdf && savedId) {
+          await uploadPdf(savedId);
+        }
         alert('저장되었습니다.');
         if (!isEdit) setIsSaved(true);
       } else {
@@ -311,6 +394,8 @@ export default function WorklogFormClient({ worklog, isEdit }: WorklogFormClient
               onClick={() => {
                 setFormData(initialFormData);
                 setIsSaved(false);
+                setAttachments([]);
+                setPendingPdf(null);
               }}
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
             >
@@ -565,18 +650,65 @@ export default function WorklogFormClient({ worklog, isEdit }: WorklogFormClient
             )}
           </div>
 
-          {/* 첨부파일 (추후 구현) */}
+          {/* 첨부파일 (PDF만) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              첨부파일 <span className="text-gray-400">(추후 지원)</span>
+              첨부파일 <span className="text-gray-400">(PDF만, 10MB 이하)</span>
             </label>
-            <button
-              type="button"
-              disabled
-              className="px-4 py-2 text-gray-400 border border-gray-200 rounded-md bg-gray-50 cursor-not-allowed"
-            >
-              📎 파일 선택
-            </button>
+            <input
+              type="file"
+              accept=".pdf"
+              ref={pdfInputRef}
+              className="hidden"
+              onChange={handlePdfSelect}
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => pdfInputRef.current?.click()}
+                disabled={isUploadingPdf}
+                className="px-4 py-2 text-brand-orange border border-brand-orange rounded-md hover:bg-orange-50 disabled:opacity-50"
+              >
+                {isUploadingPdf ? '업로드 중...' : '📎 PDF 선택'}
+              </button>
+              {pendingPdf && (
+                <span className="text-sm text-gray-600 flex items-center gap-1">
+                  📄 {pendingPdf.name} ({(pendingPdf.size / 1024).toFixed(0)}KB)
+                  <button
+                    type="button"
+                    onClick={() => { setPendingPdf(null); if (pdfInputRef.current) pdfInputRef.current.value = ''; }}
+                    className="text-red-400 hover:text-red-600 ml-1"
+                  >
+                    X
+                  </button>
+                </span>
+              )}
+            </div>
+            {/* 저장된 첨부파일 목록 */}
+            {attachments.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {attachments.map(att => (
+                  <li key={att.id} className="flex items-center gap-2 text-sm text-gray-600">
+                    <a
+                      href={att.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-orange hover:underline flex items-center gap-1"
+                    >
+                      📄 {att.fileName}
+                    </a>
+                    <span className="text-gray-400">({(att.fileSize / 1024).toFixed(0)}KB)</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAttachment(att.id)}
+                      className="text-red-400 hover:text-red-600 text-xs"
+                    >
+                      삭제
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* 자동 반영 체크박스 */}

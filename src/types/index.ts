@@ -37,5 +37,8 @@ export * from './settings';
 // 마스터 데이터 관련
 export * from './master';
 
+// 첨부파일 관련
+export * from './attachment';
+
 // API 응답 관련
 export * from './api';

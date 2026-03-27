@@ -46,7 +46,7 @@ const TABS = [
   { id: 'comments', label: '💬 경영진코멘트', disabled: false },
   { id: 'meeting', label: '📋 회의록', disabled: false },
   { id: 'cost', label: '💰 원가', disabled: true },
-  { id: 'attachment', label: '📎 첨부파일', disabled: true }, // Google Workspace 필요
+  { id: 'attachment', label: '📎 첨부파일', disabled: false },
 ];
 
 interface ProjectDetailClientProps {
@@ -1594,6 +1594,8 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
               projectId={projectId}
               canEdit={canEdit}
             />
+          ) : activeTab === 'attachment' ? (
+            <AttachmentsSection projectId={projectId} />
           ) : (
             <div className="text-center text-gray-500 py-12">
               <span className="text-4xl mb-4 block">🚧</span>
@@ -2004,5 +2006,89 @@ export default function ProjectDetailClient({ projectId }: ProjectDetailClientPr
         </div>
       )}
     </AppLayout>
+  );
+}
+
+/**
+ * 첨부파일 섹션 컴포넌트 (프로젝트 상세 탭)
+ */
+function AttachmentsSection({ projectId }: { projectId: string }) {
+  const [attachments, setAttachments] = useState<Record<string, unknown>[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/attachments?projectId=${projectId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) setAttachments(data.data);
+      })
+      .catch(err => console.error('첨부파일 로드 오류:', err))
+      .finally(() => setIsLoading(false));
+  }, [projectId]);
+
+  if (isLoading) {
+    return <div className="text-center text-gray-500 py-8">로딩 중...</div>;
+  }
+
+  if (attachments.length === 0) {
+    return (
+      <div className="text-center text-gray-500 py-12">
+        <span className="text-4xl mb-4 block">📎</span>
+        <p>첨부파일이 없습니다.</p>
+        <p className="text-sm mt-1">업무일지 작성 시 PDF 파일을 첨부할 수 있습니다.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">파일명</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">업무일지</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">단계</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">업로더</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">크기</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">등록일</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {attachments.map((att) => (
+            <tr key={att.id as string} className="hover:bg-gray-50">
+              <td className="px-4 py-3 text-sm">
+                <a
+                  href={att.fileUrl as string}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-orange hover:underline flex items-center gap-1"
+                >
+                  📄 {att.fileName as string}
+                </a>
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-600">
+                {(att.worklogDate as string) || '-'}
+              </td>
+              <td className="px-4 py-3 text-sm">
+                {(att.worklogStage as string) && (
+                  <span className="px-2 py-0.5 bg-orange-50 text-brand-orange rounded text-xs">
+                    {att.worklogStage as string}
+                  </span>
+                )}
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-600">
+                {(att.uploaderName as string) || '-'}
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-500">
+                {((att.fileSize as number) / 1024).toFixed(0)}KB
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-500">
+                {(att.createdAt as string)?.split('T')[0] || '-'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
