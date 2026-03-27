@@ -59,14 +59,18 @@ export async function GET() {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const oneWeekAgoStr = oneWeekAgo.toISOString().split('T')[0];
 
-    // 병렬 조회: 프로젝트, 최근 업무일지, 사용자 즐겨찾기
+    // 병렬 조회: 프로젝트(카운트용 최소 컬럼), 최근 업무일지(표시용 컬럼), 사용자 즐겨찾기
     const [projects, recentWorklogsFiltered, userFavorites] = await Promise.all([
-      getAllAsObjects<SheetProject>(SHEET_NAMES.PROJECTS),
+      query<SheetProject>(SHEET_NAMES.PROJECTS, {
+        select: 'id,status,customer,item,current_stage,issues,team_leader_id',
+      }),
       query<SheetWorkLog>(SHEET_NAMES.WORKLOGS, {
+        select: 'id,project_id,date,customer,item,stage,assignee_id',
         filters: [{ column: 'date', op: 'gte', value: oneWeekAgoStr }],
         orderBy: { column: 'date', ascending: false },
       }),
       query<SheetFavorite>(SHEET_NAMES.FAVORITES, {
+        select: 'id,user_id,project_id',
         filters: [{ column: 'userId', op: 'eq', value: session.user.id }],
       }),
     ]);
