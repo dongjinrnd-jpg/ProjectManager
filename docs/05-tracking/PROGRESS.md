@@ -750,10 +750,10 @@ updated: 2026-03-06
 - [x] **Sidebar 메뉴 추가** ✅
   - [x] 📋 개선요청 메뉴 (engineer, admin, sysadmin만 표시) ✅
 
-#### 3.12 업무일지 댓글 기능 (PRD 3.2) 🚀 진행 중
-- [ ] **WorklogComments 시트 생성**
-  - [ ] Google Sheets에 WorklogComments 시트 수동 생성
-  - [ ] 헤더: id, worklogId, authorId, authorName, parentId, content, createdAt
+#### 3.12 업무일지 댓글 기능 (PRD 3.2) ✅ 완료 (2026-03-06)
+- [x] **WorklogComments 시트 생성** ✅
+  - [x] Google Sheets에 WorklogComments 시트 생성 ✅
+  - [x] 헤더: id, worklogId, authorId, authorName, parentId, content, createdAt ✅
 - [x] **타입 정의** (src/types/worklogComment.ts) ✅ (2026-03-06)
   - [x] WorklogComment, CreateWorklogCommentInput, WorklogCommentThread ✅
   - [x] SHEET_NAMES에 WORKLOG_COMMENTS 추가 ✅
@@ -767,6 +767,7 @@ updated: 2026-03-06
   - [x] 업무일지 상세 + 댓글 모달 ✅
   - [x] 스레드 표시 (부모 댓글 + 답글) ✅
   - [x] 댓글 작성/답글/삭제 UI ✅
+  - [x] onCommentCountChange useCallback 무한루프 버그 수정 (useRef 패턴) ✅
 - [x] **ProjectDetailClient 통합** ✅ (2026-03-06)
   - [x] 업무일지 카드에 댓글 수 배지 (💬 N) ✅
   - [x] "상세 →" 클릭 시 모달 표시 (페이지 이동 대신) ✅
