@@ -53,30 +53,20 @@ export default function ProjectsClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // 사용자 목록 가져오기
-  const fetchUsers = useCallback(async () => {
-    try {
-      const response = await fetch('/api/users');
-      const data = await response.json();
-      if (data.success) {
-        setUsers(data.data.filter((u: User) => u.isActive));
-      }
-    } catch (err) {
-      console.error('사용자 목록 조회 오류:', err);
-    }
-  }, []);
-
-  // 즐겨찾기 목록 가져오기
-  const fetchFavorites = useCallback(async () => {
+  // 즐겨찾기 목록 가져오기 (반환값 사용 가능)
+  const fetchFavorites = useCallback(async (): Promise<string[]> => {
     try {
       const response = await fetch('/api/favorites');
       const data = await response.json();
       if (data.success) {
-        setFavoriteProjectIds(data.data.map((f: { projectId: string }) => f.projectId));
+        const ids = data.data.map((f: { projectId: string }) => f.projectId);
+        setFavoriteProjectIds(ids);
+        return ids;
       }
     } catch (err) {
       console.error('즐겨찾기 목록 조회 오류:', err);
     }
+    return [];
   }, []);
 
   // 즐겨찾기 토글
@@ -115,11 +105,8 @@ export default function ProjectsClient() {
     }
   };
 
-  // 즐겨찾기 로드 완료 여부
-  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
-
-  // 프로젝트 목록 가져오기
-  const fetchProjects = useCallback(async () => {
+  // 프로젝트 목록 가져오기 (favIds를 직접 받을 수 있음)
+  const fetchProjects = useCallback(async (favIds?: string[]) => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -129,10 +116,10 @@ export default function ProjectsClient() {
       if (filterStage) params.set('stage', filterStage);
 
       // 즐겨찾기 모드: 해당 프로젝트 ID만 서버에 요청
-      if (showFavoritesOnly && favoriteProjectIds.length > 0) {
-        params.set('ids', favoriteProjectIds.join(','));
-      } else if (showFavoritesOnly && favoriteProjectIds.length === 0) {
-        // 즐겨찾기가 없으면 빈 결과
+      const ids = favIds ?? favoriteProjectIds;
+      if (showFavoritesOnly && ids.length > 0) {
+        params.set('ids', ids.join(','));
+      } else if (showFavoritesOnly && ids.length === 0) {
         setProjects([]);
         setError(null);
         setIsLoading(false);
@@ -156,17 +143,33 @@ export default function ProjectsClient() {
     }
   }, [searchQuery, filterStatus, filterDivision, filterStage, showFavoritesOnly, favoriteProjectIds]);
 
-  useEffect(() => {
-    fetchUsers();
-    fetchFavorites().then(() => setFavoritesLoaded(true));
-  }, [fetchUsers, fetchFavorites]);
+  // 초기 로드 완료 여부
+  const [initialLoaded, setInitialLoaded] = useState(false);
 
-  // 즐겨찾기 로드 완료 후 프로젝트 조회 (즐겨찾기 ID가 필요하므로 순차 실행)
+  // 초기 로드: 사용자 + 즐겨찾기 병렬 → 프로젝트 조회
   useEffect(() => {
-    if (favoritesLoaded) {
+    const loadInitial = async () => {
+      // 사용자와 즐겨찾기를 병렬로 가져옴
+      const [, favIds] = await Promise.all([
+        fetch('/api/users').then(r => r.json()).then(data => {
+          if (data.success) setUsers(data.data.filter((u: User) => u.isActive));
+        }).catch(err => console.error('사용자 목록 조회 오류:', err)),
+        fetchFavorites(),
+      ]);
+      // 즐겨찾기 ID를 바로 프로젝트 API에 전달
+      await fetchProjects(favIds);
+      setInitialLoaded(true);
+    };
+    loadInitial();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 필터 변경 시 프로젝트 재조회 (초기 로드 이후만)
+  useEffect(() => {
+    if (initialLoaded) {
       fetchProjects();
     }
-  }, [favoritesLoaded, fetchProjects]);
+  }, [searchQuery, filterStatus, filterDivision, filterStage, showFavoritesOnly, favoriteProjectIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 사용자 이름 찾기
   const getUserName = (userId: string) => {
