@@ -16,7 +16,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import WeeklyReportPreviewModal from './WeeklyReportPreviewModal';
 import {
   getKoreanDate,
-  getWeekOfMonth,
+  getYearMonthWeek,
   getWeekRange,
   getTotalWeeksInMonth,
   formatDate,
@@ -41,11 +41,12 @@ export default function WeeklyReportsClient() {
   // 미리보기 모달 상태
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-  // 현재 선택된 주차 (한국 시간 기준)
+  // 현재 선택된 주차 (한국 시간 기준, ISO 목요일 규칙)
   const now = getKoreanDate();
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
-  const [selectedWeek, setSelectedWeek] = useState(getWeekOfMonth(now));
+  const currentInfo = getYearMonthWeek(now);
+  const [selectedYear, setSelectedYear] = useState(currentInfo.year);
+  const [selectedMonth, setSelectedMonth] = useState(currentInfo.month);
+  const [selectedWeek, setSelectedWeek] = useState(currentInfo.week);
 
   // 사용자 권한
   const userId = session?.user?.id;

@@ -13,7 +13,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   getKoreanDate,
-  getWeekOfMonth,
+  getYearMonthWeek,
   getWeekRange,
   formatDateKorean,
 } from '@/lib/weekUtils';
@@ -32,11 +32,12 @@ export default function WeeklyReportPreviewClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // URL에서 주차 정보 가져오기 (한국 시간 기준)
+  // URL에서 주차 정보 가져오기 (한국 시간 기준, ISO 목요일 규칙)
   const now = getKoreanDate();
-  const year = parseInt(searchParams.get('year') || String(now.getFullYear()));
-  const month = parseInt(searchParams.get('month') || String(now.getMonth() + 1));
-  const week = parseInt(searchParams.get('week') || String(getWeekOfMonth(now)));
+  const nowInfo = getYearMonthWeek(now);
+  const year = parseInt(searchParams.get('year') || String(nowInfo.year));
+  const month = parseInt(searchParams.get('month') || String(nowInfo.month));
+  const week = parseInt(searchParams.get('week') || String(nowInfo.week));
 
   const weekRange = getWeekRange(year, month, week);
 
@@ -119,6 +120,16 @@ export default function WeeklyReportPreviewClient() {
     window.print();
   };
 
+  // Excel 다운로드
+  const handleDownloadExcel = () => {
+    const params = new URLSearchParams({
+      year: year.toString(),
+      month: month.toString(),
+      week: week.toString(),
+    });
+    window.location.href = `/api/export/weekly-reports?${params}`;
+  };
+
   // 목록으로 돌아가기
   const handleBack = () => {
     router.push('/weekly-reports');
@@ -144,6 +155,13 @@ export default function WeeklyReportPreviewClient() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownloadExcel}
+              style={{ backgroundColor: '#217346' }}
+              className="px-4 py-2 text-white rounded-md hover:brightness-110 transition-all"
+            >
+              📊 엑셀 다운로드
+            </button>
             <button
               onClick={handlePrint}
               className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"

@@ -106,6 +106,16 @@ export default function WeeklyReportPreviewModal({
     }, 250);
   };
 
+  // Excel 다운로드
+  const handleDownloadExcel = () => {
+    const params = new URLSearchParams({
+      year: year.toString(),
+      month: month.toString(),
+      week: week.toString(),
+    });
+    window.location.href = `/api/export/weekly-reports?${params}`;
+  };
+
   // 행 번호 계산
   let rowNumber = 0;
 
@@ -125,6 +135,13 @@ export default function WeeklyReportPreviewModal({
             보고서 미리보기
           </h2>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownloadExcel}
+              style={{ backgroundColor: '#217346' }}
+              className="px-4 py-2 text-white text-sm rounded-md hover:brightness-110 transition-all"
+            >
+              📊 엑셀 다운로드
+            </button>
             <button
               onClick={handlePrint}
               className="px-4 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 transition-colors"

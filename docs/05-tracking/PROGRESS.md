@@ -3,7 +3,7 @@ type: tracking
 doc_type: Progress
 status: In Progress
 created: 2026-01-29
-updated: 2026-03-27
+updated: 2026-04-27T09:00
 ---
 
   
@@ -229,8 +229,8 @@ updated: 2026-03-27
   - [ ] 선택된 단계별 진행률 계산 (완료 단계 / 전체 단계)
 - [ ] **투자비/원가 정보 관리** ← 미구현 (선택)
   - [ ] 예상 판매가, 자재비, 자재비율, 투자실비, 물량
-- [ ] **대표 이미지** ← 미구현 (선택)
-  - [ ] 프로젝트별 이미지 등록 (Google Drive 연동)
+- [x] **대표 이미지** ✅ (2026-03-27)
+  - [x] 프로젝트별 제품 이미지 업로드 (Supabase Storage)
 
 #### 1.5 업무일지 CRUD (PRD 3.2) ✅ 완료 (2026-02-05)
 - [x] **API Routes** (/api/worklogs)
@@ -264,7 +264,7 @@ updated: 2026-03-27
     - [x] issueStatus (open/resolved)
     - [x] 수정 시 "해결됨" 체크박스
   - [x] 자동 반영 체크박스 (프로젝트 업무진행사항에 자동 반영)
-  - [ ] 첨부파일 (Phase 3에서 구현)
+  - [x] 첨부파일 (PDF 첨부) ✅ (2026-03-27)
 - [x] **프로젝트 자동 연동** ✅ (2026-02-05)
   - [x] 업무일지 작성 시 → 프로젝트 '업무진행사항' 자동 반영 (API에서 처리)
   - [x] 업무일지 이슈사항 → 프로젝트 'issues' 자동 반영
@@ -352,7 +352,7 @@ updated: 2026-03-27
   - [x] 테이블 뷰 + 간트차트 뷰 (2.4에서 구현)
 - [ ] **추가 탭 (추후 구현)**
   - [ ] 💰 원가
-  - [ ] 📎 첨부파일
+  - [x] 📎 첨부파일 ✅ (2026-03-27) — PDF 첨부 탭 구현 (Supabase Storage)
 
 #### 2.4 개별 일정표 - 세부추진항목 (PRD 3.3, Roadmap 2.8~2.9) ✅ 완료 (2026-02-06)
 
@@ -532,9 +532,17 @@ updated: 2026-03-27
 - [ ] **AI 정리 기능** (향후)
   - [ ] Google Gemini API 연동
   - [ ] 자동 요약 체크박스
-- [ ] **다운로드**
+- [x] **다운로드** ✅ (2026-04-27)
   - [x] PDF 다운로드 (브라우저 인쇄 기능) ✅
-  - [ ] 엑셀 다운로드 (.xlsx)
+  - [x] 엑셀 다운로드 (.xlsx) ✅ (2026-04-27)
+    - [x] `/api/export/weekly-reports` 신규 API (year/month/week 쿼리, 제출용만 추출) ✅
+    - [x] 미리보기 화면 인쇄 버튼 좌측에 [📊 엑셀 다운로드] 버튼 (Excel 녹색 #217346) ✅
+    - [x] 보고 시트 + 공지사항 시트 분리 ✅
+- [x] **주차 계산 버그 수정** ✅ (2026-04-27, IMP-006)
+  - [x] weekUtils.ts에 ISO 8601 목요일 규칙 적용 ✅
+  - [x] `getYearMonthWeek()` 신규 — 월 경계 날짜를 owning month 기준으로 일관 분류 ✅
+  - [x] 4/27(월)이 4월 4주차로 잘못 표시되던 문제 → 4월 5주차로 정상 표시 ✅
+  - [x] 호출자 4개 파일(WeeklyReportsClient, WeeklyReportFormClient, WeeklyReportPreviewClient, executive/dashboard) 일관성 정리 ✅
 
 #### 3.2 경영진 대시보드 (PRD 3.4) ✅ 완료 (2026-02-11)
 - [x] **경영진 메인 대시보드** (/executive) ✅ (2026-02-11)
@@ -561,22 +569,17 @@ updated: 2026-03-27
   - [x] 팀장: 프로젝트 상세 페이지 경영진코멘트 탭에서 확인/답변 ✅
   - [ ] 코멘트 알림 (해당 팀장에게) - Phase 3.4
 
-#### 3.3 파일 첨부 (PRD 3.7) ⚠️ Google Workspace 필요
-> **보류 사유:** Service Account는 Google Drive 저장 공간이 없어 파일 업로드 불가.
-> Google Workspace의 Shared Drives 또는 OAuth 사용자 인증 필요.
+#### 3.3 파일 첨부 (PRD 3.7) ✅ 완료 (2026-03-27)
+> Supabase Storage 활용으로 Google Workspace 제약 해소
 
-- [ ] **Google Drive 연동 설정** (Workspace 도입 후)
-  - [ ] Shared Drives 설정
-  - [ ] 업로드 폴더 설정
-- [ ] **첨부파일 API** (/api/attachments)
-  - [ ] POST - 파일 업로드 (Google Drive)
-  - [ ] GET - 파일 목록 조회
-  - [ ] DELETE - 파일 삭제
-- [ ] **첨부파일 UI**
-  - [ ] 프로젝트 상세에 파일 첨부 영역
-  - [ ] 업무일지에 파일 첨부 영역
-  - [ ] 파일 미리보기 (이미지, PDF)
-  - [ ] 파일 다운로드
+- [x] **Supabase Storage 연동** ✅ (2026-03-27)
+  - [x] 프로젝트 제품 이미지 업로드 (Supabase Storage) ✅
+  - [x] 업무일지 PDF 첨부파일 업로드 ✅
+  - [x] 프로젝트 상세 첨부파일 탭 ✅
+- [x] **첨부파일 UI** ✅
+  - [x] 프로젝트 상세 - 제품 이미지 등록/표시 ✅
+  - [x] 프로젝트 상세 - 첨부파일 탭 (PDF) ✅
+  - [x] 업무일지 - PDF 첨부파일 업로드/다운로드 ✅
 
 #### 3.4 알림 기능 (PRD 3.8)
 - [ ] **Gmail API 연동 설정**
@@ -810,6 +813,20 @@ updated: 2026-03-27
 #### 4.6 백업
 - [x] Git 태그 `v1.0-google-sheets` (영구 복원 지점) ✅
 - [x] Google Sheets 데이터 유지 (삭제하지 않음) ✅
+
+#### 4.7 API 성능 최적화 ✅ 완료 (2026-03-27)
+- [x] `query()` 함수 확장 — or 조건, 다중 정렬, select 컬럼 지정 ✅
+- [x] 9개 API 라우트 서버사이드 필터링 전환 (worklogs, projects, dashboard, favorites, comments, schedules, improvements 등) ✅
+- [x] 프로젝트 상세 API — 150ms delay 순차 조회 → Promise.all 병렬 조회 ✅
+- [x] 대시보드 API — 필요한 컬럼만 SELECT (progress, note 등 대용량 텍스트 제외) ✅
+- [x] 통합 API 신설 — `/api/projects/list-page`, `/api/worklogs/list-page` ✅
+  - 프로젝트 목록: users + favorites + projects → 1회 호출
+  - 업무일지 목록: users + projects + worklogs → 1회 호출
+- [x] 프로젝트 즐겨찾기 모드 — `WHERE id IN (...)` 서버사이드 필터 ✅
+- [x] `isActive` 비교 버그 수정 (boolean/string 호환) ✅
+
+#### 4.8 UX 개선 ✅ (2026-03-27)
+- [x] 업무일지 저장 후 '신규 작성' 버튼 활성화 (연속 작성 지원) ✅
 
 ---
 

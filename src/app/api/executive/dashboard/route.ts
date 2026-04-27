@@ -12,7 +12,7 @@
 import { NextResponse } from 'next/server';
 import { getAllAsObjects, SHEET_NAMES } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
-import { getKoreanDate, getWeekOfMonth, getWeekRange, formatDate } from '@/lib/weekUtils';
+import { getKoreanDate, getYearMonthWeek, getWeekRange, formatDate } from '@/lib/weekUtils';
 import type { ProjectStage, ProjectStatus } from '@/types';
 
 // 시트에서 가져온 타입들
@@ -253,11 +253,9 @@ export async function GET() {
       completed: favoriteProjects.filter(p => p.healthStatus === 'completed').length,
     };
 
-    // 현재 주차 정보
+    // 현재 주차 정보 (ISO 목요일 규칙)
     const koreanDate = getKoreanDate();
-    const year = koreanDate.getFullYear();
-    const month = koreanDate.getMonth() + 1;
-    const week = getWeekOfMonth(koreanDate);
+    const { year, month, week } = getYearMonthWeek(koreanDate);
     const { start: weekStart, end: weekEnd } = getWeekRange(year, month, week);
 
     // 최근 1개월 이내 회의록

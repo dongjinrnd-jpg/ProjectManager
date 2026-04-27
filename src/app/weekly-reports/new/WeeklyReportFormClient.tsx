@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import type { WeeklyReport, Project } from '@/types';
 import WorklogImportModal from './WorklogImportModal';
-import { getWeekOfMonth, getWeekRange, getTotalWeeksInMonth, formatDate } from '@/lib/weekUtils';
+import { getYearMonthWeek, getWeekRange, getTotalWeeksInMonth, formatDate } from '@/lib/weekUtils';
 
 // 구분 옵션
 const CATEGORY_OPTIONS = ['농기', '중공업', '해외', '기타'];
@@ -42,11 +42,9 @@ export default function WeeklyReportFormClient({
   // 업무일지 불러오기 모달
   const [showImportModal, setShowImportModal] = useState(false);
 
-  // 현재 주차 기본값
+  // 현재 주차 기본값 (ISO 목요일 규칙)
   const now = new Date();
-  const defaultYear = now.getFullYear();
-  const defaultMonth = now.getMonth() + 1;
-  const defaultWeek = getWeekOfMonth(now);
+  const { year: defaultYear, month: defaultMonth, week: defaultWeek } = getYearMonthWeek(now);
   const defaultWeekRange = getWeekRange(defaultYear, defaultMonth, defaultWeek);
 
   // 폼 데이터
