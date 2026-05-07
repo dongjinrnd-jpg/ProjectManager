@@ -116,7 +116,7 @@ export default function SchedulesClient() {
           <button
             onClick={() => {
               const params = new URLSearchParams();
-              params.set('type', 'gantt');
+              params.set('type', 'gantt-month');
               if (showFavoritesOnly) params.set('favorites', 'true');
               if (statusFilter) params.set('status', statusFilter);
               if (divisionFilter) params.set('division', divisionFilter);

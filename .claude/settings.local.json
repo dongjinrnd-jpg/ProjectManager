@@ -11,7 +11,25 @@
       "Bash(taskkill /F /IM curl.exe)",
       "Bash(taskkill /F /PID 57104)",
       "Bash(rm -f \"E:/Project/vibecode/ProjectManager/.next/dev/lock\")",
-      "Bash(taskkill //F //PID 57104)"
+      "Bash(taskkill //F //PID 57104)",
+      "Bash(git push:*)",
+      "Bash(npx tsc *)",
+      "Bash(node -e ' *)",
+      "Bash(node --input-type=module -e ' *)",
+      "Bash(npm run *)",
+      "PowerShell(Get-ChildItem .next -Recurse -Force | Where-Object { -not $_.PSIsContainer } | ForEach-Object { try { Remove-Item $_.FullName -Force -ErrorAction Stop } catch { Write-Output \"LOCKED: $\\($_.FullName\\)\" } } | Select-Object -First 10)",
+      "Bash(npm install *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(npx eslint *)"
+    ],
+    "additionalDirectories": [
+      "E:\\Project\\vibecode\\ProjectManager\\.next"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "playwright"
+  ]
 }
