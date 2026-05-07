@@ -100,6 +100,13 @@ const MONTH_GANTT_COLORS = {
   project: '93C5FD',     // 프로젝트 대일정용 (계획색과 동일)
 };
 
+// 한국 시간(KST, UTC+9) 기준 오늘 날짜 (YYYYMMDD)
+function getTodayKST(): string {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().slice(0, 10).replace(/-/g, '');
+}
+
 const BORDER_THIN = { style: 'thin' as const, color: { rgb: '595959' } };
 const ALL_BORDERS = {
   top: BORDER_THIN,
@@ -336,7 +343,7 @@ export async function GET(request: Request) {
         { wch: 12 },  // 종료일
       ];
 
-      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const today = getTodayKST();
       filename = `전체일정표_${today}.xlsx`;
     } else {
       // 세부추진항목: 특정 프로젝트 또는 전체
@@ -391,7 +398,7 @@ export async function GET(request: Request) {
         { wch: 30 },  // 비고
       ];
 
-      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const today = getTodayKST();
       if (projectId) {
         const project = projectMap.get(projectId);
         const projectName = project ? `${project.customer}_${project.item}`.replace(/[/\\?%*:|"<>]/g, '_') : projectId;
@@ -453,7 +460,7 @@ function determineActualStatus(s: SheetSchedule): 'in_progress' | 'completed' | 
 }
 
 function buildMonthGanttSheet(args: BuildMonthGanttArgs): { ws: XLSX.WorkSheet; filename: string } {
-  const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const today = getTodayKST();
 
   if (args.projectId) {
     return buildProjectDetailMonthGantt(args, today);
