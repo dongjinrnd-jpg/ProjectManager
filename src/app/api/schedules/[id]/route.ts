@@ -118,8 +118,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // 요청 바디 미리 파싱 (실적 날짜 권한 체크용)
     const body: UpdateScheduleInput = await request.json();
 
-    // 실적 날짜 수정 권한 체크: admin만 가능
-    const canEditActualDates = userRole === 'admin';
+    // 실적 날짜 수정 권한 체크: engineer, admin 가능
+    const canEditActualDates = ['engineer', 'admin'].includes(userRole);
     if (!canEditActualDates && (body.actualStart !== undefined || body.actualEnd !== undefined)) {
       return NextResponse.json(
         { success: false, error: '실적 날짜 수정 권한이 없습니다. (관리자만 가능)' },
