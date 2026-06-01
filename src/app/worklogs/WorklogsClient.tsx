@@ -20,6 +20,9 @@ let usersCache: { data: User[]; timestamp: number } | null = null;
 let projectsCache: { data: Project[]; timestamp: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5분
 
+// 검색 필터 저장 키 (작성/수정 후 목록 복귀 시 검색 조건 유지)
+const FILTER_STORAGE_KEY = 'worklogs_filters';
+
 // 오늘 날짜를 YYYY-MM-DD 형식으로 반환
 function getTodayString(): string {
   const today = new Date();
@@ -47,6 +50,8 @@ export default function WorklogsClient() {
   const [filterProjectId, setFilterProjectId] = useState('');
   const [filterAssigneeId, setFilterAssigneeId] = useState('');
   const [filterKeyword, setFilterKeyword] = useState('');
+  // 세션 저장 필터 복원 완료 여부 (복원 전에는 조회하지 않아 깜빡임/중복조회 방지)
+  const [filtersRestored, setFiltersRestored] = useState(false);
 
   // 삭제 모달
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -88,10 +93,49 @@ export default function WorklogsClient() {
     }
   }, [filterStartDate, filterEndDate, filterProjectId, filterAssigneeId, filterKeyword]);
 
-  // 통합 API 1회 호출 (필터 변경 시 자동 재조회)
+  // 마운트 시 세션에 저장된 검색 필터 복원
+  // (업무일지 작성/수정 후 목록으로 돌아와도 기존 검색 조건 유지)
   useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(FILTER_STORAGE_KEY);
+      if (saved) {
+        const f = JSON.parse(saved);
+        if (typeof f.startDate === 'string') setFilterStartDate(f.startDate);
+        if (typeof f.endDate === 'string') setFilterEndDate(f.endDate);
+        if (typeof f.projectId === 'string') setFilterProjectId(f.projectId);
+        if (typeof f.assigneeId === 'string') setFilterAssigneeId(f.assigneeId);
+        if (typeof f.keyword === 'string') setFilterKeyword(f.keyword);
+      }
+    } catch {
+      // 저장된 필터 파싱 실패 시 기본값(오늘) 유지
+    }
+    setFiltersRestored(true);
+  }, []);
+
+  // 필터 변경 시 세션에 저장
+  useEffect(() => {
+    if (!filtersRestored) return;
+    try {
+      sessionStorage.setItem(
+        FILTER_STORAGE_KEY,
+        JSON.stringify({
+          startDate: filterStartDate,
+          endDate: filterEndDate,
+          projectId: filterProjectId,
+          assigneeId: filterAssigneeId,
+          keyword: filterKeyword,
+        })
+      );
+    } catch {
+      // 저장 실패는 무시 (조회 동작에는 영향 없음)
+    }
+  }, [filtersRestored, filterStartDate, filterEndDate, filterProjectId, filterAssigneeId, filterKeyword]);
+
+  // 통합 API 호출 (필터 복원 완료 후, 필터 변경 시 자동 재조회)
+  useEffect(() => {
+    if (!filtersRestored) return;
     fetchPageData();
-  }, [fetchPageData]);
+  }, [fetchPageData, filtersRestored]);
 
   // 사용자 이름 찾기
   const getUserName = (userId: string) => {

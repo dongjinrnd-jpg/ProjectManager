@@ -3,7 +3,7 @@ type: tracking
 doc_type: Progress
 status: In Progress
 created: 2026-01-29
-updated: 2026-05-08T10:00
+updated: 2026-06-02T11:00
 ---
 
   
@@ -241,7 +241,14 @@ updated: 2026-05-08T10:00
   - [x] DELETE /api/worklogs/[id] - 삭제 (본인만)
 - [x] **업무일지 목록 페이지** (/worklogs)
   - [x] 테이블 뷰 (날짜, ITEM, 고객사, 단계, 담당자, 참여자, 업무내용)
-  - [x] 필터링 (날짜 범위, 프로젝트, 작성자, 키워드)
+  - [x] 필터링 (날짜 범위, 프로젝트, 담당자, 키워드)
+  - [x] **담당자 필터: 작성자 + 참여자(participants) 모두 매칭** ✅ (2026-06-02)
+    - [x] 참여자로만 포함된 업무일지도 검색됨 (list-page API 메모리 필터) ✅
+    - [x] Excel 다운로드(export API)에도 동일 적용 ✅
+  - [x] **검색 조건 유지 (sessionStorage)** ✅ (2026-06-02)
+    - [x] 필터 변경 시 sessionStorage 저장, 마운트 시 복원 ✅
+    - [x] 작성/수정(/worklogs/new, /[id]/edit) 후 목록 복귀 시 조건 유지 ✅
+    - [x] 복원 완료 전 조회 차단(filtersRestored 플래그)으로 깜빡임/중복조회 방지 ✅
   - [x] 전체 열람 가능 (모든 직원)
   - [x] 작성 버튼 → /worklogs/new 페이지 링크
   - [x] 수정 버튼 → /worklogs/[id]/edit 페이지 링크
@@ -361,6 +368,12 @@ updated: 2026-05-08T10:00
 - [x] POST /api/schedules - 항목 생성 ✅
 - [x] PUT /api/schedules/[id] - 항목 수정 ✅
 - [x] DELETE /api/schedules/[id] - 항목 삭제 ✅
+- [x] **접근 권한 정리** ✅ (2026-06-01)
+  - [x] 조회: 모든 로그인 사용자 ✅
+  - [x] 생성: engineer, admin ✅
+  - [x] 수정: engineer, admin (sysadmin 제외) ✅
+  - [x] 실적 날짜 수정: engineer, admin ✅ (기존 admin 전용 → engineer 추가)
+  - [x] 삭제: 프로젝트 팀장 또는 admin/sysadmin ✅
 
 ##### 2.4.2 세부추진항목 등록/수정 모달 (Roadmap 2.9) ✅
 - [x] 모달 컴포넌트 구현 (인라인 모달) ✅
@@ -622,6 +635,7 @@ updated: 2026-05-08T10:00
   - [x] 파일명: 프로젝트목록_YYYYMMDD.xlsx
 - [x] **업무일지 목록 다운로드** ✅
   - [x] 현재 필터 적용된 목록 (날짜, 프로젝트, 담당자, 단계, 키워드)
+  - [x] 담당자 필터: 작성자 + 참여자 모두 매칭 ✅ (2026-06-02)
   - [x] 컬럼: No, 날짜, ITEM, 고객사, 단계, 담당자, 참여자, 계획, 업무내용, 이슈사항, 이슈상태
   - [x] 파일명: 업무일지_YYYYMMDD.xlsx
   - [x] 권한: engineer 이상
