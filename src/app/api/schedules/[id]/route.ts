@@ -106,9 +106,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // 권한 확인 (engineer, admin만 수정 가능)
+    // 권한 확인 (engineer, admin만 수정 가능 / 시스템관리자는 일정 수정 불가)
     const userRole = session.user.role;
-    if (!['engineer', 'admin', 'sysadmin'].includes(userRole)) {
+    if (!['engineer', 'admin'].includes(userRole)) {
       return NextResponse.json(
         { success: false, error: '세부추진항목 수정 권한이 없습니다.' },
         { status: 403 }
@@ -118,8 +118,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // 요청 바디 미리 파싱 (실적 날짜 권한 체크용)
     const body: UpdateScheduleInput = await request.json();
 
-    // 실적 날짜 수정 권한 체크: sysadmin, admin만 가능
-    const canEditActualDates = ['sysadmin', 'admin'].includes(userRole);
+    // 실적 날짜 수정 권한 체크: admin만 가능
+    const canEditActualDates = userRole === 'admin';
     if (!canEditActualDates && (body.actualStart !== undefined || body.actualEnd !== undefined)) {
       return NextResponse.json(
         { success: false, error: '실적 날짜 수정 권한이 없습니다. (관리자만 가능)' },
