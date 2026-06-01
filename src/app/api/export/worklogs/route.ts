@@ -102,9 +102,17 @@ export async function GET(request: Request) {
         return false;
       }
 
-      // 담당자 필터
-      if (assigneeId && log.assigneeId !== assigneeId) {
-        return false;
+      // 담당자 필터: 작성자(assigneeId) 또는 참여자(participants)에 포함되면 매칭
+      if (assigneeId) {
+        const isAssignee = log.assigneeId === assigneeId;
+        const isParticipant = String(log.participants || '')
+          .split(',')
+          .map((id) => id.trim())
+          .filter(Boolean)
+          .includes(assigneeId);
+        if (!isAssignee && !isParticipant) {
+          return false;
+        }
       }
 
       // 단계 필터

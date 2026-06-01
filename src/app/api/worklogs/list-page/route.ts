@@ -39,15 +39,16 @@ export async function GET(request: Request) {
     if (startDate) filters.push({ column: 'date', op: 'gte', value: startDate });
     if (endDate) filters.push({ column: 'date', op: 'lte', value: endDate });
     if (projectId) filters.push({ column: 'projectId', op: 'eq', value: projectId });
-    if (assigneeId) filters.push({ column: 'assigneeId', op: 'eq', value: assigneeId });
     if (stage) filters.push({ column: 'stage', op: 'eq', value: stage });
+    // 담당자 필터는 참여자(participants)도 함께 매칭해야 하므로 DB 필터가 아닌
+    // 메모리에서 처리한다 (participants는 쉼표 구분 ID 문자열).
 
     const orFilter = keyword
       ? `content.ilike.%${keyword}%,plan.ilike.%${keyword}%,item.ilike.%${keyword}%,customer.ilike.%${keyword}%`
       : undefined;
 
     // 3개를 병렬로 조회 (DB 레벨 병렬, 네트워크 왕복 1회)
-    const [worklogs, users, projects] = await Promise.all([
+    const [allWorklogs, users, projects] = await Promise.all([
       query<Record<string, unknown>>(SHEET_NAMES.WORKLOGS, {
         filters,
         or: orFilter,
@@ -62,6 +63,18 @@ export async function GET(request: Request) {
         orderBy: { column: 'createdAt', ascending: false },
       }),
     ]);
+
+    // 담당자 필터: 작성자(assigneeId) 또는 참여자(participants)에 포함되면 매칭
+    const worklogs = assigneeId
+      ? allWorklogs.filter((w) => {
+          if (w.assigneeId === assigneeId) return true;
+          const participants = String(w.participants || '')
+            .split(',')
+            .map((id) => id.trim())
+            .filter(Boolean);
+          return participants.includes(assigneeId);
+        })
+      : allWorklogs;
 
     return NextResponse.json({
       success: true,
