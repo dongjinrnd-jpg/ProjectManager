@@ -137,6 +137,21 @@ export default function WorklogsClient() {
     fetchPageData();
   }, [fetchPageData, filtersRestored]);
 
+  // 검색 조건 초기화 (기본값: 오늘 날짜, 나머지 필터 해제)
+  const handleResetFilters = () => {
+    const today = getTodayString();
+    setFilterStartDate(today);
+    setFilterEndDate(today);
+    setFilterProjectId('');
+    setFilterAssigneeId('');
+    setFilterKeyword('');
+    try {
+      sessionStorage.removeItem(FILTER_STORAGE_KEY);
+    } catch {
+      // 세션 정리 실패는 무시 (state 초기화로 충분)
+    }
+  };
+
   // 사용자 이름 찾기
   const getUserName = (userId: string) => {
     const user = users.find(u => u.id === userId);
@@ -308,6 +323,14 @@ export default function WorklogsClient() {
             className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
           >
             전체 기간
+          </button>
+          {/* 검색 조건 초기화 */}
+          <button
+            onClick={handleResetFilters}
+            title="검색 조건을 모두 초기화합니다 (날짜는 오늘로)"
+            className="px-3 py-1 text-sm rounded-md border border-gray-300 text-gray-600 bg-white hover:bg-gray-50 transition-colors"
+          >
+            🔄 초기화
           </button>
         </div>
 

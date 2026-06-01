@@ -3,7 +3,7 @@ type: tracking
 doc_type: Progress
 status: In Progress
 created: 2026-01-29
-updated: 2026-06-02T11:00
+updated: 2026-06-02T14:00
 ---
 
   
@@ -249,6 +249,9 @@ updated: 2026-06-02T11:00
     - [x] 필터 변경 시 sessionStorage 저장, 마운트 시 복원 ✅
     - [x] 작성/수정(/worklogs/new, /[id]/edit) 후 목록 복귀 시 조건 유지 ✅
     - [x] 복원 완료 전 조회 차단(filtersRestored 플래그)으로 깜빡임/중복조회 방지 ✅
+  - [x] **🔄 검색 초기화 버튼** ✅ (2026-06-02)
+    - [x] "전체 기간" 버튼 옆 배치, 클릭 시 기본값(날짜=오늘)으로 리셋 ✅
+    - [x] sessionStorage 저장 필터도 함께 제거 ✅
   - [x] 전체 열람 가능 (모든 직원)
   - [x] 작성 버튼 → /worklogs/new 페이지 링크
   - [x] 수정 버튼 → /worklogs/[id]/edit 페이지 링크
