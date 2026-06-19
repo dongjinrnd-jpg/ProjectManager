@@ -13,10 +13,13 @@ import {
   findRowByColumn,
   updateById,
   deleteById,
+  deleteByColumn,
   insertRow,
   getAllAsObjects,
+  query,
   SHEET_NAMES,
 } from '@/lib/supabase/db';
+import { getSupabase } from '@/lib/supabase/client';
 import { getSession, hasMinRole, isAdmin } from '@/lib/auth';
 import type { Project, UpdateProjectInput, ProjectStatus, ProjectStage, UserRole } from '@/types';
 
@@ -298,10 +301,48 @@ export async function DELETE(
       );
     }
 
-    // 삭제 이력 기록
-    await recordHistory(id, 'deleted', '', 'true', session.user.id);
+    // 자식 행 선삭제 (FK 제약 회피)
+    // 1) worklogs에 종속된 자식들 먼저: worklog_comments, worklog 첨부파일
+    const childWorklogs = await query<{ id: string }>(SHEET_NAMES.WORKLOGS, {
+      filters: [{ column: 'projectId', op: 'eq', value: id }],
+      select: 'id',
+    });
+    const worklogIds = childWorklogs.map((w) => w.id).filter(Boolean);
 
-    // Supabase에서 삭제
+    const supabase = getSupabase();
+
+    if (worklogIds.length > 0) {
+      await deleteByColumn(SHEET_NAMES.WORKLOG_COMMENTS, 'worklogId', worklogIds);
+      // 업무일지 첨부파일 (entityType='worklog')
+      const { error: attErr } = await supabase
+        .from(SHEET_NAMES.ATTACHMENTS)
+        .delete()
+        .eq('entity_type', 'worklog')
+        .in('entity_id', worklogIds);
+      if (attErr) throw new Error(`첨부파일 삭제 오류: ${attErr.message}`);
+    }
+
+    // 2) 프로젝트 직접 참조 자식 테이블 일괄 삭제
+    await Promise.all([
+      deleteByColumn(SHEET_NAMES.WORKLOGS, 'projectId', id),
+      deleteByColumn(SHEET_NAMES.PROJECT_SCHEDULES, 'projectId', id),
+      deleteByColumn(SHEET_NAMES.FAVORITES, 'projectId', id),
+      deleteByColumn(SHEET_NAMES.COMMENTS, 'projectId', id),
+      deleteByColumn(SHEET_NAMES.MEETING_MINUTES, 'projectId', id),
+      deleteByColumn(SHEET_NAMES.WEEKLY_REPORTS, 'projectId', id),
+      deleteByColumn(SHEET_NAMES.PROJECT_HISTORY, 'projectId', id),
+      // 프로젝트 첨부파일 (entityType='project')
+      (async () => {
+        const { error } = await supabase
+          .from(SHEET_NAMES.ATTACHMENTS)
+          .delete()
+          .eq('entity_type', 'project')
+          .eq('entity_id', id);
+        if (error) throw new Error(`첨부파일 삭제 오류: ${error.message}`);
+      })(),
+    ]);
+
+    // 3) 프로젝트 본체 삭제
     await deleteById(SHEET_NAMES.PROJECTS, id);
 
     return NextResponse.json({

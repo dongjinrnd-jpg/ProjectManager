@@ -320,6 +320,34 @@ export async function insertAndReturn<T extends Record<string, unknown>>(
 }
 
 /**
+ * 특정 컬럼 값과 일치하는 모든 행을 삭제합니다.
+ *
+ * @param tableName - 테이블 이름
+ * @param column - 필터 컬럼 (camelCase)
+ * @param value - 일치값 또는 값 배열(IN 절)
+ * @returns 삭제된 행 수
+ */
+export async function deleteByColumn(
+  tableName: SheetName,
+  column: string,
+  value: string | string[]
+): Promise<number> {
+  const supabase = getSupabase();
+  const snakeCol = fieldToSnake(column);
+
+  let q = supabase.from(tableName).delete({ count: 'exact' });
+  q = Array.isArray(value) ? q.in(snakeCol, value) : q.eq(snakeCol, value);
+
+  const { error, count } = await q;
+
+  if (error) {
+    throw new Error(`Supabase 삭제 오류 (${tableName}.${column}): ${error.message}`);
+  }
+
+  return count ?? 0;
+}
+
+/**
  * 연결 상태를 확인합니다.
  */
 export async function checkConnection(): Promise<{
