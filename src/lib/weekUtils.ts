@@ -101,20 +101,17 @@ export function getWeekRange(year: number, month: number, week: number): { start
 
 /**
  * 해당 월의 총 주차 수 계산 (ISO 목요일 규칙)
- * - 해당 월의 마지막 목요일이 속한 주의 주차 번호
+ * - 각 주는 목요일이 속한 달에 귀속되므로, 총 주차 수 = 해당 월의 목요일 개수
  */
 export function getTotalWeeksInMonth(year: number, month: number): number {
-  const lastDay = new Date(year, month, 0); // 해당 월의 마지막 날
-  // 마지막 날이 속한 주의 목요일 기준으로 owning month를 판정
-  const info = getYearMonthWeek(lastDay);
-  if (info.year === year && info.month === month) {
-    return info.week;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  let thursdays = 0;
+  for (let day = 1; day <= daysInMonth; day++) {
+    if (new Date(year, month - 1, day).getDay() === 4) {
+      thursdays++;
+    }
   }
-  // 마지막 날이 다음 달 1주차에 속한 경우 → 직전 날짜 기준으로 계산
-  const prevDay = new Date(lastDay);
-  prevDay.setDate(lastDay.getDate() - 1);
-  const prevInfo = getYearMonthWeek(prevDay);
-  return prevInfo.week;
+  return thursdays;
 }
 
 /**
