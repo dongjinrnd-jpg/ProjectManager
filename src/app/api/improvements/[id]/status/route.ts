@@ -9,10 +9,10 @@
 import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
-  getAllAsObjects,
   updateById,
   insertRow,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
@@ -129,17 +129,8 @@ async function addHistory(
   changedBy: string,
   changedByName: string
 ): Promise<void> {
-  const allHistories = await getAllAsObjects<{ id: string }>(SHEET_NAMES.IMPROVEMENT_HISTORIES);
-
   // 새 ID 생성
-  let maxNum = 0;
-  for (const row of allHistories) {
-    if (row.id && row.id.startsWith('IMPH-')) {
-      const num = parseInt(row.id.replace('IMPH-', ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-  const historyId = `IMPH-${String(maxNum + 1).padStart(5, '0')}`;
+  const historyId = await generateSequentialId(SHEET_NAMES.IMPROVEMENT_HISTORIES, 'IMPH-', 5);
 
   const now = new Date().toISOString();
 

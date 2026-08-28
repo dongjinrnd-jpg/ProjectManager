@@ -45,6 +45,12 @@ export const SHEET_NAMES = {
 
 export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES];
 
+/**
+ * PostgREST 한 번의 요청으로 받을 수 있는 최대 행 수.
+ * 서버 기본 상한(1000)에 맞춰 페이지네이션 단위로 사용한다.
+ */
+const PAGE_SIZE = 1000;
+
 // ============================================
 // 호환성 함수 (기존 sheets.ts API 유지)
 // ============================================
@@ -60,15 +66,26 @@ export async function getAllAsObjects<T extends Record<string, unknown>>(
   tableName: SheetName
 ): Promise<T[]> {
   const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from(tableName)
-    .select('*');
 
-  if (error) {
-    throw new Error(`Supabase 조회 오류 (${tableName}): ${error.message}`);
+  // PostgREST 기본 응답 상한(1000행)을 넘기기 위해 range로 페이지네이션한다.
+  const rows: Record<string, unknown>[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) {
+      throw new Error(`Supabase 조회 오류 (${tableName}): ${error.message}`);
+    }
+
+    const page = data || [];
+    rows.push(...page);
+
+    if (page.length < PAGE_SIZE) break;
   }
 
-  return toCamelCaseArray<T>(data || []);
+  return toCamelCaseArray<T>(rows);
 }
 
 /**
@@ -216,54 +233,103 @@ export async function query<T extends Record<string, unknown>>(
   }
 ): Promise<T[]> {
   const supabase = getSupabase();
-  let q = supabase.from(tableName).select(options?.select || '*');
 
-  // 필터 적용
-  if (options?.filters) {
-    for (const filter of options.filters) {
-      const col = fieldToSnake(filter.column);
-      switch (filter.op) {
-        case 'eq': q = q.eq(col, filter.value); break;
-        case 'neq': q = q.neq(col, filter.value); break;
-        case 'gt': q = q.gt(col, filter.value); break;
-        case 'gte': q = q.gte(col, filter.value); break;
-        case 'lt': q = q.lt(col, filter.value); break;
-        case 'lte': q = q.lte(col, filter.value); break;
-        case 'like': q = q.like(col, filter.value as string); break;
-        case 'ilike': q = q.ilike(col, filter.value as string); break;
-        case 'in': q = q.in(col, filter.value as unknown[]); break;
+  // 페이지마다 동일한 조건의 쿼리를 새로 만든다 (빌더는 재사용 불가)
+  const build = () => {
+    let q = supabase.from(tableName).select(options?.select || '*');
+
+    // 필터 적용
+    if (options?.filters) {
+      for (const filter of options.filters) {
+        const col = fieldToSnake(filter.column);
+        switch (filter.op) {
+          case 'eq': q = q.eq(col, filter.value); break;
+          case 'neq': q = q.neq(col, filter.value); break;
+          case 'gt': q = q.gt(col, filter.value); break;
+          case 'gte': q = q.gte(col, filter.value); break;
+          case 'lt': q = q.lt(col, filter.value); break;
+          case 'lte': q = q.lte(col, filter.value); break;
+          case 'like': q = q.like(col, filter.value as string); break;
+          case 'ilike': q = q.ilike(col, filter.value as string); break;
+          case 'in': q = q.in(col, filter.value as unknown[]); break;
+        }
       }
     }
-  }
 
-  // OR 조건 (PostgREST 문법: "col1.ilike.%val%,col2.ilike.%val%")
-  if (options?.or) {
-    q = q.or(options.or);
-  }
-
-  // 정렬 (단일 또는 다중)
-  if (options?.orderBy) {
-    const orders = Array.isArray(options.orderBy) ? options.orderBy : [options.orderBy];
-    for (const order of orders) {
-      q = q.order(fieldToSnake(order.column), {
-        ascending: order.ascending ?? true,
-      });
+    // OR 조건 (PostgREST 문법: "col1.ilike.%val%,col2.ilike.%val%")
+    if (options?.or) {
+      q = q.or(options.or);
     }
-  }
 
-  // 제한
-  if (options?.limit) {
-    q = q.limit(options.limit);
-  }
+    // 정렬 (단일 또는 다중)
+    if (options?.orderBy) {
+      const orders = Array.isArray(options.orderBy) ? options.orderBy : [options.orderBy];
+      for (const order of orders) {
+        q = q.order(fieldToSnake(order.column), {
+          ascending: order.ascending ?? true,
+        });
+      }
+    }
 
-  const { data, error } = await q;
+    return q;
+  };
 
-  if (error) {
-    throw new Error(`Supabase 쿼리 오류 (${tableName}): ${error.message}`);
-  }
-
+  // limit이 없으면 조건에 맞는 전체 행을 가져온다.
+  // PostgREST 기본 상한(1000행) 때문에 range로 나눠 요청해야 한다.
+  const wanted = options?.limit ?? Infinity;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return toCamelCaseArray<T>((data as any[]) || []);
+  const rows: any[] = [];
+
+  for (let from = 0; from < wanted; from += PAGE_SIZE) {
+    const size = Math.min(PAGE_SIZE, wanted - from);
+    const { data, error } = await build().range(from, from + size - 1);
+
+    if (error) {
+      throw new Error(`Supabase 쿼리 오류 (${tableName}): ${error.message}`);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const page = (data as any[]) || [];
+    rows.push(...page);
+
+    if (page.length < size) break;
+  }
+
+  return toCamelCaseArray<T>(rows);
+}
+
+/**
+ * `PREFIX + 일련번호` 형식의 다음 ID를 생성합니다.
+ *
+ * 전체 행을 읽어 최댓값을 찾던 기존 방식은 PostgREST 응답 상한(1000행)에
+ * 걸려 최신 행을 놓치고 중복 PK를 만들었습니다.
+ * 여기서는 prefix로 필터링한 뒤 내림차순 1건만 조회합니다.
+ *
+ * @param tableName - 테이블 이름
+ * @param prefix - ID 접두사 (예: 'WL-20260828-')
+ * @param padding - 일련번호 자릿수 (예: 3 → '001')
+ * @returns 다음 ID 문자열
+ */
+export async function generateSequentialId(
+  tableName: SheetName,
+  prefix: string,
+  padding: number
+): Promise<string> {
+  // prefix로 필터링한 id만 조회하고 숫자로 비교한다.
+  // (문자열 정렬만 쓰면 자릿수가 넘어갈 때 'PS-999' > 'PS-1000'이 되어 어긋난다)
+  const rows = await query<{ id: string }>(tableName, {
+    select: 'id',
+    filters: [{ column: 'id', op: 'like', value: `${prefix}%` }],
+  });
+
+  let maxNum = 0;
+  for (const row of rows) {
+    if (!row.id) continue;
+    const parsed = parseInt(row.id.slice(prefix.length), 10);
+    if (!isNaN(parsed) && parsed > maxNum) maxNum = parsed;
+  }
+
+  return `${prefix}${String(maxNum + 1).padStart(padding, '0')}`;
 }
 
 /**

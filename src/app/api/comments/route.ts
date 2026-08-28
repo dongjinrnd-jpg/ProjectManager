@@ -16,6 +16,7 @@ import {
   insertRow,
   query,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { Comment, CreateCommentInput, CommentThread } from '@/types';
@@ -24,20 +25,7 @@ import type { Comment, CreateCommentInput, CommentThread } from '@/types';
  * 새 코멘트 ID 생성
  */
 async function generateCommentId(): Promise<string> {
-  const allComments = await getAllAsObjects<{ id: string }>(SHEET_NAMES.COMMENTS);
-
-  // 최대 번호 계산
-  const prefix = 'CMT-';
-  let maxNum = 0;
-
-  for (const row of allComments) {
-    if (row.id && row.id.startsWith(prefix)) {
-      const num = parseInt(row.id.replace(prefix, ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-
-  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  return generateSequentialId(SHEET_NAMES.COMMENTS, 'CMT-', 3);
 }
 
 /**

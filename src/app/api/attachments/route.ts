@@ -9,7 +9,13 @@
 
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase/client';
-import { query, getAllAsObjects, insertRow, SHEET_NAMES } from '@/lib/supabase/db';
+import {
+  query,
+  getAllAsObjects,
+  insertRow,
+  SHEET_NAMES,
+  generateSequentialId,
+} from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { AttachmentEntityType } from '@/types';
 
@@ -19,16 +25,7 @@ const BUCKET = 'attachments';
  * 새 첨부파일 ID 생성
  */
 async function generateAttachmentId(): Promise<string> {
-  const allItems = await getAllAsObjects<{ id: string }>(SHEET_NAMES.ATTACHMENTS);
-  const prefix = 'ATT-';
-  let maxNum = 0;
-  for (const item of allItems) {
-    if (item.id && item.id.startsWith(prefix)) {
-      const num = parseInt(item.id.replace(prefix, ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-  return `${prefix}${String(maxNum + 1).padStart(5, '0')}`;
+  return generateSequentialId(SHEET_NAMES.ATTACHMENTS, 'ATT-', 5);
 }
 
 /**

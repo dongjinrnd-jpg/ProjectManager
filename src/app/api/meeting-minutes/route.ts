@@ -14,8 +14,8 @@ import {
   getAllAsObjects,
   appendRow,
   getHeaders,
-  getRows,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
@@ -51,30 +51,7 @@ interface SheetUser extends Record<string, unknown> {
  * 새 회의록 ID 생성 - 기존 최대 ID 기반으로 중복 방지
  */
 async function generateMeetingMinutesId(): Promise<string> {
-  // getRows()는 헤더 미포함(A2:Z), getHeaders()로 별도 조회
-  const [headers, rows] = await Promise.all([
-    getHeaders(SHEET_NAMES.MEETING_MINUTES),
-    getRows(SHEET_NAMES.MEETING_MINUTES),
-  ]);
-  const idIndex = headers.indexOf('id');
-
-  let maxNum = 0;
-
-  if (idIndex >= 0) {
-    for (let i = 0; i < rows.length; i++) {
-      const id = rows[i][idIndex];
-      if (id && id.startsWith('MTG-')) {
-        const num = parseInt(id.replace('MTG-', ''), 10);
-        if (!isNaN(num) && num > maxNum) {
-          maxNum = num;
-        }
-      }
-    }
-  }
-
-  // 최대 ID + 1 로 새 ID 생성
-  const nextNum = maxNum + 1;
-  return `MTG-${String(nextNum).padStart(3, '0')}`;
+  return generateSequentialId(SHEET_NAMES.MEETING_MINUTES, 'MTG-', 3);
 }
 
 /**

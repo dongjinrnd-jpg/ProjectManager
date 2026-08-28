@@ -14,9 +14,9 @@ import {
   getAllAsObjects,
   appendRow,
   getHeaders,
-  getRows,
   objectToRow,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { WeeklyReport, CreateWeeklyReportInput } from '@/types';
@@ -51,17 +51,7 @@ async function generateWeeklyReportId(
   week: number
 ): Promise<string> {
   const prefix = `WR-${year}-${String(month).padStart(2, '0')}-${week}-`;
-  const rows = await getRows(SHEET_NAMES.WEEKLY_REPORTS);
-
-  let maxNum = 0;
-  for (const row of rows) {
-    if (row[0] && row[0].startsWith(prefix)) {
-      const num = parseInt(row[0].replace(prefix, ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-
-  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  return generateSequentialId(SHEET_NAMES.WEEKLY_REPORTS, prefix, 3);
 }
 
 /**

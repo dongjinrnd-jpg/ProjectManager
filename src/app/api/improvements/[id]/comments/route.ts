@@ -13,6 +13,7 @@ import {
   getAllAsObjects,
   insertRow,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
@@ -147,16 +148,7 @@ export async function POST(
     }
 
     // 새 ID 생성
-    const allComments = await getAllAsObjects<{ id: string }>(SHEET_NAMES.IMPROVEMENT_COMMENTS);
-
-    let maxNum = 0;
-    for (const row of allComments) {
-      if (row.id && row.id.startsWith('IMPC-')) {
-        const num = parseInt(row.id.replace('IMPC-', ''), 10);
-        if (num > maxNum) maxNum = num;
-      }
-    }
-    const commentId = `IMPC-${String(maxNum + 1).padStart(5, '0')}`;
+    const commentId = await generateSequentialId(SHEET_NAMES.IMPROVEMENT_COMMENTS, 'IMPC-', 5);
 
     const now = new Date().toISOString();
 

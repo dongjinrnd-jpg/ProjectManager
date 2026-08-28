@@ -9,10 +9,10 @@
 
 import { NextResponse } from 'next/server';
 import {
-  getAllAsObjects,
   insertRow,
   query,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
@@ -35,17 +35,7 @@ function hasAccess(role: string): boolean {
  * 형식: IMP-001, IMP-002, ...
  */
 async function generateImprovementId(): Promise<string> {
-  const rows = await getAllAsObjects<{ id: string }>(SHEET_NAMES.IMPROVEMENTS);
-
-  let maxNum = 0;
-  for (const row of rows) {
-    if (row.id && row.id.startsWith('IMP-')) {
-      const num = parseInt(row.id.replace('IMP-', ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-
-  return `IMP-${String(maxNum + 1).padStart(3, '0')}`;
+  return generateSequentialId(SHEET_NAMES.IMPROVEMENTS, 'IMP-', 3);
 }
 
 /**
@@ -221,17 +211,8 @@ async function addHistory(
   changedBy: string,
   changedByName: string
 ): Promise<void> {
-  const allHistories = await getAllAsObjects<{ id: string }>(SHEET_NAMES.IMPROVEMENT_HISTORIES);
-
   // 새 ID 생성
-  let maxNum = 0;
-  for (const row of allHistories) {
-    if (row.id && row.id.startsWith('IMPH-')) {
-      const num = parseInt(row.id.replace('IMPH-', ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-  const historyId = `IMPH-${String(maxNum + 1).padStart(5, '0')}`;
+  const historyId = await generateSequentialId(SHEET_NAMES.IMPROVEMENT_HISTORIES, 'IMPH-', 5);
 
   const now = new Date().toISOString();
 

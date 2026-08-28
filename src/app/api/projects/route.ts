@@ -9,11 +9,11 @@
 
 import { NextResponse } from 'next/server';
 import {
-  getAllAsObjects,
   findRowByColumn,
   insertRow,
   query,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { Project, CreateProjectInput, ProjectStatus, ProjectStage, UserRole } from '@/types';
@@ -23,21 +23,7 @@ import type { Project, CreateProjectInput, ProjectStatus, ProjectStage, UserRole
  */
 async function generateProjectId(): Promise<string> {
   const year = new Date().getFullYear();
-  const allItems = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.PROJECTS);
-
-  // 올해 프로젝트 수 계산
-  const prefix = `PRJ-${year}-`;
-  let maxNum = 0;
-
-  for (const item of allItems) {
-    const id = item.id as string;
-    if (id && id.startsWith(prefix)) {
-      const num = parseInt(id.replace(prefix, ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-
-  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  return generateSequentialId(SHEET_NAMES.PROJECTS, `PRJ-${year}-`, 3);
 }
 
 /**

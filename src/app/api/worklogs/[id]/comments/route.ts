@@ -11,10 +11,10 @@
 import { NextResponse } from 'next/server';
 import {
   findRowByColumn,
-  getAllAsObjects,
   insertRow,
   query,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type {
@@ -155,16 +155,7 @@ export async function POST(
     }
 
     // 새 ID 생성
-    const allComments = await getAllAsObjects<{ id: string }>(SHEET_NAMES.WORKLOG_COMMENTS);
-
-    let maxNum = 0;
-    for (const row of allComments) {
-      if (row.id && row.id.startsWith('WLC-')) {
-        const num = parseInt(row.id.replace('WLC-', ''), 10);
-        if (num > maxNum) maxNum = num;
-      }
-    }
-    const commentId = `WLC-${String(maxNum + 1).padStart(5, '0')}`;
+    const commentId = await generateSequentialId(SHEET_NAMES.WORKLOG_COMMENTS, 'WLC-', 5);
 
     const now = new Date().toISOString();
 

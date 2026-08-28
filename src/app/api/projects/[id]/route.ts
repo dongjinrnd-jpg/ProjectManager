@@ -15,9 +15,9 @@ import {
   deleteById,
   deleteByColumn,
   insertRow,
-  getAllAsObjects,
   query,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSupabase } from '@/lib/supabase/client';
 import { getSession, hasMinRole, isAdmin } from '@/lib/auth';
@@ -33,18 +33,8 @@ async function recordHistory(
   newValue: string,
   changedById: string
 ): Promise<void> {
-  const allItems = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.PROJECT_HISTORY);
-
   // 새 ID 생성
-  const maxNum = allItems.reduce((max, item) => {
-    const id = item.id as string;
-    if (id && id.startsWith('PH-')) {
-      const num = parseInt(id.replace('PH-', ''), 10);
-      return num > max ? num : max;
-    }
-    return max;
-  }, 0);
-  const historyId = `PH-${String(maxNum + 1).padStart(3, '0')}`;
+  const historyId = await generateSequentialId(SHEET_NAMES.PROJECT_HISTORY, 'PH-', 3);
 
   const now = new Date().toISOString();
   const historyData: Record<string, unknown> = {

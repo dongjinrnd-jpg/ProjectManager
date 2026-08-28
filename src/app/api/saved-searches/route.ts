@@ -12,6 +12,7 @@ import {
   getAllAsObjects,
   insertRow,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { SavedSearch, SavedSearchParsed, CreateSavedSearchInput } from '@/types';
@@ -21,18 +22,7 @@ import type { SavedSearch, SavedSearchParsed, CreateSavedSearchInput } from '@/t
  * 형식: SS-NNN
  */
 async function generateSavedSearchId(): Promise<string> {
-  const prefix = 'SS-';
-  const allRows = await getAllAsObjects<{ id: string }>(SHEET_NAMES.SAVED_SEARCHES);
-
-  let maxNum = 0;
-  for (const row of allRows) {
-    if (row.id && row.id.startsWith(prefix)) {
-      const num = parseInt(row.id.replace(prefix, ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-
-  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  return generateSequentialId(SHEET_NAMES.SAVED_SEARCHES, 'SS-', 3);
 }
 
 /**

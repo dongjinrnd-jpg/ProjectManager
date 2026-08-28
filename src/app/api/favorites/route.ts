@@ -10,12 +10,12 @@
 
 import { NextResponse } from 'next/server';
 import {
-  getAllAsObjects,
   findRowByColumn,
   insertRow,
   deleteById,
   query,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { Favorite } from '@/types';
@@ -24,21 +24,7 @@ import type { Favorite } from '@/types';
  * 새 즐겨찾기 ID 생성
  */
 async function generateFavoriteId(): Promise<string> {
-  const allItems = await getAllAsObjects<Record<string, unknown>>(SHEET_NAMES.FAVORITES);
-
-  // 최대 번호 계산
-  const prefix = 'FAV-';
-  let maxNum = 0;
-
-  for (const item of allItems) {
-    const id = item.id as string;
-    if (id && id.startsWith(prefix)) {
-      const num = parseInt(id.replace(prefix, ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-
-  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  return generateSequentialId(SHEET_NAMES.FAVORITES, 'FAV-', 3);
 }
 
 /**

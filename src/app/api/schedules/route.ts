@@ -14,6 +14,7 @@ import {
   query,
   getById,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { ProjectSchedule, CreateScheduleInput } from '@/types';
@@ -23,18 +24,7 @@ import type { ProjectSchedule, CreateScheduleInput } from '@/types';
  * 형식: PS-NNN
  */
 async function generateScheduleId(): Promise<string> {
-  const prefix = 'PS-';
-  const allSchedules = await getAllAsObjects<{ id: string }>(SHEET_NAMES.PROJECT_SCHEDULES);
-
-  let maxNum = 0;
-  for (const row of allSchedules) {
-    if (row.id && row.id.startsWith(prefix)) {
-      const num = parseInt(row.id.replace(prefix, ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-
-  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  return generateSequentialId(SHEET_NAMES.PROJECT_SCHEDULES, 'PS-', 3);
 }
 
 /**

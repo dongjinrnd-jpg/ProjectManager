@@ -9,12 +9,12 @@
 
 import { NextResponse } from 'next/server';
 import {
-  getAllAsObjects,
   findRowByColumn,
   insertRow,
   updateById,
   query,
   SHEET_NAMES,
+  generateSequentialId,
 } from '@/lib/supabase/db';
 import { getSession } from '@/lib/auth';
 import type { WorkLog, CreateWorkLogInput, ProjectStage } from '@/types';
@@ -25,18 +25,7 @@ import type { WorkLog, CreateWorkLogInput, ProjectStage } from '@/types';
  */
 async function generateWorkLogId(date: string): Promise<string> {
   const dateStr = date.replace(/-/g, '');
-  const prefix = `WL-${dateStr}-`;
-  const allWorklogs = await getAllAsObjects<{ id: string }>(SHEET_NAMES.WORKLOGS);
-
-  let maxNum = 0;
-  for (const row of allWorklogs) {
-    if (row.id && row.id.startsWith(prefix)) {
-      const num = parseInt(row.id.replace(prefix, ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-
-  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  return generateSequentialId(SHEET_NAMES.WORKLOGS, `WL-${dateStr}-`, 3);
 }
 
 /**
